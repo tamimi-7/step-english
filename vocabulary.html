@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<script>(function(){try{var t=JSON.parse(localStorage.getItem("step_theme"));if(!t)t=(window.matchMedia&&matchMedia("(prefers-color-scheme: dark)").matches)?"dark":"light";document.documentElement.setAttribute("data-theme",t);}catch(e){}})();</script>
+<title>STEP English — المفردات</title>
+<link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+<header id="nav"></header>
+
+<main class="container">
+  <h1><i data-i="type"></i> مفردات القراءة</h1>
+  <p class="muted">مفردات تكررت في قسم القراءة مع القطعة، والمطلوب معنى الكلمة. الكلمات مأخوذة من ملف تجميعات القراءة. بعض المرادفات في الملف الأصلي كانت غير دقيقة فصُحّحت، ويظهر تحتها المرادف القديم بعبارة «في التجميعات» لتعرفه إن جاء بنفس الصيغة في الاختبار.</p>
+
+  <div class="card" style="margin-bottom:22px">
+    <h3>صيغة السؤال في الاختبار</h3>
+    <div class="pair">
+      <div>
+        <div class="ex"><span class="en">Q/ What does the word "............" mean?</span><span class="ar">ماذا تعني كلمة «............»؟</span></div>
+        <div class="ex"><span class="en">Q/ The word "............" in the paragraph is closest in meaning to?</span><span class="ar">كلمة «............» في الفقرة هي الأقرب في المعنى لـ؟</span></div>
+      </div>
+      <div>
+        <div class="ex right"><span class="en">Alexander Graham Bell <b>invented</b> the telephone.</span><span class="ar">The word "invented" is closest in meaning to? → <b>made</b> (occupied  excluded  survived )</span></div>
+        <div class="note tip" style="margin:0"><span class="ic"><i data-i="bulb"></i></span><p>إذا لم تعرف الكلمة: ارجع للجملة في القطعة، واستبدل كل خيار مكان الكلمة، واختر الخيار الذي يحافظ على معنى الجملة.</p></div>
+      </div>
+    </div>
+  </div>
+
+  <section class="section">
+    <div class="section-title"><h2><i data-i="cards"></i> بطاقات الحفظ</h2><span class="badge ok">أعرف: <span id="knownCount">0</span></span></div>
+    <div class="flash-wrap">
+      <div class="btn-row" style="justify-content:center">
+        <div class="seg" id="deckSeg">
+          <button type="button" data-v="all" class="on">كل الكلمات</button>
+          <button type="button" data-v="unknown">التي لا أعرفها</button>
+          <button type="button" data-v="random">ترتيب عشوائي</button>
+        </div>
+      </div>
+      <div class="flashcard" id="card"><div class="inner"><div class="face front"></div><div class="face back"></div></div></div>
+      <div class="progress"><div id="flashBar"></div></div>
+      <div class="muted small" id="flashProg"></div>
+      <div class="btn-row" style="justify-content:center;margin-top:10px">
+        <button type="button" class="btn" id="dontBtn"> لا أعرفها</button>
+        <button type="button" class="btn btn-primary" id="knowBtn"> أعرفها</button>
+      </div>
+      <p class="small muted kbd-hint" style="margin-top:10px">اختصارات: مسافة = اقلب البطاقة، سهم يسار = أعرفها، سهم يمين = لا أعرفها</p>
+      <p class="small muted" style="margin-top:6px">يحفظ الموقع مكانك في البطاقات تلقائيًا. <button type="button" class="linkish" id="resetKnown">مسح علامات «أعرفها»</button></p>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="section-title"><h2><i data-i="clipboard"></i> القائمة الكاملة</h2><span class="badge" id="vocabCount"></span></div>
+    <input class="search" id="search" type="search" placeholder="ابحث بالإنجليزي أو العربي… مثال: essential أو ضروري" autocomplete="off">
+    <div class="table-wrap" style="margin-top:12px">
+      <table>
+        <thead><tr><th>#</th><th class="en">Word</th><th class="en">Closest meaning</th><th>المعنى</th><th></th></tr></thead>
+        <tbody id="vocabBody"></tbody>
+      </table>
+    </div>
+  </section>
+</main>
+
+<footer id="footer"></footer>
+<script src="data/vocab.js"></script>
+<script src="data/events.js"></script>
+<script src="assets/app.js"></script>
+<script src="assets/sfx.js"></script>
+<script src="assets/bank.js"></script>
+<script src="assets/progress.js"></script>
+<script src="assets/vocab-page.js"></script>
+</body>
+</html>

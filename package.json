@@ -1,0 +1,13 @@
+{
+  "name": "step-english",
+  "version": "1.1.0",
+  "private": true,
+  "description": "STEP English study site with accounts, leaderboard, challenges and adaptive training",
+  "scripts": {
+    "dev": "node dev/server.js",
+    "deploy": "vercel deploy --prod --yes"
+  },
+  "engines": {
+    "node": "22.x"
+  }
+}

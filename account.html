@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<script>(function(){try{var t=JSON.parse(localStorage.getItem("step_theme"));if(!t)t=(window.matchMedia&&matchMedia("(prefers-color-scheme: dark)").matches)?"dark":"light";document.documentElement.setAttribute("data-theme",t);}catch(e){}})();</script>
+<title>STEP English — حسابي</title>
+<link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+<header id="nav"></header>
+
+<main class="container">
+  <div id="forms" class="grid grid-2" style="align-items:start">
+    <div class="card fade-up">
+      <h1 style="font-size:1.6rem"><i data-i="user"></i> حسابك</h1>
+      <p class="muted">حساب واحد بسيط: اسم مستخدم وكلمة مرور. لا يحتاج بريدًا إلكترونيًا.</p>
+      <div class="tabs"><button type="button" id="tabLogin" class="on">تسجيل الدخول</button><button type="button" id="tabReg">حساب جديد</button></div>
+      <form id="authForm" autocomplete="on">
+        <div class="field" id="nameWrap" hidden><label class="lbl" for="name">الاسم الذي يظهر في الترتيب</label><input class="input" id="name" maxlength="30" placeholder="مثال: أحمد"></div>
+        <div class="field"><label class="lbl" for="username">اسم المستخدم</label><input class="input en" id="username" autocomplete="username" maxlength="20" placeholder="ahmed_1" required></div>
+        <div class="field"><label class="lbl" for="password">كلمة المرور</label><input class="input en" id="password" type="password" autocomplete="current-password" minlength="4" required></div>
+        <div class="form-msg err" id="formMsg" hidden></div>
+        <button type="submit" class="btn btn-primary btn-lg" id="submitBtn" style="width:100%">تسجيل الدخول</button>
+      </form>
+    </div>
+    <div class="card c-rose link-card" style="cursor:default">
+      <h3>ليش أسوي حساب؟</h3>
+      <ul>
+        <li><i data-i="trophy"></i> تدخل <b>الترتيب العام والأسبوعي</b> مع إخوانك — كل إجابة صحيحة في الاختبارات والتدريب = نقطة.</li>
+        <li><i data-i="swords"></i> تشارك في <b>التحديات</b>: نفس الأسئلة للجميع، والترتيب حسب الدرجة ثم الوقت.</li>
+        <li><i data-i="cloud"></i> يُحفظ <b>تقدمك ونسبة إتقانك</b> على حسابك وتكمل من أي جهاز.</li>
+      </ul>
+      <p class="small muted">اسم المستخدم ٣–٢٠ حرفًا أو رقمًا (عربي أو إنجليزي) بدون مسافات. كلمة المرور ٤ أحرف على الأقل.</p>
+    </div>
+  </div>
+
+  <div id="profile" hidden>
+    <div class="card fade-up" style="display:flex;align-items:center;gap:16px;flex-wrap:wrap;justify-content:space-between">
+      <div style="display:flex;align-items:center;gap:14px" id="pHead"></div>
+      <div class="btn-row"><a class="btn btn-warm" href="compete.html"><i data-i="trophy"></i> المنافسات</a><button type="button" class="btn btn-danger btn-sm" id="logoutBtn">تسجيل الخروج</button></div>
+    </div>
+    <div class="section" style="margin-top:18px" id="pStats"></div>
+    <div class="note tip"><span class="ic"><i data-i="cloud"></i></span><p id="pProg"></p></div>
+    <div class="section" id="weak"><div class="section-title"><h2>نقاط ضعفك</h2><span class="muted small">الأضعف أولًا — افهم القاعدة ثم تدرّب</span></div><div class="card sheet"><div id="pWeak"></div></div></div>
+    <div class="section" id="marks"><div class="section-title"><h2>أسئلتك المعلَّمة</h2><span class="muted small">علّمت عليها بنفسك لتذاكرها</span></div><div class="card"><div id="pMarks"></div></div></div>
+    <div class="section"><div class="section-title"><h2>آخر النتائج</h2></div><div id="pResults"></div></div>
+  </div>
+</main>
+
+<footer id="footer"></footer>
+<script src="data/vocab.js"></script>
+<script src="data/questions.js"></script>
+<script src="data/reading.js"></script>
+<script src="data/collections.js"></script>
+<script src="data/why.js"></script>
+<script src="data/events.js"></script>
+<script src="assets/app.js"></script>
+<script src="assets/sfx.js"></script>
+<script src="assets/bank.js"></script>
+<script src="assets/progress.js"></script>
+<script src="assets/account.js"></script>
+</body>
+</html>

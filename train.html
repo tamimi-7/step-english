@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<script>(function(){try{var t=JSON.parse(localStorage.getItem("step_theme"));if(!t)t=(window.matchMedia&&matchMedia("(prefers-color-scheme: dark)").matches)?"dark":"light";document.documentElement.setAttribute("data-theme",t);}catch(e){}})();</script>
+<title>STEP English — التدريب</title>
+<link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+<header id="nav"></header>
+
+<main class="container">
+  <div class="events-bar" id="eventsBar"></div>
+  <!-- ===== لوحة التدريب ===== -->
+  <div id="dash">
+    <section class="hero" style="padding:30px 34px">
+      <div style="display:flex;align-items:center;gap:26px;flex-wrap:wrap">
+        <div class="score-ring sm on-hero" id="ring" style="--p:0"><span>0٪</span></div>
+        <div style="flex:1;min-width:240px">
+          <h1 style="margin-bottom:.2em"><i data-i="target"></i> التدريب</h1>
+          <p style="margin-bottom:8px">إتقانك الكلي يرتفع كلما أجبت صحيحًا أكثر من مرة على نفس السؤال عبر أيام مختلفة. النظام يتذكر كل سؤال ويعيد لك ما أخطأت فيه في وقته المناسب.</p>
+          <div class="chips" id="dashMeta" style="margin-top:8px"></div>
+        </div>
+      </div>
+    </section>
+
+    <div class="note tip" id="topicHint" hidden></div>
+
+    <section class="section">
+      <div class="section-title"><h2>اختر نوع التدريب</h2></div>
+      <div class="grid grid-3" id="modeCards"></div>
+      <div class="card" style="margin-top:16px;display:flex;gap:16px;align-items:center;flex-wrap:wrap;justify-content:space-between">
+        <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap"><b>عدد الأسئلة</b>
+          <div class="seg" id="countSeg"><button type="button" data-v="10" class="on">10</button><button type="button" data-v="20">20</button><button type="button" data-v="30">30</button></div>
+          <span class="muted small">تظهر الإجابة والشرح بعد كل سؤال مباشرة.</span></div>
+        <button type="button" class="btn btn-primary btn-lg" id="startBtn">ابدأ التدريب ←</button>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="section-title"><h2>الإتقان حسب الموضوع</h2><span class="badge">الأضعف أولًا</span></div>
+      <div class="card"><div id="topics"></div></div>
+    </section>
+  </div>
+
+  <!-- ===== جلسة التدريب ===== -->
+  <div id="session" hidden>
+    <div class="quiz-top">
+      <h2 id="sessTitle" style="margin:0;font-size:1.2rem"></h2>
+      <div class="btn-row"><span class="badge" id="tScore"><i data-i="check"></i> 0</span><span class="badge info" id="tCounter"></span></div>
+    </div>
+    <div class="progress"><div id="tBar"></div></div>
+    <div id="tPassage" hidden></div>
+    <div class="card q-card">
+      <div class="btn-row" style="justify-content:space-between"><span class="badge" id="tType"></span><span class="muted small" id="tHist"></span></div>
+      <div class="q-text" id="tText"></div>
+      <div class="opts-list" id="tOpts"></div>
+      <div class="feedback" id="tFeedback" hidden></div>
+      <div class="quiz-nav" style="justify-content:flex-end"><button type="button" class="btn btn-primary" id="tNext" disabled>التالي ←</button></div>
+    </div>
+    <p class="small muted center" style="margin-top:10px">اختصارات: الأرقام ١–٤ للإجابة، Enter للتالي</p>
+  </div>
+
+  <!-- ===== ملخص الجولة ===== -->
+  <div id="summary" hidden></div>
+</main>
+
+<footer id="footer"></footer>
+<script src="data/vocab.js"></script>
+<script src="data/questions.js"></script>
+<script src="data/reading.js"></script>
+<script src="data/collections.js"></script>
+<script src="data/why.js"></script>
+<script src="data/events.js"></script>
+<script src="assets/app.js"></script>
+<script src="assets/sfx.js"></script>
+<script src="assets/bank.js"></script>
+<script src="assets/progress.js"></script>
+<script src="assets/train.js"></script>
+</body>
+</html>

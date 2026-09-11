@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<script>(function(){try{var t=JSON.parse(localStorage.getItem("step_theme"));if(!t)t=(window.matchMedia&&matchMedia("(prefers-color-scheme: dark)").matches)?"dark":"light";document.documentElement.setAttribute("data-theme",t);}catch(e){}})();</script>
+<title>STEP English — تجهيز الاختبار</title>
+<meta name="description" content="مذاكرة اختبار STEP: قواعد، مفردات، قراءة، تدريب ذكي، ومنافسات بين الأصدقاء">
+<link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+<header id="nav"></header>
+
+<main class="container">
+  <section class="hero">
+    <span class="badge">اختبار كفايات اللغة الإنجليزية — قياس</span>
+    <h1>جهّز نفسك لاختبار STEP… <mark>وتنافس</mark> مع إخوانك</h1>
+    <p>دروس القواعد الأكثر تكرارًا، مفردات القراءة من التجميعات، تدريب ذكي يركّز على نقاط ضعفك، واختبار يحاكي الاختبار الحقيقي — مع ترتيب وتحديات بينك وبين إخوانك.</p>
+    <div class="actions">
+      <a class="btn btn-light" href="train.html"><i data-i="target"></i> ابدأ التدريب</a>
+      <a class="btn btn-outline-light" href="quiz.html"><i data-i="pencil"></i> اختبر نفسك</a>
+      <a class="btn btn-outline-light" href="compete.html"><i data-i="trophy"></i> شوف الترتيب</a>
+    </div>
+    <div class="chips" id="heroChips"></div>
+  </section>
+
+  <div class="events-bar" id="eventsBar"></div>
+
+  <section class="section"><div class="grid grid-4" id="homeStats"></div></section>
+
+  <section class="section">
+    <div class="grid grid-2">
+      <div class="card sheet">
+        <div class="section-title"><h2><i data-i="trophy"></i> الترتيب</h2><a class="more" href="compete.html">المنافسات ←</a></div>
+        <div id="homeBoard"><p class="muted small">جارٍ التحميل…</p></div>
+      </div>
+      <div class="card sheet">
+        <div class="section-title"><h2><i data-i="chartdown"></i> نقاط ضعفك</h2><a class="more" href="train.html">التدريب ←</a></div>
+        <div id="homeWeak"></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="section-title"><h2>ابدأ من هنا</h2><span class="muted small">اختر ما يناسب وقتك اليوم</span></div>
+    <div class="grid grid-3 papers">
+      <a class="stack" href="train.html"><div class="card paper"><div class="icon p-blue"><i data-i="target"></i></div><h3>تدرّب بذكاء</h3><p>أسئلة على قدر مستواك، وما تخطئ فيه يرجع لك في وقته حتى يثبت.</p><span class="cta">ابدأ جولة ←</span></div></a>
+      <a class="stack" href="quiz.html"><div class="card paper"><div class="icon p-green"><i data-i="pencil"></i></div><h3>اختبر نفسك كما في القاعة</h3><p>مؤقّت وصفحة مراجعة مثل الاختبار الحقيقي، ثم شرح لكل سؤال أخطأت فيه.</p><span class="cta">ابدأ اختبارًا ←</span></div></a>
+      <a class="stack" href="compete.html"><div class="card paper"><div class="icon p-rose"><i data-i="trophy"></i></div><h3>تحدَّ إخوانك</h3><p>كل إجابة صحيحة نقطة. تصدّر الترتيب وأرسل تحديًا برابط واحد.</p><span class="cta">شوف الترتيب ←</span></div></a>
+      <a class="stack" href="collections.html"><div class="card paper"><div class="icon p-teal"><i data-i="library"></i></div><h3>راجع النماذج السابقة</h3><p>٢٦ نموذج استماع، ٤٥ قرامر، ٤٨ قطع، بإجاباتها كما جاءت في التجميعات.</p><span class="cta">تصفّح التجميعات ←</span></div></a>
+      <a class="stack" href="grammar.html"><div class="card paper"><div class="icon p-violet"><i data-i="book"></i></div><h3>أتقن القواعد المتكررة</h3><p>١٧ درسًا مرتبة حسب ما يأتي فعلًا في STEP، مع تدريب قصير بعد كل درس.</p><span class="cta">افتح الدروس ←</span></div></a>
+      <a class="stack" href="vocabulary.html"><div class="card paper"><div class="icon p-orange"><i data-i="type"></i></div><h3>احفظ مفردات القراءة</h3><p>٢٧٣ كلمة من التجميعات ببطاقات تتذكر ما تعرفه وتعيد ما نسيته.</p><span class="cta">راجع البطاقات ←</span></div></a>
+      <a class="stack" href="reading.html"><div class="card paper"><div class="icon p-teal"><i data-i="bookopen"></i></div><h3>اقرأ بسرعة وافهم</h3><p>أنواع الأسئلة وطريقة الحل في الوقت المحدود، وقطع على مواضيع الاختبار.</p><span class="cta">تدرّب على القراءة ←</span></div></a>
+      <a class="stack" href="listening.html"><div class="card paper"><div class="icon p-pink"><i data-i="headphones"></i></div><h3>جهّز أذنك للاستماع</h3><p>ما ينتظرك في القسم، ومشكلة الصوت في القاعة وكيف تتعامل معها.</p><span class="cta">اقرأ النصائح ←</span></div></a>
+      <a class="stack" href="tips.html"><div class="card paper"><div class="icon p-amber"><i data-i="bulb"></i></div><h3>تعلّم من تجارب غيرك</h3><p>ما تمنّى المختبرون لو عرفوه قبل الدخول، وخطة عشرة أيام جاهزة.</p><span class="cta">اقرأ التجارب ←</span></div></a>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="section-title"><h2>شكل الاختبار كما وصفه المختبرون</h2></div>
+    <div class="grid grid-2">
+      <div class="card sheet">
+        <h3>الأقسام</h3>
+        <div class="table-wrap"><table>
+          <thead><tr><th>القسم</th><th>ماذا يأتي فيه</th></tr></thead>
+          <tbody>
+            <tr><td><b><i data-i="headphones"></i> الاستماع</b></td><td>مقاطع قصيرة، على كل مقطع سؤال إلى ثلاثة أسئلة. الكلام غير سريع والنطق واضح لكن الصوت قد يكون منخفضًا.</td></tr>
+            <tr><td><b><i data-i="bookopen"></i> القراءة</b></td><td>قطع عليها أسئلة فهم + أسئلة مفردات بصيغة <span class="en">closest in meaning to</span>. أغلبها من التجميعات و٣–٤ قطع جديدة.</td></tr>
+            <tr><td><b><i data-i="book"></i> القواعد</b></td><td>أسهل قسم حسب المختبرين، ومعظمه يتكرر من التجميعات: الأزمنة، make/let، for/since، but = however، Never + قلب.</td></tr>
+          </tbody>
+        </table></div>
+        <p class="small muted" style="margin-top:10px">النسب المعلنة من قياس تقريبًا: القراءة ٤٠٪، القواعد ٣٠٪، الاستماع ٢٠٪، التحليل الكتابي ١٠٪.</p>
+      </div>
+      <div class="card sheet">
+        <h3>٣ أشياء يجب أن تعرفها قبل الدخول</h3>
+        <ol>
+          <li><b>كل قسم مقسّم إلى ٣ أجزاء، ولكل جزء وقته المستقل.</b> تنبيه «باقي ٥ دقائق» للجزء الحالي فقط.</li>
+          <li><b>الشاشة تعرض رقم الصفحة لا رقم السؤال.</b> اضغط «التالي» حتى تصل إلى صفحة المراجعة.</li>
+          <li><b>لا تتوقف عند الأسئلة المكررة.</b> حلّ بسرعة، علّم على غير المتأكد منه، وارجع له في صفحة المراجعة.</li>
+        </ol>
+        <a class="btn btn-sm" href="tips.html">كل النصائح والتجارب ←</a>
+      </div>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="section-title"><h2>كيف تذاكر من هذا الموقع؟</h2></div>
+    <div class="card sheet">
+      <div class="timeline">
+        <div class="step"><b>١. القواعد أولًا (٣–٤ أيام)</b> درس أو درسان يوميًا مع التدريب السريع في نهاية كل درس.</div>
+        <div class="step"><b>٢. تدريب ذكي يوميًا (١٠ دقائق)</b> النظام يعطيك أسئلة جديدة وما أخطأت فيه، ويرفع نسبة إتقانك موضوعًا موضوعًا.</div>
+        <div class="step"><b>٣. المفردات والقراءة</b> ٥٠ بطاقة يوميًا، وقطعة أو قطعتان مع قراءة الأسئلة أولًا.</div>
+        <div class="step"><b>٤. اختبار بمؤقت ثم مراجعة</b> اختبار شامل مرة كل يومين، وضع «مراجعة» لتثبيت ما تعلمته، وتحدٍّ لإخوانك في نهاية الأسبوع.</div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer id="footer"></footer>
+<script src="data/vocab.js"></script>
+<script src="data/questions.js"></script>
+<script src="data/reading.js"></script>
+<script src="data/collections.js"></script>
+<script src="data/why.js"></script>
+<script src="data/events.js"></script>
+<script src="assets/app.js"></script>
+<script src="assets/sfx.js"></script>
+<script src="assets/bank.js"></script>
+<script src="assets/progress.js"></script>
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+  document.getElementById("heroChips").innerHTML = `<span class="chip"><i data-i="book"></i> ${QUESTIONS.length} سؤال قواعد</span><span class="chip"><i data-i="type"></i> ${VOCAB.length} كلمة</span><span class="chip"><i data-i="bookopen"></i> ${PASSAGES.length} قطع قراءة</span><span class="chip"><i data-i="brain"></i> تدريب يتكيف مع مستواك</span>`;
+});
+</script>
+</body>
+</html>

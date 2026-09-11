@@ -1,0 +1,14 @@
+# أسرار وإعدادات محلية
+.env
+.env.*
+.vercel/
+.claude/
+
+# ملفات مؤقتة
+node_modules/
+_meta.json
+_g.json
+*.log
+.DS_Store
+Thumbs.db
+.agents/

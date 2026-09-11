@@ -1,0 +1,606 @@
+/* ===== إنقلش عام — تطبيق تعلم اللغة (SPA) ===== */
+(function(){
+  const $ = s => document.querySelector(s);
+  const V = window.GEN_VOCAB || [], G = window.GEN_GRAMMAR || [], D = window.GEN_DIALOGUES || [], U = window.GEN_UNITS || [];
+  const LV = ["A1", "A2", "B1", "B2"], LVN = { A1: "مبتدئ", A2: "أساسي", B1: "متوسط", B2: "متقدم" };
+  const LVC = { A1: "#16a34a", A2: "#2563eb", B1: "#d97706", B2: "#7c3aed" };
+  const L = ["A", "B", "C", "D"];
+  const theme = id => V.find(t => t.id === id), lesson = id => G.find(l => l.id === id), dialog = id => D.find(d => d.id === id);
+  const wid = (t, i) => `gw-${t.id}-${i}`;
+  const rec = id => Progress.data.q[id];
+  const known = id => { const r = rec(id); return !!(r && r.lvl >= 1); };
+  const mastered = id => { const r = rec(id); return !!(r && r.lvl >= 3); };
+  const themeStats = t => { let k = 0, m = 0; t.words.forEach((w, i) => { if(known(wid(t, i))) k++; if(mastered(wid(t, i))) m++; }); return { k, m, n: t.words.length, pct: Math.round(k / t.words.length * 100) }; };
+  const allWords = () => V.flatMap(t => t.words.map((w, i) => ({ t, i, w })));
+  const dayKey = () => new Date().toLocaleDateString("en-CA");
+
+  /* ---------- XP / state ---------- */
+  const GEN = Object.assign({ xp: 0, daily: {}, units: {}, best: {}, level: "A1" }, Store.get("step_gen", {}));
+  const saveGen = () => Store.set("step_gen", GEN);
+  function gainXP(n, quiet){
+    if(!n) return;
+    const before = xpLevel(GEN.xp); GEN.xp += n; const after = xpLevel(GEN.xp); saveGen();
+    if(!quiet) toast(`+${n} XP`);
+    if(after > before) after0(after);
+  }
+  const addXP = n => gainXP(n);
+  function after0(lv){
+    const el = document.createElement("div"); el.className = "levelup";
+    el.innerHTML = `<div class="lu-card"><div class="lu-n">${lv}</div><h3>ارتفع مستواك!</h3><p class="muted">صرت <b>${levelTitle(lv)}</b> — واصل، خطوتك التالية تنتظرك.</p><button type="button" class="btn btn-primary">تمام</button></div>`;
+    document.body.appendChild(el); hydrateIcons(el); confetti();
+    const close = () => el.remove();
+    el.querySelector("button").addEventListener("click", close);
+    el.addEventListener("click", e => { if(e.target === el) close(); });
+    setTimeout(close, 6000);
+  }
+  const xpLevel = xp => Math.floor(Math.sqrt(xp / 60)) + 1;
+  const xpNext = xp => { const l = xpLevel(xp); return { l, cur: xp - 60 * (l - 1) * (l - 1), need: 60 * (l * l) - 60 * (l - 1) * (l - 1) }; };
+  const TITLES = ["مبتدئ", "متعلم", "مثابر", "متمكن", "متقدم", "طليق", "خبير", "أستاذ"];
+  const levelTitle = l => TITLES[Math.min(TITLES.length - 1, Math.floor((l - 1) / 3))];
+  async function postPoints(score, total, seconds, ids){
+    if(!Auth.user() || !score || !ids || !ids.length) return;
+    try{
+      const j = await Auth.api("/api/result", { method: "POST", body: { mode: "general", score, total, seconds: seconds || 0, ids } });
+      if(j.points > 0){ toast(`+${j.points} نقطة في المنافسة${j.mult > 1 ? " (×" + j.mult + " فعالية)" : ""}`); if(typeof SFX !== "undefined") SFX.coin(); }
+      else if(j.repeated > 0) toast("لا نقاط جديدة: هذه الأسئلة سبق أن أخذت نقاطها", 3200);
+      Progress.sync(true);
+    }catch(e){}
+  }
+  const sfx = n => { if(typeof SFX !== "undefined" && SFX[n]) SFX[n](); };
+
+  /* ---------- speech ---------- */
+  let voices = [];
+  function loadVoices(){ try{ voices = speechSynthesis.getVoices(); }catch(e){} }
+  loadVoices(); try{ speechSynthesis.onvoiceschanged = loadVoices; }catch(e){}
+  const hush = () => { try{ speechSynthesis.cancel(); }catch(e){} };
+  let speakTimer = null;
+  function speak(text, rate){
+    try{
+      if(!("speechSynthesis" in window)) return toast("النطق غير مدعوم في هذا المتصفح");
+      const go = () => {
+        const u = new SpeechSynthesisUtterance(text); u.lang = "en-US"; u.rate = rate || 0.92;
+        const v = voices.find(v => /en[-_]US/i.test(v.lang) && /female|zira|samantha|aria|jenny/i.test(v.name)) || voices.find(v => /en[-_]US/i.test(v.lang)) || voices.find(v => /^en/i.test(v.lang));
+        if(v) u.voice = v;
+        speechSynthesis.speak(u);
+      };
+      clearTimeout(speakTimer);
+      if(speechSynthesis.speaking || speechSynthesis.pending){ speechSynthesis.cancel(); speakTimer = setTimeout(go, 120); } else go();
+    }catch(e){ toast("النطق غير مدعوم في هذا المتصفح"); }
+  }
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  function listen(cb){
+    let done = false; const fin = v => { if(done) return; done = true; cb(v); };
+    if(!SR){ toast("التعرف على الصوت غير مدعوم هنا — جرّب متصفح Chrome"); fin(null); return null; }
+    try{
+      const r = new SR(); r.lang = "en-US"; r.interimResults = false; r.maxAlternatives = 3;
+      r.onresult = e => fin(Array.from(e.results[0]).map(a => a.transcript));
+      r.onerror = () => fin(null); r.onend = () => fin(null); r.start(); return r;
+    }catch(e){ fin(null); return null; }
+  }
+  const CONTR = { "i'm": "i am", "it's": "it is", "what's": "what is", "that's": "that is", "there's": "there is", "where's": "where is", "how's": "how is", "he's": "he is", "she's": "she is", "let's": "let us", "i'll": "i will", "you'll": "you will", "we'll": "we will", "i'd": "i would", "i've": "i have", "you've": "you have", "we've": "we have", "you're": "you are", "we're": "we are", "they're": "they are", "don't": "do not", "doesn't": "does not", "didn't": "did not", "can't": "can not", "cannot": "can not", "won't": "will not", "isn't": "is not", "aren't": "are not", "wasn't": "was not", "couldn't": "could not", "wouldn't": "would not", "shouldn't": "should not" };
+  const norm = s => String(s).toLowerCase().replace(/[’‘]/g, "'").replace(/[^a-z0-9' ]+/g, " ").replace(/\s+/g, " ").trim().split(" ").map(w => CONTR[w] || w).join(" ");
+  function similarity(a, b){ const A = norm(a).split(" ").filter(Boolean), B = new Set(norm(b).split(" ").filter(Boolean)); if(!A.length) return 0; let hit = 0; A.forEach(w => { if(B.has(w)) hit++; }); return Math.round(hit / Math.max(A.length, B.size) * 100); }
+  const spk = (text, cls) => `<button type="button" class="spk ${cls || ""}" data-say="${esc(text)}" title="استمع">${I("headphones")}</button>`;
+  document.addEventListener("click", e => { const b = e.target.closest("[data-say]"); if(b){ speak(b.dataset.say); } });
+
+  /* ---------- question builders ---------- */
+  const arNorm = x => String(x).replace(/[\u064B-\u0652\u0640]/g, "").replace(/[أإآ]/g, "ا").replace(/ى/g, "ي").replace(/ة/g, "ه").trim();
+  const arSegs = x => arNorm(x).split(/[\/،,()]/).map(y => y.trim()).filter(y => y.length > 2);
+  const arOverlap = (a, b) => { const A = new Set(arSegs(a)); return arSegs(b).some(y => A.has(y)); };
+  function pickDistract(pool, correct, n, key){ const out = []; for(const x of shuffle(pool)){ const v = key(x); if(v !== correct && !out.includes(v)) out.push(v); if(out.length === n) break; } return out; }
+  function meaningQ(t, i){ const w = t.words[i]; const pool = [...t.words.filter(x => x !== w), ...V.filter(x => x.lvl === t.lvl && x !== t).flatMap(x => x.words)].filter(x => x[0].toLowerCase() !== w[0].toLowerCase() && !arOverlap(x[1], w[1])); const dis = pickDistract(pool, w[1], 3, x => x[1]); const opts = shuffle([w[1], ...dis]); return { id: wid(t, i), kind: "meaning", q: w[0], sub: w[2], opts, a: opts.indexOf(w[1]), ex: `${w[0]} = ${w[1]} — ${w[3]}`, say: w[0] }; }
+  function reverseQ(t, i){ const w = t.words[i]; const pool = [...t.words.filter(x => x !== w), ...V.filter(x => x.lvl === t.lvl && x !== t).flatMap(x => x.words)].filter(x => x[1] !== w[1] && !arOverlap(x[1], w[1]) && x[0].toLowerCase() !== w[0].toLowerCase()); const dis = pickDistract(pool, w[0], 3, x => x[0]); const opts = shuffle([w[0], ...dis]); return { id: wid(t, i), kind: "reverse", q: w[1], opts, a: opts.indexOf(w[0]), ex: `${w[1]} = ${w[0]} — ${w[3]}`, sayAfter: w[0] }; }
+  /* مطابقة الكلمة داخل المثال مع تصريفاتها: يذاكر/ذاكر/يذاكرون، والعبارات مثل pick (you) up */
+  const IRREG = { be: "was were been am is are", begin: "began begun", bite: "bit bitten", break: "broke broken", bring: "brought", build: "built", buy: "bought", can: "could", catch: "caught", choose: "chose chosen", come: "came", cost: "cost", cut: "cut", deal: "dealt", do: "did done does", draw: "drew drawn", drink: "drank drunk", drive: "drove driven", eat: "ate eaten", fall: "fell fallen", feel: "felt", find: "found", fly: "flew flown", forget: "forgot forgotten", get: "got gotten", give: "gave given", go: "went gone goes", grow: "grew grown", have: "had has", hear: "heard", hold: "held", hurt: "hurt", keep: "kept", know: "knew known", lay: "laid", lead: "led", learn: "learnt", leave: "left", lend: "lent", let: "let", lose: "lost", make: "made", may: "might", mean: "meant", meet: "met", pay: "paid", put: "put", read: "read", ride: "rode ridden", rise: "rose risen", run: "ran", say: "said", see: "saw seen", sell: "sold", send: "sent", set: "set", shall: "should", show: "showed shown", sing: "sang sung", sit: "sat", sleep: "slept", speak: "spoke spoken", spend: "spent", stand: "stood", steal: "stole stolen", swim: "swam swum", take: "took taken", teach: "taught", tell: "told", think: "thought", throw: "threw thrown", understand: "understood", wake: "woke woken", wear: "wore worn", will: "would", win: "won", wind: "wound", withdraw: "withdrew withdrawn", write: "wrote written" };
+  /* كلمات قد تتغيّر أو تُحذف داخل الجملة (ضمائر، أدوات تعريف، نائب عن شخص) */
+  const ANY = /^(someone|somebody|something|sb|sth|one's|someone's|somebody's|i|you|he|she|it|we|they|me|him|her|us|them|my|your|his|its|our|their|the|a|an|this|that|these|those)$/i;
+  const reEsc = t => t.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  function tokenAlt(w){
+    const set = new Set([w, w + "s", w + "es", w + "ed", w + "ing", w + "'s"]);
+    if(/y$/.test(w)){ set.add(w.slice(0, -1) + "ies"); set.add(w.slice(0, -1) + "ied"); }
+    if(/e$/.test(w)){ set.add(w.slice(0, -1) + "ing"); set.add(w + "d"); }
+    if(/[^aeiou][aeiou][^aeiouwxy]$/.test(w)){ set.add(w + w.slice(-1) + "ing"); set.add(w + w.slice(-1) + "ed"); }
+    if(/ies$/.test(w)) set.add(w.slice(0, -3) + "y");
+    else if(/es$/.test(w)) set.add(w.slice(0, -2));
+    if(/s$/.test(w)) set.add(w.slice(0, -1));
+    if(IRREG[w]) IRREG[w].split(" ").forEach(x => set.add(x));
+    return "(?:" + [...set].sort((a, b) => b.length - a.length).map(reEsc).join("|") + ")";
+  }
+  function phraseRe(phrase){
+    const toks = String(phrase).toLowerCase().split(/[\s\-]+/).map(t => t.replace(/[^a-z']/g, "")).filter(Boolean);
+    const content = toks.filter(t => !ANY.test(t)).map(tokenAlt);
+    if(!content.length) return null;
+    const GAP = "(?:[\\s\\-,.'’]+[A-Za-z']+){0,3}[\\s\\-,.'’]+";
+    try{ return new RegExp("(^|[^A-Za-z])(" + content.join(GAP) + ")(?![A-Za-z])", "i"); }catch(e){ return null; }
+  }
+  const RE_CACHE = {};
+  const wordRe = w => (w in RE_CACHE) ? RE_CACHE[w] : (RE_CACHE[w] = phraseRe(w));
+  const hasSentence = w => { const re = wordRe(w[0]); return !!(re && re.test(w[3])); };
+  function sentenceQ(t, i){ const w = t.words[i]; const re = wordRe(w[0]); const m = re && w[3].match(re); if(!m) return meaningQ(t, i); if(m[2].split(/\s+/).length / w[3].split(/\s+/).length > 0.6) return meaningQ(t, i); const q = w[3].replace(re, "$1______"); const pool = [...t.words.filter(x => x !== w), ...V.filter(x => x.lvl === t.lvl && x !== t).flatMap(x => x.words)]; const dis = pickDistract(pool, w[0], 3, x => x[0]); const opts = shuffle([w[0], ...dis]); return { id: wid(t, i), kind: "sentence", q, sub: w[4], opts, a: opts.indexOf(w[0]), ex: `${w[3]} — ${w[4]}`, sayAfter: w[3], hint: "اختر الكلمة الصحيحة (قد تكون في الجملة بصيغة مختلفة)" }; }
+  function grammarQ(l, i){ const p = l.practice[i]; return { id: `gg-${l.id}-${i}`, kind: "grammar", q: p.q, sub: l.t, opts: p.o, a: p.a, ex: p.ex, lesson: l.id }; }
+  function dialogQ(d, i){ const lines = d.lines; const line = lines[i]; if(!line || line[0] !== "B" || i === 0) return null; const prev = lines[i - 1]; const others = D.filter(x => x !== d).flatMap(x => x.lines.filter(y => y[0] === "B" && y[1] !== line[1])).map(y => y[1]); const dis = pickDistract(others, line[1], 2, x => x); const opts = shuffle([line[1], ...dis]); return { id: `gd-${d.id}-${i}`, kind: "dialog", q: `${prev[1]}`, sub: `${d.t} · ${d.roles[0]} يقول — ما الرد المناسب؟`, opts, a: opts.indexOf(line[1]), ex: line[2], say: prev[1] }; }
+  const randomWordQ = (t, i) => [meaningQ, reverseQ, sentenceQ][Math.floor(Math.random() * 3)](t, i);
+  function themeQs(t, n, builder){ const idx = shuffle(t.words.map((_, i) => i)).slice(0, n || t.words.length); return idx.map(i => (builder || randomWordQ)(t, i)); }
+  function dueWordIds(){ const now = Date.now(); return Object.entries(Progress.data.q).filter(([id, r]) => id.startsWith("gw-") && r.n && r.due <= now).map(([id]) => id); }
+  function qFromWordId(id){ const m = id.match(/^gw-(.+)-(\d+)$/); if(!m) return null; const t = theme(m[1]); return t && t.words[+m[2]] ? randomWordQ(t, +m[2]) : null; }
+  function levelThemes(lvl){ return V.filter(t => t.lvl === lvl); }
+  const spellable = t => t.words.map((_, i) => i).filter(i => t.words[i][0].length <= 12 && !t.words[i][0].includes(" "));
+  function currentLevel(){ for(const lv of LV){ const units = U.filter(u => u.lvl === lv); if(units.some(u => !GEN.units[u.id])) return lv; } return "B2"; }
+
+  /* ---------- router ---------- */
+  const routes = {};
+  function go(h){ location.hash = "#/" + h; }
+  function route(){
+    const parts = (location.hash.replace(/^#\/?/, "") || "").split("/");
+    const name = parts[0] || "home"; const fn = routes[name] || routes.home;
+    stopTimers(); window.scrollTo(0, 0);
+    fn(...parts.slice(1));
+  }
+  let timers = []; const after = (fn, ms) => { const t = setTimeout(fn, ms); timers.push(t); return t; }; const every = (fn, ms) => { const t = setInterval(fn, ms); timers.push(t); return t; };
+  function stopTimers(){ timers.forEach(t => { if(t && typeof t.clear === "function") t.clear(); else { clearTimeout(t); clearInterval(t); } }); timers = []; clearTimeout(speakTimer); hush(); }
+  const render = html => { $("#app").innerHTML = html; hydrateIcons($("#app")); };
+  const crumb = (items) => `<div class="crumbs"><a href="#/">${I("home")} إنقلش عام</a>${items.map(x => ` <span>›</span> ${x.href ? `<a href="${x.href}">${x.t}</a>` : `<b>${x.t}</b>`}`).join("")}</div>`;
+  const bar = (pct, cls) => `<div class="progress"><div class="${cls || ""}" style="width:${pct}%"></div></div>`;
+
+  /* ---------- progress helpers ---------- */
+  function unitPct(u){
+    if(GEN.units[u.id]) return 100;
+    const ths = u.themes.map(theme).filter(Boolean);
+    let k = 0, n = 0; ths.forEach(t => { const s = themeStats(t); k += s.k; n += s.n; });
+    if(!ths.length && u.grammar && lesson(u.grammar)){ const l = lesson(u.grammar); n = l.practice.length; k = l.practice.filter((_, i) => known(`gg-${l.id}-${i}`)).length; }
+    return n ? Math.round(k / n * 70) : 0;
+  }
+  function levelPct(lv){ const units = U.filter(u => u.lvl === lv); if(!units.length) return 0; return Math.round(units.reduce((a, u) => a + unitPct(u), 0) / units.length); }
+  function nextUnit(){ return U.find(u => !GEN.units[u.id]) || U[U.length - 1]; }
+  const themeDone = t => themeStats(t).pct >= 100;
+  const lessonDone = l => { const ids = l.practice.map((_, i) => `gg-${l.id}-${i}`); return ids.filter(known).length >= Math.ceil(ids.length * .7); };
+  const dialogDone = d => { const ids = d.lines.map((ln, i) => ln[0] === "B" && i > 0 ? `gd-${d.id}-${i}` : null).filter(Boolean); return ids.length ? ids.filter(known).length >= Math.ceil(ids.length * .5) : true; };
+  const dialogsOf = u => (Array.isArray(u.dialogue) ? u.dialogue : u.dialogue ? [u.dialogue] : []).map(dialog).filter(Boolean);
+  function unitSteps(u){
+    const steps = [];
+    u.themes.map(theme).filter(Boolean).forEach(t => steps.push({ kind: "theme", t, done: themeDone(t), href: `#/theme/${t.id}`, label: "كلمات: " + t.t }));
+    const l = u.grammar ? lesson(u.grammar) : null; if(l) steps.push({ kind: "lesson", l, done: lessonDone(l), href: `#/lesson/${l.id}`, label: "القاعدة: " + l.t });
+    dialogsOf(u).forEach(d => steps.push({ kind: "dialogue", d, done: dialogDone(d), href: `#/dialogue/${d.id}`, label: "المحادثة: " + d.t }));
+    steps.push({ kind: "test", done: !!GEN.units[u.id], href: `#/unittest/${u.id}`, label: "اختبار الوحدة" });
+    return steps;
+  }
+  function nextStepOf(u){ return unitSteps(u).find(s => !s.done) || unitSteps(u).slice(-1)[0]; }
+  function unitOfTheme(id){ return U.find(u => u.themes.includes(id)); }
+  function nextAfterTheme(t){ // بعد إنهاء كلمات موضوع: الخطوة التالية في وحدته
+    const u = unitOfTheme(t.id); if(!u) return null; const s = nextStepOf(u); if(!s) return null;
+    if(s.kind === "theme" && s.t === t) return null; return s;
+  }
+
+  /* ---------- HOME ---------- */
+  routes.home = () => {
+    const xp = xpNext(GEN.xp), streak = Progress.streak();
+    const all = allWords(); const kn = all.filter(x => known(wid(x.t, x.i))).length;
+    const due = dueWordIds().length; const daily = GEN.daily[dayKey()];
+    const cur = currentLevel(), nu = nextUnit(), nuIdx = U.filter(u => u.lvl === nu.lvl).indexOf(nu) + 1, ns = nextStepOf(nu);
+    render(`
+      <section class="hero gen-hero gen-simple">
+        <span class="badge">إنقلش عام — مستقل عن STEP</span>
+        <h1>تعلّم الإنجليزية <mark>خطوة بخطوة</mark></h1>
+        <p>مستواك الآن <b>${cur} · ${LVN[cur]}</b> · الوحدة <b>${nuIdx} — ${esc(nu.t)}</b><br><span class="small">خطوتك التالية: ${esc(ns.label)}</span></p>
+        <div class="actions"><a class="btn btn-light" href="${ns.href}">${I("zap")} أكمل التعلّم</a><a class="btn btn-outline-light" href="#/daily">${I("calendar")} تحدي اليوم${daily ? " ✓" : ""}</a></div>
+      </section>
+      <div class="gen-stats">
+        <div class="gs"><div class="gs-n">${GEN.xp}</div><div class="gs-l">XP · المستوى ${xp.l} (${levelTitle(xp.l)})</div>${bar(Math.round(xp.cur / xp.need * 100))}</div>
+        <div class="gs"><div class="gs-n">${streak}</div><div class="gs-l">${I("fire")} ${streak === 1 ? "يوم متواصل" : "أيام متواصلة"}</div></div>
+        <div class="gs"><div class="gs-n">${kn}</div><div class="gs-l">${I("check")} كلمة تعرفها من ${all.length}</div></div>
+        <a class="gs ${due ? "hot" : ""}" href="#/review"><div class="gs-n">${due}</div><div class="gs-l">${I("repeat")} كلمة تحتاج مراجعة</div></a>
+      </div>
+      <section class="section"><div class="section-title"><h2>المستويات</h2><span class="muted small">التقدم يزيد مع كل كلمة تتعلمها ويكتمل باختبار الوحدة</span></div>
+        <div class="lvl-list">${LV.map(lv => { const units = U.filter(u => u.lvl === lv), done = units.filter(u => GEN.units[u.id]).length, pct = levelPct(lv); const st = pct === 100 ? "done" : lv === cur ? "cur" : ""; return `<a class="lvl-row ${st}" href="#/level/${lv}" style="--c:${LVC[lv]}"><div class="lvl-badge" style="background:${LVC[lv]}">${lv}</div><div class="lvl-body"><div class="lvl-head"><b>${LVN[lv]}</b><span class="lvl-pct">${pct}%</span></div>${bar(pct)}<div class="small muted">${done}/${units.length} وحدة مكتملة${lv === cur ? " · <b>أنت هنا</b>" : ""}</div></div>${I("arrow")}</a>`; }).join("")}</div>
+      </section>
+      <section class="section"><div class="section-title"><h2>استكشف بحرّية</h2></div>
+        <div class="grid grid-4 gen-menu">
+          <a class="card link-card c-violet" href="#/vocab"><div class="icon p-violet">${I("type")}</div><h3>المفردات</h3><p class="muted small">${all.length} كلمة في ${V.length} موضوعًا</p></a>
+          <a class="card link-card c-green" href="#/grammar"><div class="icon p-green">${I("book")}</div><h3>القواعد</h3><p class="muted small">${G.length} درسًا: متى ولماذا</p></a>
+          <a class="card link-card c-teal" href="#/talk"><div class="icon p-teal">${I("mic")}</div><h3>المحادثة</h3><p class="muted small">${D.length} حوارًا تسمعه وتنطقه</p></a>
+          <a class="card link-card c-rose" href="#/games"><div class="icon p-rose">${I("timer")}</div><h3>الألعاب</h3><p class="muted small">سباق، طابق، رتّب الحروف</p></a>
+          <a class="card link-card c-amber" href="library.html"><div class="icon p-amber">${I("bookopen")}</div><h3>القصص والروايات</h3><p class="muted small">اقرأ واستمع بصوت قارئ — من A1 إلى C2</p></a>
+        </div>
+      </section>`);
+  };
+
+  /* ---------- GAMES ---------- */
+  routes.games = () => {
+    render(crumb([{ t: "الألعاب" }]) + `<h1>${I("timer")} الألعاب</h1><p class="muted">ألعاب سريعة على كلمات مستواك. كل إجابة صحيحة تعطيك XP.</p>
+      <div class="grid grid-3">
+        <a class="card link-card c-rose" href="#/game/speed"><div class="icon p-rose">${I("timer")}</div><h3>سباق ٦٠ ثانية</h3><p class="muted small">أكبر عدد من المعاني قبل انتهاء الوقت. أفضل نتيجة: ${GEN.best.speed || 0}</p></a>
+        <a class="card link-card c-blue" href="#/game/match"><div class="icon p-blue">${I("cards")}</div><h3>طابق الكلمات</h3><p class="muted small">اربط كل كلمة بمعناها.</p></a>
+        <a class="card link-card c-amber" href="#/game/spell"><div class="icon p-amber">${I("type")}</div><h3>رتّب الحروف</h3><p class="muted small">كوّن الكلمة من حروفها المبعثرة.</p></a>
+      </div>`);
+  };
+
+  /* ---------- LEVEL ---------- */
+  routes.level = lv => {
+    if(!LV.includes(lv)) return routes.home();
+    const units = U.filter(u => u.lvl === lv), done = units.filter(u => GEN.units[u.id]).length, pct = levelPct(lv);
+    render(crumb([{ t: `${lv} — ${LVN[lv]}` }]) + `<div class="card sheet lvl-top" style="--c:${LVC[lv]}"><div class="section-title"><div class="lvl-badge" style="background:${LVC[lv]}">${lv}</div><h1 style="margin:0">${LVN[lv]}</h1><span class="lvl-pct big">${pct}%</span></div>${bar(pct)}<p class="muted small" style="margin:8px 0 0">${done}/${units.length} وحدة مكتملة. أكمل الوحدات بالترتيب: مفردات ← قاعدة ← محادثة ← اختبار قصير.</p></div>
+      <div class="units">${units.map((u, i) => { const d = !!GEN.units[u.id], p = unitPct(u); return `<a class="unit ${d ? "done" : ""}" href="#/unit/${u.id}">${d ? `<span class="stamp">${I("check")} مكتملة</span>` : ""}<div class="unit-n" style="background:${d ? "var(--ok)" : LVC[lv]}">${d ? I("check") : i + 1}</div><div class="unit-body"><div class="unit-head"><span class="unit-t">${esc(u.t)}</span><span class="lvl-pct">${p}%</span></div><div class="muted small">${esc(u.goal)}</div>${bar(p)}</div></a>`; }).join("")}</div>`);
+  };
+
+  /* ---------- UNIT ---------- */
+  routes.unit = id => {
+    const u = U.find(x => x.id === id); if(!u) return routes.home();
+    const steps = unitSteps(u); const ns = steps.find(s => !s.done); const done = !!GEN.units[u.id];
+    const cls = s => `step-card ${s.done ? "done" : ""} ${s === ns ? "next" : ""}`;
+    const tag = s => s.done ? `<span class="badge ok">${I("check")} مكتمل</span>` : s === ns ? `<span class="badge accent">${I("zap")} الخطوة التالية</span>` : "";
+    const num = (s, k) => `<div class="step-n">${s.done ? I("check") : s.kind === "test" ? I("trophy") : k + 1}</div>`;
+    render(crumb([{ t: u.lvl, href: `#/level/${u.lvl}` }, { t: u.t }]) + `<div class="card sheet"><div class="section-title"><span class="badge" style="background:${LVC[u.lvl]};color:#fff">${u.lvl}</span><h1 style="margin:0">${esc(u.t)}</h1>${done ? '<span class="badge ok">مكتملة</span>' : ""}</div><p class="muted">${esc(u.goal)}</p>${bar(unitPct(u))}<p class="small muted" style="margin:6px 0 0">${steps.filter(s => s.done).length} من ${steps.length} خطوات مكتملة${ns ? ` · التالي: <b>${esc(ns.label)}</b>` : ""}</p></div>
+      <div class="steps">
+        ${steps.map((s, k) => {
+          if(s.kind === "theme"){ const st = themeStats(s.t); return `<div class="${cls(s)}">${num(s, k)}<div style="flex:1"><div class="step-head"><h3>${I("type")} المفردات: ${esc(s.t.t)}</h3>${tag(s)}</div><p class="muted small">${s.t.words.length} كلمة · تعرف ${st.k} · متقنة ${st.m}</p>${bar(st.pct)}<div class="btn-row"><a class="btn btn-sm ${s.done ? "" : "btn-primary"}" href="#/theme/${s.t.id}">${s.done ? "راجع الكلمات" : "تعلّم الكلمات"}</a><a class="btn btn-sm" href="#/game/flash/${s.t.id}">بطاقات</a><a class="btn btn-sm" href="#/game/quiz/${s.t.id}">اختبار</a></div></div></div>`; }
+          if(s.kind === "lesson") return `<div class="${cls(s)}">${num(s, k)}<div style="flex:1"><div class="step-head"><h3>${I("book")} القاعدة: ${esc(s.l.t)}</h3>${tag(s)}</div><p class="muted small">${esc(s.l.why)}</p><div class="btn-row"><a class="btn btn-sm ${s.done ? "" : "btn-primary"}" href="#/lesson/${s.l.id}">${s.done ? "راجع القاعدة" : "افهم القاعدة"}</a><a class="btn btn-sm" href="#/practice/${s.l.id}">تدرّب</a></div></div></div>`;
+          if(s.kind === "dialogue") return `<div class="${cls(s)}">${num(s, k)}<div style="flex:1"><div class="step-head"><h3>${I("mic")} المحادثة: ${esc(s.d.t)}</h3>${tag(s)}</div><p class="muted small">${s.d.lines.length} جملة · استمع، مثّل دورك، وانطق. (يكتمل بتمثيل الدور)</p><div class="btn-row"><a class="btn btn-sm ${s.done ? "" : "btn-primary"}" href="#/dialogue/${s.d.id}">افتح المحادثة</a><a class="btn btn-sm" href="#/roleplay/${s.d.id}">مثّل دورك</a></div></div></div>`;
+          return `<div class="${cls(s)}">${num(s, k)}<div style="flex:1"><div class="step-head"><h3>اختبار الوحدة</h3>${tag(s)}</div><p class="muted small">١٢ سؤالًا من محتوى الوحدة. النجاح ٧٠٪ فأكثر يكمل الوحدة ويمنحك ١٠٠ XP.</p><div class="btn-row"><a class="btn btn-sm btn-warm" href="#/unittest/${u.id}">${done ? "أعد الاختبار" : "ابدأ الاختبار"}</a></div></div></div>`;
+        }).join("")}
+      </div>`);
+  };
+
+  /* ---------- VOCAB ---------- */
+  routes.vocab = () => {
+    render(crumb([{ t: "المفردات" }]) + `<h1>${I("type")} المفردات</h1><p class="muted">اختر موضوعًا. الشريط يوضح نسبة الكلمات التي تعرفها (أجبت عليها صحيحًا مرة على الأقل).</p>` +
+      LV.map(lv => `<div class="section"><div class="section-title"><h2 style="color:${LVC[lv]}">${lv} · ${LVN[lv]}</h2></div><div class="grid grid-3">${levelThemes(lv).map(t => { const s = themeStats(t); return `<a class="card link-card theme-card" href="#/theme/${t.id}" style="--c:${LVC[lv]}"><div class="icon" style="background:${LVC[lv]}22">${I(t.icon || "star")}</div><h3>${esc(t.t)}</h3><p class="muted small">${t.words.length} كلمة · ${s.k} تعرفها</p>${bar(s.pct)}</a>`; }).join("")}</div></div>`).join(""));
+  };
+
+  routes.theme = id => {
+    const t = theme(id); if(!t) return routes.vocab();
+    const s = themeStats(t);
+    render(crumb([{ t: "المفردات", href: "#/vocab" }, { t: t.t }]) + `<div class="card sheet"><div class="section-title"><span class="badge" style="background:${LVC[t.lvl]};color:#fff">${t.lvl}</span><h1 style="margin:0">${esc(t.t)}</h1></div><div class="chips t-chips"><span class="chip">${t.words.length} كلمة</span><span class="chip ok">${I("check")} تعرف ${s.k}</span><span class="chip">${I("star")} متقنة ${s.m}</span></div>${bar(s.pct)}<p class="small muted" style="margin:6px 0 0">اضغط ${I("headphones")} بجانب أي كلمة لتسمع نطقها.</p>
+      ${(() => { const ns = themeDone(t) ? nextAfterTheme(t) : null; return ns ? `<div class="note ok" style="margin-top:10px"><span class="ic">${I("check")}</span><p>أنهيت كلمات هذا الموضوع. <a href="${ns.href}"><b>الخطوة التالية: ${esc(ns.label)} ←</b></a></p></div>` : ""; })()}
+      <div class="btn-row" style="margin-top:12px"><a class="btn ${themeDone(t) ? "" : "btn-primary"}" href="#/game/flash/${t.id}">${I("cards")} ١) احفظ بالبطاقات</a><a class="btn btn-warm" href="#/game/quiz/${t.id}">${I("pencil")} ٢) اختبر نفسك</a></div><div class="mini-games"><span class="small muted">ألعاب إضافية:</span>${spellable(t).length >= 8 ? `<a class="mg" href="#/game/spell/${t.id}">${I("type")} رتّب الحروف</a>` : ""}<a class="mg" href="#/game/match/${t.id}">${I("cards")} طابق</a>${t.words.filter(hasSentence).length >= 6 ? `<a class="mg" href="#/game/sentence/${t.id}">${I("bookopen")} أكمل الجملة</a>` : ""}</div></div>
+      <div class="word-list">${t.words.map((w, i) => { const r = rec(wid(t, i)); const st = mastered(wid(t, i)) ? "ok" : known(wid(t, i)) ? "info" : ""; return `<div class="word-row"><div class="w-en en"><b>${esc(w[0])}</b> <span class="muted small">${esc(w[2])}</span> ${spk(w[0])}</div><div class="w-ar">${esc(w[1])}</div><div class="w-ex en small muted">${esc(w[3])} ${spk(w[3], "sm")}</div><div class="w-exar small muted">${esc(w[4])}</div><span class="badge ${st}" style="justify-self:start">${mastered(wid(t, i)) ? "متقنة" : known(wid(t, i)) ? "تعرفها" : "جديدة"}</span></div>`; }).join("")}</div>`);
+  };
+
+  let LAST_WRONG = [], LAST_OPTS = null;
+  /* ---------- generic quiz runner (immediate feedback) ---------- */
+  function runQuiz(opts){
+    // opts: {title, list, backHref, onDone(score,total,secs), xpPer, timed}
+    const S = { i: 0, score: 0, done: false, start: Date.now(), list: opts.list, ids: [], lastLeft: null, wrong: [] };
+    LAST_WRONG = [];
+    const show = () => {
+      const q = S.list[S.i]; if(!q) return finish();
+      render(`${opts.header || ""}<div class="quiz-top"><h2 style="margin:0;font-size:1.15rem">${opts.title}</h2><div class="btn-row"><span class="badge ok">${I("check")} ${S.score}</span><span class="badge info">${S.i + 1} / ${S.list.length}</span>${opts.timed ? `<span class="timer" id="gt">--</span>` : ""}</div></div>${bar(S.i / S.list.length * 100)}
+        <div class="card q-card"><div class="btn-row" style="justify-content:space-between"><span class="badge">${q.kind === "meaning" ? "ما معنى الكلمة؟" : q.kind === "reverse" ? "ما الكلمة الإنجليزية؟" : q.kind === "sentence" ? "أكمل الجملة" : q.kind === "grammar" ? "قاعدة: " + esc(q.sub || "") : q.kind === "dialog" ? "محادثة" : "سؤال"}</span>${q.say ? spk(q.say) : ""}</div>
+        <div class="q-text ${q.kind === "reverse" ? "" : "en"}" style="${q.kind === "reverse" ? "direction:rtl;text-align:right;font-family:inherit" : ""}">${esc(q.q)}</div>${q.sub && q.kind !== "grammar" ? `<div class="muted small" style="margin-top:-8px;margin-bottom:10px">${esc(q.sub)}</div>` : ""}${q.hint ? `<div class="muted small" style="margin-bottom:10px">${I("bulb")} ${esc(q.hint)}</div>` : ""}
+        <div class="opts-list" id="gopts">${q.opts.map((o, k) => `<button type="button" class="opt ${q.kind === "meaning" ? "ar" : ""}" data-k="${k}"><span class="letter">${L[k]}</span><span>${esc(o)}</span></button>`).join("")}</div>
+        <div class="feedback" id="gfb" hidden></div>
+        <div class="quiz-nav" style="justify-content:space-between"><a class="btn btn-sm" href="${opts.backHref || "#/"}">خروج</a><button type="button" class="btn btn-primary" id="gnext" disabled>التالي ←</button></div></div>`);
+      if(q.say && opts.autoSay) after(() => speak(q.say), 150);
+      $("#gopts").querySelectorAll(".opt").forEach(b => b.addEventListener("click", () => answer(+b.dataset.k)));
+      $("#gnext").addEventListener("click", next);
+      if(opts.timed) tick();
+    };
+    const answer = k => {
+      if(S.done) return; S.done = true; const q = S.list[S.i]; const ok = k === q.a;
+      $("#gopts").querySelectorAll(".opt").forEach(b => { b.disabled = true; if(+b.dataset.k === q.a) b.classList.add("correct"); else if(+b.dataset.k === k) b.classList.add("wrong"); });
+      const wasM = mastered(q.id); Progress.record(q.id, ok); sfx(ok ? "correct" : "wrong"); if(!ok) S.wrong.push({ q, chosen: k }); if(ok){ S.score++; S.ids.push(q.id); if(opts.xpPer && !wasM) gainXP(opts.xpPer, true); else saveGen(); }
+      const fb = $("#gfb"); fb.hidden = false; fb.className = "feedback " + (ok ? "ok" : "bad");
+      const sayNow = q.sayAfter || (!opts.autoSay && q.kind !== "dialog" ? q.say : null);
+      fb.innerHTML = `<b>${ok ? I("check") + " صحيح!" : I("x") + " الصحيح: " + esc(q.opts[q.a])}</b>${esc(q.ex || "")} ${sayNow ? spk(sayNow, "sm") : ""}${q.lesson ? ` <a class="mini-link" href="#/lesson/${q.lesson}">${I("book")} افهم القاعدة</a>` : ""}`;
+      hydrateIcons(fb); $("#gnext").disabled = false; $("#gnext").focus({ preventScroll: true });
+      if(sayNow) after(() => speak(sayNow), 350);
+    };
+    const next = () => { if(!S.done) return; hush(); S.i++; S.done = false; show(); };
+    const tick = () => { if(!opts.timed) return; const el = $("#gt"); if(!el) return; const left = Math.max(0, opts.timed - Math.round((Date.now() - S.start) / 1000)); el.textContent = left + "s"; el.classList.toggle("low", left <= 10); if(left !== S.lastLeft){ S.lastLeft = left; if(left <= 0) sfx("timeout"); else if(left <= 10) sfx("tick"); } if(left <= 0) return finish(); after(tick, 500); };
+    const finish = () => { hush(); LAST_WRONG = S.wrong.slice(); LAST_OPTS = opts; const secs = Math.round((Date.now() - S.start) / 1000); opts.onDone(S.score, S.list.length, secs, S.ids); };
+    const keyH = e => { if(/^[1-4]$/.test(e.key)){ const b = document.querySelectorAll("#gopts .opt")[+e.key - 1]; if(b && !b.disabled) b.click(); } else if(e.key === "Enter" || e.key === "ArrowLeft") next(); };
+    document.addEventListener("keydown", keyH); timers.push({ clear(){ document.removeEventListener("keydown", keyH); } });
+    show();
+  }
+  function resultCard(title, score, total, extra, backHref, againHref, nextStep){
+    hush(); stopTimers();
+    const pct = total ? Math.round(score / total * 100) : 0; if(pct >= 80 && total) confetti();
+    render(`<div class="card center sheet fade-up"><div class="score-ring" style="--p:${pct}"><span>${pct}%</span></div><h2>${score} من ${total}</h2><h3 class="muted" style="font-weight:600">${title}</h3>${extra || ""}
+      ${nextStep ? `<a class="btn btn-warm btn-lg" href="${nextStep.href}" style="margin-top:6px">${I("zap")} الخطوة التالية: ${esc(nextStep.label)} ←</a>` : ""}
+      ${LAST_WRONG.length ? `<div class="mistakes"><h3>${I("target")} أخطاؤك في هذه الجولة (${LAST_WRONG.length})</h3>${LAST_WRONG.map(x => `<div class="mk"><div class="mk-q en">${esc(x.q.q)}</div><div class="mk-a"><span class="bad-ans">${esc(x.q.opts[x.chosen])}</span> <span class="ok-ans">${esc(x.q.opts[x.q.a])}</span>${x.q.sayAfter || x.q.say ? `<button type="button" class="spk sm" data-say="${esc(x.q.sayAfter || x.q.say)}">${I("headphones")}</button>` : ""}</div>${x.q.ex ? `<div class="small muted">${esc(x.q.ex)}</div>` : ""}</div>`).join("")}<button type="button" class="btn btn-primary btn-sm" id="retryWrong">${I("refresh")} أعد الأخطاء فقط</button></div>` : ""}
+      <div class="btn-row" style="justify-content:center;margin-top:12px">${againHref ? `<button type="button" class="btn ${nextStep ? "" : "btn-primary"}" id="againBtn">${I("refresh")} مرة أخرى</button>` : ""}<a class="btn" href="${backHref || "#/"}">رجوع</a></div></div>`);
+    if(againHref) $("#againBtn").addEventListener("click", () => { if(location.hash === againHref) route(); else location.hash = againHref; });
+    const rw = $("#retryWrong");
+    if(rw) rw.addEventListener("click", () => {
+      const list = LAST_WRONG.map(x => x.q); const base = LAST_OPTS || {};
+      runQuiz({ title: "مراجعة أخطائك", list, backHref: base.backHref || backHref, xpPer: 0, autoSay: base.autoSay,
+        onDone: (sc, n) => resultCard("مراجعة أخطائك", sc, n, `<p class="muted">هذه الجولة للمراجعة فقط — بلا نقاط جديدة.</p>`, backHref || "#/", againHref) });
+    });
+  }
+
+  routes.game = (kind, tid) => {
+    const t = tid && tid !== "all" ? theme(tid) : null;
+    if(kind === "quiz" || kind === "sentence"){
+      const src = t || levelThemes(currentLevel())[0]; const n = Math.min(12, src.words.length);
+      const list = themeQs(src, n, kind === "sentence" ? sentenceQ : null);
+      return runQuiz({ title: (kind === "sentence" ? "أكمل الجملة — " : "اختبار المعنى — ") + src.t, list, backHref: `#/theme/${src.id}`, xpPer: 5, onDone: (s, n2, secs, ids) => { postPoints(s, n2, secs, ids); resultCard(src.t, s, n2, `<p class="muted">+${s * 5} XP</p>`, `#/theme/${src.id}`, `#/game/${kind}/${src.id}`, nextAfterTheme(src)); } });
+    }
+    if(kind === "flash") return flashGame(t || levelThemes(currentLevel())[0]);
+    if(kind === "spell") return spellGame(t);
+    if(kind === "match") return matchGame(t);
+    if(kind === "speed") return speedGame();
+    routes.home();
+  };
+
+  /* ---------- flashcards ---------- */
+  function flashGame(t){
+    const all = t.words.map((_, i) => i); const fresh = shuffle(all.filter(i => !known(wid(t, i)))), old = shuffle(all.filter(i => known(wid(t, i))));
+    let deck = [...fresh, ...old], pos = 0, flipped = false, ok = 0, mark = null; const total0 = deck.length; const again = {};
+    const keyH = e => { if(!$("#fc")) return; if(e.key === " "){ e.preventDefault(); $("#fc").click(); } else if(e.key === "ArrowLeft" && mark) mark(true); else if(e.key === "ArrowRight" && mark) mark(false); };
+    document.addEventListener("keydown", keyH); timers.push({ clear(){ document.removeEventListener("keydown", keyH); } });
+    const show = () => {
+      if(pos >= deck.length){ mark = null; return resultCard("بطاقات " + t.t, ok, total0, `<p class="muted">${fresh.length ? "بدأنا بالكلمات الجديدة أولًا. " : ""}الكلمات التي قلت «ما أعرفها» سترجع لك في المراجعة.</p>`, `#/theme/${t.id}`, `#/game/flash/${t.id}`, nextAfterTheme(t)); }
+      const w = t.words[deck[pos]];
+      render(crumb([{ t: t.t, href: `#/theme/${t.id}` }, { t: "بطاقات" }]) + `<div class="flash-wrap"><div class="muted small">${Math.min(pos + 1, deck.length)} / ${deck.length}${deck.length > total0 ? " (منها " + (deck.length - total0) + " معادة)" : ""}</div>${bar(pos / deck.length * 100)}
+        <div class="flashcard ${flipped ? "flipped" : ""}" id="fc"><div class="inner"><div class="face front">${esc(w[0])}<small>${esc(w[2])} · اضغط لعرض المعنى</small></div><div class="face back"><div class="syn">${esc(w[1])}</div><div class="ar en small" style="opacity:.95">${esc(w[3])}</div><div class="small" style="opacity:.9">${esc(w[4])}</div></div></div></div>
+        <div class="btn-row" style="justify-content:center">${spk(w[0], "big")}<button type="button" class="btn" id="fno">${I("x")} ما أعرفها</button><button type="button" class="btn btn-primary" id="fyes">${I("check")} أعرفها</button></div>
+        <p class="small muted kbd-hint">مسافة = اقلب · سهم يسار = أعرفها · سهم يمين = ما أعرفها</p></div>`);
+      after(() => speak(w[0]), 120);
+      $("#fc").addEventListener("click", () => { flipped = !flipped; $("#fc").classList.toggle("flipped", flipped); });
+      mark = yes => {
+        hush(); const idx = deck[pos]; const wasM = mastered(wid(t, idx));
+        Progress.record(wid(t, idx), yes);
+        if(yes){ ok++; if(!wasM) gainXP(2, true); else saveGen(); }
+        else { again[idx] = (again[idx] || 0) + 1; if(again[idx] <= 2){ deck.push(idx); toast("سترجع لك هذه الكلمة قبل نهاية الجولة", 1800); } }
+        pos++; flipped = false; show();
+      };
+      $("#fyes").addEventListener("click", () => mark(true)); $("#fno").addEventListener("click", () => mark(false));
+    };
+    show();
+  }
+
+  /* ---------- spelling ---------- */
+  function spellGame(t){
+    const src = t || levelThemes(currentLevel())[Math.floor(Math.random() * 3)];
+    const idx = shuffle(spellable(src)).slice(0, 10);
+    if(!idx.length){ toast("هذا الموضوع عبارات وليس كلمات مفردة — جرّب «طابق» أو الاختبار"); return go("theme/" + src.id); }
+    let pos = 0, score = 0, built = [], sids = [], checked = false;
+    const show = () => {
+      if(pos >= idx.length){ postPoints(score, idx.length, 0, sids); return resultCard("رتّب الحروف — " + src.t, score, idx.length, `<p class="muted">+${score * 8} XP</p>`, `#/theme/${src.id}`, `#/game/spell/${src.id}`, nextAfterTheme(src)); }
+      checked = false;
+      const w = src.words[idx[pos]]; const letters = shuffle(w[0].toLowerCase().split("")); built = [];
+      render(crumb([{ t: src.t, href: `#/theme/${src.id}` }, { t: "رتّب الحروف" }]) + `<div class="quiz-top"><h2 style="margin:0;font-size:1.15rem">رتّب الحروف</h2><span class="badge info">${pos + 1} / ${idx.length}</span></div>${bar(pos / idx.length * 100)}
+        <div class="card q-card center"><div class="muted">المعنى</div><div class="spell-ar">${esc(w[1])}</div><div class="small muted en">${esc(w[3].replace(new RegExp(w[0], "i"), "______"))}</div>
+        <div class="spell-out en" id="sout">${"_".repeat(w[0].length).split("").map(() => `<span class="slot"></span>`).join("")}</div>
+        <div class="letters" id="letters">${letters.map((c, i) => `<button type="button" class="letter-btn" data-i="${i}" data-c="${c}">${c}</button>`).join("")}</div>
+        <div class="feedback" id="sfb" hidden></div>
+        <div class="btn-row" style="justify-content:center;margin-top:10px"><button type="button" class="btn btn-sm" id="sundo">${I("refresh")} تراجع</button><button type="button" class="btn btn-sm" id="shint">${I("bulb")} تلميح</button>${spk(w[0])}<button type="button" class="btn btn-primary" id="snext" hidden>التالي ←</button></div></div>`);
+      const update = () => { const slots = $("#sout").querySelectorAll(".slot"); slots.forEach((s, i) => s.textContent = built[i] ? built[i].c : ""); if(built.length === w[0].length) check(); };
+      const check = () => { if(checked) return; checked = true; $("#sundo").disabled = true; $("#shint").disabled = true; const word = built.map(b => b.c).join(""); const ok = word === w[0].toLowerCase(); const wasM = mastered(wid(src, idx[pos])); Progress.record(wid(src, idx[pos]), ok); sfx(ok ? "correct" : "wrong"); const fb = $("#sfb"); fb.hidden = false; fb.className = "feedback " + (ok ? "ok" : "bad"); fb.innerHTML = ok ? `<b>${I("check")} ممتاز! ${esc(w[0])}</b>` : `<b>${I("x")} الصحيح: ${esc(w[0])}</b>`; hydrateIcons(fb); if(ok){ score++; sids.push(wid(src, idx[pos])); if(!wasM) gainXP(8, true); else saveGen(); } speak(w[0]); $("#snext").hidden = false; $("#letters").querySelectorAll("button").forEach(b => b.disabled = true); };
+      $("#letters").querySelectorAll(".letter-btn").forEach(b => b.addEventListener("click", () => { if(b.disabled) return; built.push({ c: b.dataset.c, i: +b.dataset.i }); b.disabled = true; b.classList.add("used"); update(); }));
+      $("#sundo").addEventListener("click", () => { const last = built.pop(); if(last){ const b = $("#letters").querySelector(`[data-i="${last.i}"]`); b.disabled = false; b.classList.remove("used"); update(); } });
+      $("#shint").addEventListener("click", () => { const n = built.length; const need = w[0].toLowerCase()[n]; const b = [...$("#letters").querySelectorAll(".letter-btn")].find(x => !x.disabled && x.dataset.c === need); if(b) b.click(); });
+      $("#snext").addEventListener("click", () => { hush(); pos++; show(); });
+    };
+    show();
+  }
+
+  /* ---------- matching ---------- */
+  function matchGame(t){
+    const src = t || levelThemes(currentLevel())[Math.floor(Math.random() * 3)];
+    const idx = []; const seenAr = new Set(), seenEn = new Set();
+    for(const i of shuffle(src.words.map((_, i) => i))){ const w = src.words[i]; if(seenAr.has(w[1]) || seenEn.has(w[0].toLowerCase())) continue; seenAr.add(w[1]); seenEn.add(w[0].toLowerCase()); idx.push(i); if(idx.length === 8) break; }
+    const tiles = shuffle([...idx.map(i => ({ i, side: "en", txt: src.words[i][0] })), ...idx.map(i => ({ i, side: "ar", txt: src.words[i][1] }))]);
+    let first = null, matched = 0, moves = 0; const start = Date.now();
+    render(crumb([{ t: src.t, href: `#/theme/${src.id}` }, { t: "طابق الكلمات" }]) + `<div class="quiz-top"><h2 style="margin:0;font-size:1.15rem">طابق الكلمة بمعناها</h2><div class="btn-row"><span class="badge" id="mmoves">0 حركة</span><span class="timer" id="mt">0s</span></div></div>
+      <div class="match-grid">${tiles.map((x, k) => `<button type="button" class="tile ${x.side}" data-k="${k}">${esc(x.txt)}</button>`).join("")}</div><p class="small muted center">اضغط كلمة ثم معناها. ٨ أزواج.</p>`);
+    every(() => { const el = $("#mt"); if(el) el.textContent = Math.round((Date.now() - start) / 1000) + "s"; }, 1000);
+    document.querySelectorAll(".tile").forEach(b => b.addEventListener("click", () => {
+      if(b.classList.contains("done") || b === first) return;
+      b.classList.add("sel");
+      if(!first){ first = b; if(tiles[+b.dataset.k].side === "en") speak(tiles[+b.dataset.k].txt); return; }
+      moves++; $("#mmoves").textContent = moves + " حركة";
+      const a = tiles[+first.dataset.k], c = tiles[+b.dataset.k];
+      if(a.i === c.i && a.side !== c.side){ first.classList.add("done"); b.classList.add("done"); first.classList.remove("sel"); b.classList.remove("sel"); matched++; Progress.record(wid(src, a.i), true); sfx("coin"); first = null;
+        if(matched === idx.length){ const secs = Math.round((Date.now() - start) / 1000); const xp = Math.max(20, 80 - moves * 2); gainXP(xp, true); if(!GEN.best.match || secs < GEN.best.match) GEN.best.match = secs; saveGen(); postPoints(idx.length, idx.length, secs, idx.map(i => wid(src, i))); after(() => resultCard("طابق الكلمات — " + src.t, idx.length, idx.length, `<p class="muted">${moves} حركة · ${secs} ثانية · +${xp} XP</p>`, `#/theme/${src.id}`, `#/game/match/${src.id}`, nextAfterTheme(src)), 500); }
+      } else { const f = first; first = null; after(() => { f.classList.remove("sel"); b.classList.remove("sel"); }, 350); if(a.side !== c.side) Progress.record(wid(src, a.side === "en" ? a.i : c.i), false); sfx("wrong"); }
+    }));
+  }
+
+  /* ---------- speed ---------- */
+  function speedGame(){
+    const pool = allWords().filter(x => x.t.lvl === "A1" || x.t.lvl === "A2" || known(wid(x.t, x.i)));
+    let score = 0, answered = 0, combo = 0, best = GEN.best.speed || 0, lastLeft = null; const sids = []; const start = Date.now(); const DUR = 60;
+    const nextQ = () => {
+      const x = pool[Math.floor(Math.random() * pool.length)]; const q = Math.random() < .7 ? meaningQ(x.t, x.i) : reverseQ(x.t, x.i);
+      render(`<div class="quiz-top"><h2 style="margin:0;font-size:1.15rem">${I("timer")} سباق ٦٠ ثانية</h2><div class="btn-row"><span class="badge ok">${score} نقطة</span>${combo >= 3 ? `<span class="badge accent">${I("fire")} ×${combo}</span>` : ""}<span class="timer" id="st">${DUR}s</span></div></div>
+        <div class="card q-card"><div class="badge">${q.kind === "meaning" ? "ما معنى" : "ما الكلمة"}</div><div class="q-text ${q.kind === "meaning" ? "en" : ""}" style="${q.kind === "meaning" ? "" : "direction:rtl;text-align:right;font-family:inherit"}">${esc(q.q)}</div>
+        <div class="opts-list" id="gopts">${q.opts.map((o, k) => `<button type="button" class="opt" data-k="${k}"><span class="letter">${L[k]}</span><span>${esc(o)}</span></button>`).join("")}</div></div><p class="small muted center">أفضل نتيجة: ${best} · الأرقام ١–٤ للإجابة</p>`);
+      $("#gopts").querySelectorAll(".opt").forEach(b => b.addEventListener("click", () => { const ok = +b.dataset.k === q.a; answered++; Progress.record(q.id, ok); if(ok){ combo++; score += combo >= 3 ? 2 : 1; sids.push(q.id); sfx(combo >= 3 ? "combo" : "correct"); b.classList.add("correct"); } else { combo = 0; sfx("wrong"); b.classList.add("wrong"); $("#gopts").querySelectorAll(".opt")[q.a].classList.add("correct"); } $("#gopts").querySelectorAll(".opt").forEach(x => x.disabled = true); after(nextQ, ok ? 250 : 900); }));
+    };
+    const keyH = e => { if(/^[1-4]$/.test(e.key)){ const b = document.querySelectorAll("#gopts .opt")[+e.key - 1]; if(b && !b.disabled) b.click(); } };
+    document.addEventListener("keydown", keyH); timers.push({ clear(){ document.removeEventListener("keydown", keyH); } });
+    const tick = () => { const left = DUR - Math.round((Date.now() - start) / 1000); const el = $("#st"); if(el){ el.textContent = Math.max(0, left) + "s"; el.classList.toggle("low", left <= 10); } if(left !== lastLeft){ lastLeft = left; if(left <= 0) sfx("timeout"); else if(left <= 10) sfx("tick"); } if(left <= 0){ stopTimers(); const nb = score > best; if(nb) GEN.best.speed = score; gainXP(score * 3, true); saveGen(); postPoints(score, Math.max(answered, 1), DUR, sids); resultCard("سباق ٦٠ ثانية", score, Math.max(answered, score), `<p class="muted">${answered} سؤال · +${score * 3} XP ${nb ? "· 🏆 رقم قياسي جديد!" : "· أفضل نتيجة " + best}</p>`, "#/", "#/game/speed"); return; } after(tick, 250); };
+    nextQ(); tick();
+  }
+
+  /* ---------- review (SRS) ---------- */
+  routes.review = () => {
+    const ids = dueWordIds(); const list = shuffle(ids).slice(0, 20).map(qFromWordId).filter(Boolean);
+    if(!list.length){
+      const now = Date.now(), DAY = 864e5;
+      const due = Object.entries(Progress.data.q).filter(([k, r]) => k.startsWith("gw-") && r.n && r.due).map(([, r]) => r.due);
+      const days = Array.from({ length: 7 }, (_, i) => due.filter(d => d > now + (i - 1) * DAY && d <= now + i * DAY).length);
+      const next = due.filter(d => d > now).sort((a, b) => a - b)[0];
+      const left = next ? Math.max(1, Math.round((next - now) / 36e5)) : 0;
+      const max = Math.max(1, ...days);
+      return render(crumb([{ t: "المراجعة" }]) + `<div class="card center sheet"><h2>${I("check")} ما فيه كلمات حان وقتها الآن</h2>
+        <p class="muted">${next ? `أقرب كلمة ترجع بعد <b>${left} ${left === 1 ? "ساعة" : "ساعات"}</b>.` : "ابدأ بتعلّم كلمات جديدة وسيظهر جدول مراجعتك هنا."}</p>
+        <div class="forecast">${days.map((n, i) => `<div class="fc"><div class="fc-bar" style="height:${Math.round(n / max * 60) + 6}px"></div><div class="fc-n">${n}</div><div class="fc-d">${i === 0 ? "اليوم" : i === 1 ? "غدًا" : "+" + i}</div></div>`).join("")}</div>
+        <div class="btn-row" style="justify-content:center;margin-top:14px"><a class="btn btn-primary" href="#/vocab">${I("type")} تعلّم كلمات جديدة</a><a class="btn" href="#/daily">${I("calendar")} تحدي اليوم</a></div></div>`);
+    }
+    runQuiz({ title: "مراجعة " + list.length + " كلمة", list, backHref: "#/", xpPer: 4, autoSay: true, onDone: (s, n, secs, ids) => { postPoints(s, n, secs, ids); resultCard("المراجعة", s, n, `<p class="muted">+${s * 4} XP · الكلمات الصحيحة تأجلت لموعد أبعد، والخاطئة سترجع قريبًا.</p>`, "#/", "#/review"); } });
+  };
+
+  /* ---------- daily ---------- */
+  routes.daily = () => {
+    const key = dayKey(); const already = GEN.daily[key];
+    const lv = currentLevel(); const ths = levelThemes(lv);
+    const dueQs = shuffle(dueWordIds()).slice(0, 3).map(qFromWordId).filter(Boolean);
+    const dueSet = new Set(dueQs.map(q => q.id));
+    let cand = shuffle(ths.flatMap(t => t.words.map((_, i) => ({ t, i })))).filter(x => !dueSet.has(wid(x.t, x.i)));
+    const fresh = cand.filter(x => !known(wid(x.t, x.i))); if(fresh.length >= 5) cand = fresh; else { const notM = cand.filter(x => !mastered(wid(x.t, x.i))); if(notM.length >= 5) cand = notM; }
+    const newQs = cand.slice(0, 5 - dueQs.length).map(x => randomWordQ(x.t, x.i));
+    const lessons = G.filter(l => l.lvl === lv); const gq = shuffle(lessons).slice(0, 3).map(l => grammarQ(l, Math.floor(Math.random() * l.practice.length)));
+    const ds = shuffle(D.filter(d => d.lvl === lv)); const dq = []; for(const d of ds){ const cand = d.lines.map((_, i) => dialogQ(d, i)).filter(Boolean); if(cand.length) dq.push(cand[Math.floor(Math.random() * cand.length)]); if(dq.length === 2) break; }
+    const list = shuffle([...dueQs, ...newQs, ...gq, ...dq]);
+    runQuiz({ title: "تحدي اليوم", header: already ? `<div class="note info"><span class="ic">${I("info")}</span><p>أنجزت تحدي اليوم (${already.score}/${already.total}). هذه جولة تدريب بدون نقاط.</p></div>` : "", list, backHref: "#/", xpPer: already ? 0 : 5, onDone: (s, n, secs, ids) => { if(!already){ GEN.daily[key] = { score: s, total: n }; gainXP(50, true); saveGen(); postPoints(s, n, secs, ids); } resultCard("تحدي اليوم", s, n, already ? "" : `<p class="muted">+${50 + s * 5} XP · عد غدًا لتحدٍ جديد وحافظ على سلسلتك ${I("fire")}</p>`, "#/", "#/daily"); } });
+  };
+
+  /* ---------- unit test ---------- */
+  routes.unittest = id => {
+    const u = U.find(x => x.id === id); if(!u) return routes.home();
+    const ths = u.themes.map(theme).filter(Boolean); const l = u.grammar ? lesson(u.grammar) : null; const ds = dialogsOf(u);
+    let list = [];
+    const extra = (l ? 0 : 3) + (ds.length ? 0 : 2);
+    const per = ths.length ? Math.ceil((7 + extra) / ths.length) : 0; ths.forEach(t => list.push(...themeQs(t, per)));
+    if(l) list.push(...shuffle(l.practice.map((_, i) => grammarQ(l, i))).slice(0, ths.length ? 3 : 8));
+    ds.forEach(d => { const cand = d.lines.map((_, i) => dialogQ(d, i)).filter(Boolean); list.push(...shuffle(cand).slice(0, ds.length > 1 ? 1 : 2)); });
+    list = shuffle(list).slice(0, 12);
+    runQuiz({ title: "اختبار الوحدة: " + u.t, list, backHref: `#/unit/${u.id}`, xpPer: 5, onDone: (s, n, secs, ids) => { const pass = s / n >= .7; if(pass && !GEN.units[u.id]){ GEN.units[u.id] = true; gainXP(100, true); saveGen(); } postPoints(s, n, secs, ids); const next = U[U.indexOf(u) + 1]; resultCard("اختبار الوحدة: " + u.t, s, n, pass ? `<p class="muted">${I("trophy")} اكتملت الوحدة! +100 XP</p>${next ? `<a class="btn btn-warm" href="#/unit/${next.id}">الوحدة التالية: ${esc(next.t)} ←</a>` : ""}` : `<p class="muted">تحتاج ٧٠٪ لإكمال الوحدة. راجع المفردات والقاعدة ثم أعد المحاولة.</p>`, `#/unit/${u.id}`, `#/unittest/${u.id}`); } });
+  };
+
+  /* ---------- GRAMMAR ---------- */
+  routes.grammar = () => {
+    render(crumb([{ t: "القواعد" }]) + `<h1>${I("book")} كيف تقولها صح</h1><p class="muted">بدون مسميات معقدة: كل درس يعلّمك متى تقول الشيء، ويعطيك قوالب جاهزة تعبّيها وتنطقها، ثم تجرّبها.</p>` +
+      LV.map(lv => { const ls = G.filter(l => l.lvl === lv); return ls.length ? `<div class="section"><div class="section-title"><h2 style="color:${LVC[lv]}">${lv} · ${LVN[lv]}</h2></div><div class="grid grid-2">${ls.map(l => { const ids = l.practice.map((_, i) => `gg-${l.id}-${i}`); const k = ids.filter(known).length; return `<a class="card link-card" href="#/lesson/${l.id}" style="--c:${LVC[lv]}"><h3>${esc(l.t)}</h3><p class="muted small en" style="direction:ltr;text-align:left">${esc(l.en)}</p><p class="small">${esc(l.why)}</p>${bar(Math.round(k / ids.length * 100))}</a>`; }).join("")}</div></div>` : ""; }).join(""));
+  };
+  /* يعزل المقاطع الإنجليزية داخل النص العربي ويقسّم الشرح إلى نقاط */
+  const mixed = txt => esc(txt).replace(/([A-Za-z][A-Za-z0-9'’.\-]*(?:\s+[A-Za-z][A-Za-z0-9'’.\-]*)*)/g, m => `<bdi class="${m.trim().split(/\s+/).length > 3 ? "en-line" : "en-in"}">${m}</bdi>`);
+  const arPoints = txt => String(txt).split(/(?<=[.؟!])\s+(?=[^\s])/).map(x => x.trim()).filter(Boolean)
+    .flatMap(seg => (seg.match(/\([^()]*[A-Za-z][^()]*\)/g) || []).length >= 2 ? seg.split(/،\s+/).map(x => x.trim()).filter(Boolean) : [seg]);
+  /* يفصل المثال الإنجليزي بين قوسين عن نص القاعدة العربي */
+  function pointHtml(p){
+    const m = p.match(/^(.*?)[\s،]*\(([^()]*[A-Za-z][^()]*)\)[\s،.]*$/);
+    if(m && m[1].trim()) return `<div class="pt-ar">${mixed(m[1].trim())}</div><div class="pt-en en">${esc(m[2].trim())}</div>`;
+    return mixed(p);
+  }
+  const formRows = txt => String(txt).split(/\s+—\s+|\s+\|\s+/).map(x => x.trim()).filter(Boolean);
+
+  routes.lesson = id => {
+    const l = lesson(id); if(!l) return routes.grammar();
+    const frames = l.frames || [], speakP = l.speak || [];
+    render(crumb([{ t: "القواعد", href: "#/grammar" }, { t: l.t }]) + `<article class="lesson focus-none"><h2><span class="n" style="background:${LVC[l.lvl]}">${l.lvl}</span> ${esc(l.t)}</h2><div class="en-title lesson-en">${esc(l.en)}</div>
+      <div class="why-box"><h3>${I("bulb")} وش بتقدر تقول بعد الدرس؟</h3><p>${mixed(l.why)}</p></div>
+      <div class="when-box"><h3>${I("clock")} متى تقولها؟</h3><ul class="when-list">${arPoints(l.when).map(x => `<li>${pointHtml(x)}</li>`).join("")}</ul></div>
+      ${frames.length ? `<h3>${I("type")} قوالب جاهزة — عبّي الفراغ وقلها بصوت عالٍ</h3><div class="frames">${frames.map(f => `<div class="frame"><div class="fr-en en">${esc(f[0]).replace(/___/g, '<span class="slot">___</span>')} ${spk(f[0].replace(/___/g, "something"), "sm")}</div><div class="fr-ar">${esc(f[1])}</div></div>`).join("")}</div>` : ""}
+      ${l.table ? `<h3>${I("list")} الخلاصة في جدول</h3><div class="table-wrap"><table class="gtable"><thead><tr>${l.table.head.map(h => `<th>${esc(h)}</th>`).join("")}</tr></thead><tbody>${l.table.rows.map(r => `<tr>${r.map((cell, i) => `<td class="${/[A-Za-z]/.test(cell) && i > 0 ? "en" : ""}">${esc(cell)}</td>`).join("")}</tr>`).join("")}</tbody></table></div>` : ""}
+      <h3>${I("bookopen")} أمثلة من الحياة</h3>${l.ex.map(e => `<div class="ex right"><span class="en">${esc(e[0])} ${spk(e[0], "sm")}</span><span class="ar">${esc(e[1])}</span></div>`).join("")}
+      ${speakP.length ? `<div class="speak-box"><h3>${I("mic")} قلها عن نفسك</h3><ol>${speakP.map(p => `<li>${mixed(p)}</li>`).join("")}</ol><p class="small muted">ما تحتاج تكتب — قلها بصوتك وأنت تمشي أو تسوق. التكرار بصوت عالٍ هو اللي يثبّتها.</p></div>` : ""}
+      <details class="shape" open><summary>${I("list")} شكل الجملة كامل</summary><div class="formula-rows">${formRows(l.form).map(x => `<div class="frow">${mixed(x)}</div>`).join("")}</div></details>
+      <h3>${I("alert")} أخطاء يقع فيها الكثير</h3><div class="table-wrap"><table><thead><tr><th class="en">✗ خطأ</th><th class="en">✓ صحيح</th><th>ليش</th></tr></thead><tbody>${l.mistakes.map(m => `<tr><td class="en" style="color:var(--bad)">${esc(m[0])}</td><td class="en" style="color:var(--ok)">${esc(m[1])}</td><td>${mixed(m[2])}</td></tr>`).join("")}</tbody></table></div>
+      <div class="note tip"><span class="ic">${I("sparkles")}</span><p>${mixed(l.tip)}</p></div>
+      ${l.jargon ? `<p class="small muted jargon">اسمها في كتب القواعد (للمرجع فقط، ما تحتاج تحفظه): ${mixed(l.jargon)}</p>` : ""}
+      <div class="btn-row"><a class="btn btn-primary" href="#/practice/${l.id}">${I("pencil")} جرّبها (${l.practice.length} أسئلة)</a><a class="btn" href="#/grammar">كل الدروس</a></div></article>`);
+  };
+  routes.practice = id => {
+    const l = lesson(id); if(!l) return routes.grammar();
+    const list = shuffle(l.practice.map((_, i) => grammarQ(l, i)));
+    runQuiz({ title: "تدريب: " + l.t, list, backHref: `#/lesson/${l.id}`, xpPer: 6, onDone: (s, n, secs, ids) => { postPoints(s, n, secs, ids); resultCard(l.t, s, n, `<p class="muted">+${s * 6} XP</p>`, `#/lesson/${l.id}`, `#/practice/${l.id}`); } });
+  };
+
+  /* ---------- TALK ---------- */
+  routes.talk = () => {
+    render(crumb([{ t: "تكلّم" }]) + `<h1>${I("mic")} محادثات المواقف</h1><p class="muted">استمع للحوار جملة جملة، أخفِ الترجمة وتحدَّ نفسك، مثّل دورك بالاختيار، ثم انطق الجمل ويقيّمك المتصفح (يحتاج Chrome ومايكروفون).</p>
+      <div class="card sheet"><div class="section-title"><h3 style="margin:0">${I("mic")} مستوى النطق: ${SPK_TIERS[spkTierIdx()].t}</h3><span class="badge">${spkDone()} جملة ناجحة</span></div><p class="muted small" style="margin:0">${SPK_TIERS[spkTierIdx()].desc}. ${SPK_TIERS[spkTierIdx()].upto === Infinity ? "أنت في أعلى مستوى — أحسنت!" : `كل جملة تنجح فيها تقرّبك، وبعد ${Math.max(0, SPK_TIERS[spkTierIdx()].upto - spkDone())} جملة يرتفع المستوى وتصير أصعب شوي.`}</p>${bar(SPK_TIERS[spkTierIdx()].upto === Infinity ? 100 : Math.round(spkDone() / SPK_TIERS[spkTierIdx()].upto * 100))}</div>` +
+      LV.map(lv => { const ds = D.filter(d => d.lvl === lv); return ds.length ? `<div class="section"><div class="section-title"><h2 style="color:${LVC[lv]}">${lv} · ${LVN[lv]}</h2></div><div class="grid grid-3">${ds.map(d => `<a class="card link-card" href="#/dialogue/${d.id}" style="--c:${LVC[lv]}"><div class="icon" style="background:${LVC[lv]}22">${I(d.icon || "chat")}</div><h3>${esc(d.t)}</h3><p class="muted small">${d.roles[0]} و ${d.roles[1]} · ${d.lines.length} جملة</p></a>`).join("")}</div></div>` : ""; }).join(""));
+  };
+  routes.dialogue = id => {
+    const d = dialog(id); if(!d) return routes.talk();
+    let showAr = true;
+    const draw = () => {
+      render(crumb([{ t: "تكلّم", href: "#/talk" }, { t: d.t }]) + `<div class="card sheet"><div class="section-title"><span class="badge" style="background:${LVC[d.lvl]};color:#fff">${d.lvl}</span><h1 style="margin:0">${esc(d.t)}</h1></div>
+        <div class="btn-row"><button type="button" class="btn btn-primary" id="playAll">${I("headphones")} استمع للحوار كاملًا</button><button type="button" class="btn" id="toggleAr">${showAr ? "أخفِ الترجمة" : "أظهر الترجمة"}</button><a class="btn" href="#/roleplay/${d.id}">${I("users")} مثّل دور ${d.roles[1]}</a><a class="btn btn-warm" href="#/speak/${d.id}">${I("mic")} انطق الجمل</a></div></div>
+        <div class="dialog">${d.lines.map((ln, i) => `<div class="dl ${ln[0] === "A" ? "a" : "b"}"><div class="who">${ln[0] === "A" ? d.roles[0] : d.roles[1]}</div><div class="bubble"><div class="en">${esc(ln[1])} ${spk(ln[1], "sm")}</div>${showAr ? `<div class="ar small">${esc(ln[2])}</div>` : ""}</div></div>`).join("")}</div>
+        <div class="card"><h3>${I("star")} عبارات تحفظها</h3>${d.phrases.map(p => `<div class="ex right"><span class="en">${esc(p[0])} ${spk(p[0], "sm")}</span><span class="ar">${esc(p[1])}</span></div>`).join("")}</div>`);
+      $("#toggleAr").addEventListener("click", () => { showAr = !showAr; draw(); });
+      let playing = false, run = 0;
+      const btn = $("#playAll"); const setBtn = () => { btn.innerHTML = playing ? `${I("x")} إيقاف` : `${I("headphones")} استمع للحوار كاملًا`; hydrateIcons(btn); };
+      const clearNow = () => document.querySelectorAll(".dl.now").forEach(x => x.classList.remove("now"));
+      btn.addEventListener("click", () => {
+        if(playing){ playing = false; run++; hush(); clearNow(); setBtn(); return; }
+        playing = true; const my = ++run; setBtn(); let i = 0;
+        const step = () => { if(my !== run) return; if(i >= d.lines.length){ playing = false; clearNow(); setBtn(); return; } const ln = d.lines[i]; document.querySelectorAll(".dl").forEach((x, k) => x.classList.toggle("now", k === i)); const el = document.querySelectorAll(".dl")[i]; if(el && el.scrollIntoView) el.scrollIntoView({ block: "center", behavior: "smooth" }); const u = new SpeechSynthesisUtterance(ln[1]); u.lang = "en-US"; u.rate = .9; const v = voices.find(v => /en[-_]US/i.test(v.lang) && (ln[0] === "A" ? /male|david|guy|mark|andrew|brian/i.test(v.name) : /female|zira|aria|jenny|samantha|ava|emma/i.test(v.name))) || voices.find(v => /^en/i.test(v.lang)); if(v) u.voice = v; u.onend = u.onerror = () => { if(my !== run) return; i++; after(step, 350); }; speechSynthesis.speak(u); };
+        hush(); after(step, 150);
+      });
+      timers.push({ clear(){ run++; playing = false; } });
+    };
+    draw();
+  };
+  routes.roleplay = id => {
+    const d = dialog(id); if(!d) return routes.talk();
+    const list = d.lines.map((_, i) => dialogQ(d, i)).filter(Boolean);
+    runQuiz({ title: "مثّل دور " + d.roles[1] + " — " + d.t, list, backHref: `#/dialogue/${d.id}`, xpPer: 6, autoSay: true, onDone: (s, n, secs, ids) => { postPoints(s, n, secs, ids); resultCard("تمثيل الدور: " + d.t, s, n, `<p class="muted">+${s * 6} XP</p>`, `#/dialogue/${d.id}`, `#/roleplay/${d.id}`); } });
+  };
+  /* ---------- النطق: يبدأ سهلًا ثم يصعب تدريجيًا ---------- */
+  const SPK_TIERS = [
+    { t: "تمهيدي", pass: 45, auto: true, ar: true, hint: true, short: true, upto: 15, desc: "الجملة تُقرأ لك أولًا، والترجمة ظاهرة، والنجاح من ٤٥٪" },
+    { t: "متوسط", pass: 60, auto: false, ar: true, hint: true, short: false, upto: 40, desc: "اسمع بنفسك إذا احتجت، والنجاح من ٦٠٪" },
+    { t: "متقدم", pass: 75, auto: false, ar: false, hint: false, short: false, upto: Infinity, desc: "بدون ترجمة ولا تلميح، والنجاح من ٧٥٪" }
+  ];
+  const spkDone = () => GEN.spk || 0;
+  const spkTierIdx = () => { const n = spkDone(); return n < SPK_TIERS[0].upto ? 0 : n < SPK_TIERS[1].upto ? 1 : 2; };
+  const missingWords = (target, heard) => { const H = new Set(norm(heard || "").split(" ").filter(Boolean)); return norm(target).split(" ").filter(Boolean).filter(w => !H.has(w)); };
+  function wordsHtml(target, heard){
+    const H = new Set(norm(heard || "").split(" ").filter(Boolean));
+    return target.split(/\s+/).filter(Boolean).map(w => { const n = norm(w); const ok = !n || H.has(n); return `<span class="wq ${ok ? "ok" : "miss"}">${esc(w)}</span>`; }).join(" ");
+  }
+  routes.speak = id => {
+    const d = dialog(id); if(!d) return routes.talk();
+    const ti = spkTierIdx(), T = SPK_TIERS[ti];
+    let lines = d.lines.map((ln, i) => ({ ln, i })).filter(x => x.ln[0] === "B");
+    if(T.short) lines = lines.slice().sort((a, b) => a.ln[1].split(/\s+/).length - b.ln[1].split(/\s+/).length);
+    let pos = 0, total = 0, tries = 0, best = 0, passedCount = 0;
+    const show = () => {
+      if(pos >= lines.length){
+        const avg = Math.round(total / lines.length);
+        GEN.xp += Math.round(avg / 5); saveGen();
+        const nextNeed = T.upto === Infinity ? 0 : Math.max(0, T.upto - spkDone());
+        return resultCard("النطق: " + d.t, passedCount, lines.length, `<p class="muted">متوسط الدقة ${avg}٪ · مستوى النطق: <b>${T.t}</b>${nextNeed ? ` · باقي ${nextNeed} جملة ناجحة للمستوى التالي` : ""}</p>`, `#/dialogue/${d.id}`, `#/speak/${d.id}`);
+      }
+      const cur = lines[pos], ln = cur.ln; tries = 0; best = 0;
+      render(crumb([{ t: "تكلّم", href: "#/talk" }, { t: d.t, href: `#/dialogue/${d.id}` }, { t: "انطق" }]) + `<div class="quiz-top"><h2 style="margin:0;font-size:1.15rem">${I("mic")} انطق الجملة</h2><div class="btn-row"><span class="badge accent">مستوى ${T.t}</span><span class="badge info">${pos + 1} / ${lines.length}</span></div></div>${bar(pos / lines.length * 100)}
+        <div class="card q-card center">
+          <p class="small muted" style="margin:0 0 8px">${esc(T.desc)}. ${T.upto === Infinity ? "أنت في أعلى مستوى." : `بعد ${Math.max(0, T.upto - spkDone())} جملة ناجحة ترتفع للمستوى التالي.`}</p>
+          <div class="muted small">${esc(d.roles[1])} يقول:</div>
+          <div class="q-text center speak-line" style="text-align:center">${esc(ln[1])}</div>
+          ${T.ar ? `<div class="muted">${esc(ln[2])}</div>` : `<button type="button" class="btn btn-sm" id="showAr">${I("info")} أظهر الترجمة</button>`}
+          <div class="btn-row" style="justify-content:center;margin-top:10px">${spk(ln[1], "big")}${T.hint ? `<button type="button" class="btn btn-sm" id="slow">${I("headphones")} ببطء</button>` : ""}<button type="button" class="btn btn-warm btn-lg" id="rec">${I("mic")} اضغط وتكلّم</button></div>
+          <div id="heard" class="feedback" hidden></div>
+          <div class="btn-row" style="justify-content:center;margin-top:10px"><button type="button" class="btn" id="skip">تخطَّ</button><button type="button" class="btn btn-primary" id="nx" hidden>التالي ←</button></div>
+          ${SR ? "" : `<div class="note warn"><span class="ic">${I("alert")}</span><p>التعرف على الصوت غير مدعوم في هذا المتصفح. استخدم Chrome على الجوال أو الكمبيوتر.</p></div>`}
+        </div>`);
+      if(!SR) $("#rec").disabled = true;
+      if(T.auto) after(() => speak(ln[1], .8), 350);
+      if(T.hint) $("#slow").addEventListener("click", () => speak(ln[1], .55));
+      if(!T.ar) $("#showAr").addEventListener("click", e => { e.target.closest("button").outerHTML = `<div class="muted">${esc(ln[2])}</div>`; });
+      const advance = ok => { if(ok){ passedCount++; GEN.spk = spkDone() + 1; saveGen(); } total += best; pos++; show(); };
+      $("#skip").addEventListener("click", () => { total += best; pos++; show(); });
+      $("#nx").addEventListener("click", () => advance(best >= T.pass));
+      $("#rec").addEventListener("click", () => {
+        const b = $("#rec"); hush(); b.textContent = "… أستمع"; b.disabled = true;
+        listen(res => {
+          b.disabled = false; b.innerHTML = `${I("mic")} حاول مرة أخرى`; hydrateIcons(b);
+          const h = $("#heard"); h.hidden = false; tries++;
+          if(!res){ h.className = "feedback bad"; h.innerHTML = "لم أسمع شيئًا. تأكد من إذن المايكروفون وتكلّم بصوت واضح."; $("#nx").hidden = false; return; }
+          const score = Math.max(...res.map(r => similarity(r, ln[1]))); best = Math.max(best, score);
+          const heard = res[0]; const pass = score >= T.pass;
+          Progress.record(`gd-${d.id}-${cur.i}`, pass); sfx(pass ? "correct" : "wrong");
+          const miss = missingWords(ln[1], heard);
+          h.className = "feedback " + (pass ? "ok" : "bad");
+          h.innerHTML = `<b>${pass ? I("check") + ` ${score}٪ — ${score >= 90 ? "نطق ممتاز!" : "أحسنت، مقبول"}` : I("x") + ` ${score}٪ — تحتاج ${T.pass}٪`}</b>
+            <div class="wq-line en">${wordsHtml(ln[1], heard)}</div>
+            <div class="small muted en">سمعت: ${esc(heard)}</div>
+            ${!pass && miss.length ? `<div class="small">ركّز على: <b class="en">${miss.slice(0, 5).map(esc).join(" · ")}</b>${T.hint ? " — اضغط «ببطء» واسمعها ثم أعد" : ""}</div>` : ""}
+            ${!pass && tries >= 2 ? `<div class="small muted">تقدر تتخطاها وترجع لها لاحقًا.</div>` : ""}`;
+          hydrateIcons(h);
+          if(pass){ $("#nx").hidden = false; $("#nx").focus({ preventScroll: true }); }
+          else $("#nx").hidden = tries < 2;
+        });
+      });
+    };
+    show();
+  };
+
+  window.addEventListener("hashchange", route);
+  document.addEventListener("DOMContentLoaded", async () => { if(Auth.user()) await Progress.sync(false); route(); });
+})();

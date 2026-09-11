@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<script>(function(){try{var t=JSON.parse(localStorage.getItem("step_theme"));if(!t)t=(window.matchMedia&&matchMedia("(prefers-color-scheme: dark)").matches)?"dark":"light";document.documentElement.setAttribute("data-theme",t);}catch(e){}})();</script>
+<title>STEP English — القراءة</title>
+<link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+<header id="nav"></header>
+
+<main class="container">
+  <h1><i data-i="bookopen"></i> القراءة (Reading Comprehension)</h1>
+  <p class="muted">أكبر قسم في الاختبار (حوالي ٤٠٪). أغلب القطع تأتي من التجميعات، ويأتي معها عادةً ٣–٤ قطع جديدة. القسم مقسّم إلى ٣ أجزاء ولكل جزء وقته.</p>
+
+  <section class="section">
+    <div class="grid grid-2">
+      <div class="card">
+        <h3>أنواع الأسئلة</h3>
+        <div class="table-wrap"><table>
+          <thead><tr><th>النوع</th><th>شكله</th><th>كيف تحله</th></tr></thead>
+          <tbody>
+            <tr><td><b>الفكرة الرئيسية</b></td><td class="en">What is the main idea / best title?</td><td>اقرأ الجملة الأولى والأخيرة من كل فقرة. الإجابة تغطي القطعة كلها لا جزءًا منها.</td></tr>
+            <tr><td><b>التفاصيل</b></td><td class="en">According to the passage, … / Which of the following…?</td><td>خذ كلمة مفتاحية من السؤال وابحث عنها في القطعة، الإجابة في الجملة نفسها أو التي بعدها.</td></tr>
+            <tr><td><b>المفردات</b></td><td class="en">The word "X" is closest in meaning to…</td><td>راجع صفحة المفردات، وإن لم تعرف الكلمة استبدل كل خيار في الجملة.</td></tr>
+            <tr><td><b>الاستنتاج</b></td><td class="en">It can be inferred that… / The author suggests…</td><td>الإجابة غير مكتوبة حرفيًا لكنها تلزم من كلام القطعة. استبعد الخيارات المبالغ فيها (always, never, all).</td></tr>
+            <tr><td><b>المرجع</b></td><td class="en">The word "it/they" refers to…</td><td>ارجع للجملة السابقة وابحث عن الاسم الذي يناسب الضمير (مفرد/جمع، شيء/شخص).</td></tr>
+            <tr><td><b>غرض الكاتب</b></td><td class="en">The purpose of the passage is to…</td><td>يشرح؟ يقنع؟ يقارن؟ يحذّر؟ انظر لنبرة القطعة العامة.</td></tr>
+          </tbody>
+        </table></div>
+      </div>
+      <div class="card">
+        <h3>استراتيجية الحل في الوقت المحدود</h3>
+        <ol>
+          <li><b>اقرأ الأسئلة أولًا</b> (بدون الخيارات) لتعرف ماذا تبحث عنه.</li>
+          <li><b>اقرأ القطعة قراءة سريعة</b> (skim): أول جملة في كل فقرة تعطيك الفكرة.</li>
+          <li><b>ابحث عن الكلمة المفتاحية</b> (scan) لكل سؤال، وقد تكون في القطعة بمرادفها وليس بنفس الكلمة.</li>
+          <li><b>استبعد خيارين</b> واضحي الخطأ ثم قارن بين الباقي.</li>
+          <li><b>لا تُطل على قطعة واحدة.</b> إذا كانت من التجميعات حلّها بسرعة وانتقل؛ الوقت المتبقي للقطع الجديدة.</li>
+          <li><b>اضغط «التالي» حتى صفحة المراجعة</b> لتتأكد أنه لا توجد قطعة أخرى لم ترها.</li>
+        </ol>
+        <div class="note warn"><span class="ic"><i data-i="alert"></i></span><p>تجربة حقيقية: مختبرة حلّت قطعتين من التجميعات وقضت الوقت تراجعهما، ثم اكتشفت عند آخر دقيقتين قطعة ثالثة جديدة لم تلحق تقرأها. لا تطمئن حتى ترى صفحة المراجعة.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="section-title"><h2>قطع تدريبية على مواضيع الاختبار الجديدة</h2></div>
+    <div class="note info"><span class="ic"><i data-i="info"></i></span><p>هذه القطع مكتوبة على نفس المواضيع والأفكار التي ذكرها المختبرون في القطع الجديدة (أطباء الأطفال، التعلم من الأخطاء، السمنة وفقدان الشهية، العنف، الفشل). النص ليس نص الاختبار الحرفي، لكن الأسئلة تحاكي ما ورد. اضغط على الخيار لتظهر الإجابة والشرح، وتُحفظ أخطاؤك تلقائيًا في صفحة الاختبار.</p></div>
+    <div id="passages"></div>
+  </section>
+</main>
+
+<footer id="footer"></footer>
+<script src="data/reading.js"></script>
+<script src="data/events.js"></script>
+<script src="assets/app.js"></script>
+<script src="assets/sfx.js"></script>
+<script src="assets/bank.js"></script>
+<script src="assets/progress.js"></script>
+<script>document.addEventListener("DOMContentLoaded", () => renderPassages("passages"));</script>
+</body>
+</html>
