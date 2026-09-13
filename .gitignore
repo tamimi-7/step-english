@@ -12,3 +12,4 @@ _g.json
 .DS_Store
 Thumbs.db
 .agents/
+audit.json
