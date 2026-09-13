@@ -70,19 +70,7 @@
       if(speechSynthesis.speaking || speechSynthesis.pending){ speechSynthesis.cancel(); speakTimer = setTimeout(go, 120); } else go();
     }catch(e){ toast("النطق غير مدعوم في هذا المتصفح"); }
   }
-  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-  function listen(cb){
-    let done = false; const fin = v => { if(done) return; done = true; cb(v); };
-    if(!SR){ toast("التعرف على الصوت غير مدعوم هنا — جرّب متصفح Chrome"); fin(null); return null; }
-    try{
-      const r = new SR(); r.lang = "en-US"; r.interimResults = false; r.maxAlternatives = 3;
-      r.onresult = e => fin(Array.from(e.results[0]).map(a => a.transcript));
-      r.onerror = () => fin(null); r.onend = () => fin(null); r.start(); return r;
-    }catch(e){ fin(null); return null; }
-  }
-  const CONTR = { "i'm": "i am", "it's": "it is", "what's": "what is", "that's": "that is", "there's": "there is", "where's": "where is", "how's": "how is", "he's": "he is", "she's": "she is", "let's": "let us", "i'll": "i will", "you'll": "you will", "we'll": "we will", "i'd": "i would", "i've": "i have", "you've": "you have", "we've": "we have", "you're": "you are", "we're": "we are", "they're": "they are", "don't": "do not", "doesn't": "does not", "didn't": "did not", "can't": "can not", "cannot": "can not", "won't": "will not", "isn't": "is not", "aren't": "are not", "wasn't": "was not", "couldn't": "could not", "wouldn't": "would not", "shouldn't": "should not" };
-  const norm = s => String(s).toLowerCase().replace(/[’‘]/g, "'").replace(/[^a-z0-9' ]+/g, " ").replace(/\s+/g, " ").trim().split(" ").map(w => CONTR[w] || w).join(" ");
-  function similarity(a, b){ const A = norm(a).split(" ").filter(Boolean), B = new Set(norm(b).split(" ").filter(Boolean)); if(!A.length) return 0; let hit = 0; A.forEach(w => { if(B.has(w)) hit++; }); return Math.round(hit / Math.max(A.length, B.size) * 100); }
+  const SR = typeof Speech !== "undefined" && Speech.supported;
   const spk = (text, cls) => `<button type="button" class="spk ${cls || ""}" data-say="${esc(text)}" title="استمع">${I("headphones")}</button>`;
   document.addEventListener("click", e => { const b = e.target.closest("[data-say]"); if(b){ speak(b.dataset.say); } });
 
@@ -176,39 +164,38 @@
 
   /* ---------- HOME ---------- */
   routes.home = () => {
-    const xp = xpNext(GEN.xp), streak = Progress.streak();
+    const xp = xpNext(GEN.xp), meU = Auth.user(), dl = meU ? Store.get("step_daily_last_" + meU.u, null) : null;
+    const flame = dl && dl.streak ? dl.streak : Progress.streak();
     const all = allWords(); const kn = all.filter(x => known(wid(x.t, x.i))).length;
     const due = dueWordIds().length; const daily = GEN.daily[dayKey()];
     const cur = currentLevel(), nu = nextUnit(), nuIdx = U.filter(u => u.lvl === nu.lvl).indexOf(nu) + 1, ns = nextStepOf(nu);
     render(`
       <section class="hero gen-hero gen-simple">
-        <span class="badge">إنقلش عام — مستقل عن STEP</span>
         <h1>تعلّم الإنجليزية <mark>خطوة بخطوة</mark></h1>
         <p>مستواك الآن <b>${cur} · ${LVN[cur]}</b> · الوحدة <b>${nuIdx} — ${esc(nu.t)}</b><br><span class="small">خطوتك التالية: ${esc(ns.label)}</span></p>
-        <div class="actions"><a class="btn btn-light" href="${ns.href}">${I("zap")} أكمل التعلّم</a><a class="btn btn-outline-light" href="#/daily">${I("calendar")} تحدي اليوم${daily ? " ✓" : ""} ${ptsTag()}</a></div>
+        <div class="actions"><a class="btn btn-light" href="${ns.href}">${I("zap")} أكمل التعلّم</a><a class="btn btn-outline-light" href="#/daily">${I("calendar")} تحدي اليوم${daily ? " ✓" : ""} ${ptsTag()}</a>${due ? `<a class="btn btn-outline-light" href="#/review">${I("repeat")} راجع ${due} ${due > 10 || due < 3 ? "كلمة" : "كلمات"}</a>` : ""}</div>
       </section>
       <div class="gen-stats">
-        <div class="gs"><div class="gs-n">${GEN.xp}</div><div class="gs-l">XP · المستوى ${xp.l} (${levelTitle(xp.l)})</div>${bar(Math.round(xp.cur / xp.need * 100))}</div>
-        <div class="gs"><div class="gs-n">${streak}</div><div class="gs-l">${I("fire")} ${streak === 1 ? "يوم متواصل" : "أيام متواصلة"}</div></div>
-        <div class="gs"><div class="gs-n">${kn}</div><div class="gs-l">${I("check")} كلمة تعرفها من ${all.length}</div></div>
-        <a class="gs ${due ? "hot" : ""}" href="#/review"><div class="gs-n">${due}</div><div class="gs-l">${I("repeat")} كلمة تحتاج مراجعة</div></a>
-        <a class="gs pts" href="account.html#points" id="ptsCard"><div class="gs-n" id="ptsCardN">${Auth.user() ? "…" : "—"}</div><div class="gs-l">${I("trophy")} نقاط المنافسة</div><div class="small muted" id="ptsCardSub">${Auth.user() ? "" : "سجّل الدخول لتجمع نقاطًا"}</div></a>
+        <div class="gs">${emo("star", "gs-emo")}<div class="gs-b"><div class="gs-n">${GEN.xp}</div><div class="gs-l">XP · المستوى ${xp.l}</div>${bar(Math.round(xp.cur / xp.need * 100))}</div></div>
+        <div class="gs">${emo("fire", "gs-emo")}<div class="gs-b"><div class="gs-n">${flame}</div><div class="gs-l">${flame === 1 ? "يوم ورا بعض" : "أيام ورا بعض"}</div></div></div>
+        <div class="gs">${emo("check", "gs-emo")}<div class="gs-b"><div class="gs-n">${kn}</div><div class="gs-l">كلمة تعرفها من ${all.length}</div></div></div>
+        <a class="gs pts" href="account.html#points" id="ptsCard">${emo("trophy", "gs-emo")}<div class="gs-b"><div class="gs-n" id="ptsCardN">${Auth.user() ? "…" : "—"}</div><div class="gs-l" id="ptsCardSub">${Auth.user() ? "نقاط المنافسة" : "سجّل الدخول لتجمع نقاطًا"}</div></div></a>
       </div>
-      <p class="small muted pts-where">${I("trophy")} <b>وين تاخذ نقاط؟</b> اختبار الموضوع، اختبار الوحدة، تدريب القاعدة، تحدي اليوم، الألعاب، تمثيل الدور، تصريف الأفعال، وأسئلة القصص — كل سؤال تجيبه صح <b>لأول مرة</b> = نقطة. البطاقات والمراجعة بدون نقاط.</p>
+      <details class="pts-where small muted"><summary>${I("trophy")} وين تاخذ نقاط؟</summary><p>اختبار الموضوع، اختبار الوحدة، تدريب القاعدة، تحدي اليوم، الألعاب، تمثيل الدور، تصريف الأفعال، وأسئلة القصص — كل سؤال تجيبه صح <b>لأول مرة</b> = نقطة. البطاقات والمراجعة بدون نقاط، و XP لمستواك الشخصي فقط.</p></details>
       <section class="section"><div class="section-title"><h2>المستويات</h2><span class="muted small">التقدم يزيد مع كل كلمة تتعلمها ويكتمل باختبار الوحدة</span></div>
         <div class="lvl-list">${LV.map(lv => { const units = U.filter(u => u.lvl === lv), done = units.filter(u => GEN.units[u.id]).length, pct = levelPct(lv); const st = pct === 100 ? "done" : lv === cur ? "cur" : ""; return `<a class="lvl-row ${st}" href="#/level/${lv}" style="--c:${LVC[lv]}"><div class="lvl-badge" style="background:${LVC[lv]}">${lv}</div><div class="lvl-body"><div class="lvl-head"><b>${LVN[lv]}</b><span class="lvl-pct">${pct}%</span></div>${bar(pct)}<div class="small muted">${done}/${units.length} وحدة مكتملة${lv === cur ? " · <b>أنت هنا</b>" : ""}</div></div>${I("arrow")}</a>`; }).join("")}</div>
       </section>
-      <section class="section"><div class="section-title"><h2>استكشف بحرّية</h2></div>
+      <section class="section"><div class="section-title"><h2>كل الأقسام</h2></div>
         <div class="grid grid-4 gen-menu">
-          <a class="card link-card c-violet" href="#/vocab"><div class="icon p-violet">${I("type")}</div><h3>المفردات</h3><p class="muted small">${all.length} كلمة في ${V.length} موضوعًا</p></a>
-          <a class="card link-card c-green" href="#/grammar"><div class="icon p-green">${I("book")}</div><h3>القواعد</h3><p class="muted small">${G.length} درسًا: متى ولماذا</p></a>
-          <a class="card link-card c-teal" href="#/talk"><div class="icon p-teal">${I("mic")}</div><h3>المحادثة</h3><p class="muted small">${D.length} حوارًا تسمعه وتنطقه</p></a>
-          <a class="card link-card c-rose" href="#/games"><div class="icon p-rose">${I("timer")}</div><h3>الألعاب</h3><p class="muted small">سباق، طابق، رتّب الحروف</p></a>
-          <a class="card link-card c-amber" href="library.html"><div class="icon p-amber">${I("bookopen")}</div><h3>القصص والروايات</h3><p class="muted small">اقرأ واستمع بصوت قارئ — من A1 إلى C2</p></a>
-          <a class="card link-card c-blue" href="#/verbs"><div class="icon p-blue">${I("list")}</div><h3>تصريف الأفعال</h3><p class="muted small">${(window.GEN_VERBS || []).length} فعلًا: الماضي، بعد have، وing — مع بحث واختبار</p></a>
+          <a class="card link-card c-violet" href="#/vocab"><div class="menu-emo">${emo("books")}</div><h3>المفردات</h3><p class="muted small">${all.length} كلمة في ${V.length} موضوعًا</p></a>
+          <a class="card link-card c-green" href="#/grammar"><div class="menu-emo">${emo("memo")}</div><h3>القواعد</h3><p class="muted small">${G.length} درسًا: متى ولماذا</p></a>
+          <a class="card link-card c-teal" href="#/talk"><div class="menu-emo">${emo("talk")}</div><h3>المحادثة</h3><p class="muted small">${D.length} حوارًا تسمعه وتنطقه</p></a>
+          <a class="card link-card c-rose" href="#/games"><div class="menu-emo">${emo("game")}</div><h3>الألعاب</h3><p class="muted small">سباق، طابق، رتّب الحروف</p></a>
+          <a class="card link-card c-amber" href="library.html"><div class="menu-emo">${emo("book")}</div><h3>القصص والروايات</h3><p class="muted small">اقرأ واستمع بصوت قارئ — من A1 إلى C2</p></a>
+          <a class="card link-card c-blue" href="#/verbs"><div class="menu-emo">${emo("repeat")}</div><h3>تصريف الأفعال</h3><p class="muted small">${(window.GEN_VERBS || []).length} فعلًا: الماضي، بعد have، وing — مع بحث واختبار</p></a>
         </div>
       </section>`);
-    if(Auth.user()) Auth.api("/api/me").then(m => { const n = $("#ptsCardN"), sub = $("#ptsCardSub"); if(n) n.textContent = m.points || 0; if(sub) sub.textContent = (m.rank ? `ترتيبك #${m.rank}` : "") + (m.monthRank ? ` · البطولة #${m.monthRank}` : ""); }).catch(() => {});
+    if(Auth.user()) Auth.api("/api/me").then(m => { const n = $("#ptsCardN"), sub = $("#ptsCardSub"); if(n) n.textContent = m.points || 0; if(sub) sub.textContent = "نقطة" + (m.monthRank ? ` · البطولة #${m.monthRank}` : m.rank ? ` · #${m.rank}` : ""); }).catch(() => {});
   };
 
   /* ---------- تصريف الأفعال ---------- */
@@ -611,69 +598,78 @@
   };
   /* ---------- النطق: يبدأ سهلًا ثم يصعب تدريجيًا ---------- */
   const SPK_TIERS = [
-    { t: "تمهيدي", pass: 45, auto: true, ar: true, hint: true, short: true, upto: 15, desc: "الجملة تُقرأ لك أولًا، والترجمة ظاهرة، والنجاح من ٤٥٪" },
-    { t: "متوسط", pass: 60, auto: false, ar: true, hint: true, short: false, upto: 40, desc: "اسمع بنفسك إذا احتجت، والنجاح من ٦٠٪" },
-    { t: "متقدم", pass: 75, auto: false, ar: false, hint: false, short: false, upto: Infinity, desc: "بدون ترجمة ولا تلميح، والنجاح من ٧٥٪" }
+    { t: "تمهيدي", pass: 40, auto: true, ar: true, hint: true, short: true, upto: 15, desc: "الجملة تُقرأ لك أولًا، والترجمة ظاهرة، والنجاح من ٤٠٪" },
+    { t: "متوسط", pass: 55, auto: false, ar: true, hint: true, short: false, upto: 40, desc: "اسمع بنفسك إذا احتجت، والنجاح من ٥٥٪" },
+    { t: "متقدم", pass: 70, auto: false, ar: false, hint: false, short: false, upto: Infinity, desc: "بدون ترجمة ولا تلميح، والنجاح من ٧٠٪" }
   ];
   const spkDone = () => GEN.spk || 0;
   const spkTierIdx = () => { const n = spkDone(); return n < SPK_TIERS[0].upto ? 0 : n < SPK_TIERS[1].upto ? 1 : 2; };
-  const missingWords = (target, heard) => { const H = new Set(norm(heard || "").split(" ").filter(Boolean)); return norm(target).split(" ").filter(Boolean).filter(w => !H.has(w)); };
-  function wordsHtml(target, heard){
-    const H = new Set(norm(heard || "").split(" ").filter(Boolean));
-    return target.split(/\s+/).filter(Boolean).map(w => { const n = norm(w); const ok = !n || H.has(n); return `<span class="wq ${ok ? "ok" : "miss"}">${esc(w)}</span>`; }).join(" ");
-  }
+  /* الجملة كلمات: الأخضر انقال صح، والأحمر باقي — اضغط أي كلمة تسمعها */
+  const wordChips = (words, state) => words.map((w, i) => `<button type="button" class="wq ${state ? state[i] : ""}" data-say="${esc(w.replace(/[^A-Za-z0-9' -]/g, ""))}">${esc(w)}</button>`).join(" ");
   routes.speak = id => {
     const d = dialog(id); if(!d) return routes.talk();
     const ti = spkTierIdx(), T = SPK_TIERS[ti];
     let lines = d.lines.map((ln, i) => ({ ln, i })).filter(x => x.ln[0] === "B");
     if(T.short) lines = lines.slice().sort((a, b) => a.ln[1].split(/\s+/).length - b.ln[1].split(/\s+/).length);
-    let pos = 0, total = 0, tries = 0, best = 0, passedCount = 0;
+    let pos = 0, total = 0, passedCount = 0, perfect = 0;
     const show = () => {
       if(pos >= lines.length){
         const avg = Math.round(total / lines.length);
         GEN.xp += Math.round(avg / 5); saveGen();
         const nextNeed = T.upto === Infinity ? 0 : Math.max(0, T.upto - spkDone());
-        return resultCard("النطق: " + d.t, passedCount, lines.length, `<p class="muted">متوسط الدقة ${avg}٪ · مستوى النطق: <b>${T.t}</b>${nextNeed ? ` · باقي ${nextNeed} جملة ناجحة للمستوى التالي` : ""}</p>`, `#/dialogue/${d.id}`, `#/speak/${d.id}`);
+        if(avg >= 90) try{ confetti(); }catch(e){}
+        return resultCard("النطق: " + d.t, passedCount, lines.length, `<p class="muted">متوسط الدقة ${avg}٪ · ${perfect} ${perfect === 1 ? "جملة" : "جمل"} ١٠٠٪ · مستوى النطق: <b>${T.t}</b>${nextNeed ? ` · باقي ${nextNeed} جملة ناجحة للمستوى التالي` : ""}</p>`, `#/dialogue/${d.id}`, `#/speak/${d.id}`);
       }
-      const cur = lines[pos], ln = cur.ln; tries = 0; best = 0;
+      const cur = lines[pos], ln = cur.ln;
+      let hit = [], best = 0, tries = 0, rec = null, counted = false;
+      const words = String(ln[1]).split(/\s+/).filter(Boolean);
       render(crumb([{ t: "تكلّم", href: "#/talk" }, { t: d.t, href: `#/dialogue/${d.id}` }, { t: "انطق" }]) + `<div class="quiz-top"><h2 style="margin:0;font-size:1.15rem">${I("mic")} انطق الجملة</h2><div class="btn-row"><span class="badge accent">مستوى ${T.t}</span><span class="badge info">${pos + 1} / ${lines.length}</span></div></div>${bar(pos / lines.length * 100)}
-        <div class="card q-card center">
-          <p class="small muted" style="margin:0 0 8px">${esc(T.desc)}. ${T.upto === Infinity ? "أنت في أعلى مستوى." : `بعد ${Math.max(0, T.upto - spkDone())} جملة ناجحة ترتفع للمستوى التالي.`}</p>
+        <div class="card q-card center speak-card">
           <div class="muted small">${esc(d.roles[1])} يقول:</div>
-          <div class="q-text center speak-line" style="text-align:center">${esc(ln[1])}</div>
+          <div class="wq-line en speak-line" id="tw">${wordChips(words)}</div>
           ${T.ar ? `<div class="muted">${esc(ln[2])}</div>` : `<button type="button" class="btn btn-sm" id="showAr">${I("info")} أظهر الترجمة</button>`}
-          <div class="btn-row" style="justify-content:center;margin-top:10px">${spk(ln[1], "big")}${T.hint ? `<button type="button" class="btn btn-sm" id="slow">${I("headphones")} ببطء</button>` : ""}<button type="button" class="btn btn-warm btn-lg" id="rec">${I("mic")} اضغط وتكلّم</button></div>
-          <div id="heard" class="feedback" hidden></div>
+          <div class="sp-meter" id="meter" hidden><div class="sp-ring" id="ring" style="--p:0"><span id="ringN">0٪</span></div><div class="sp-msg" id="spMsg"></div></div>
+          <div class="btn-row" style="justify-content:center;margin-top:12px">${spk(ln[1], "big")}${T.hint ? `<button type="button" class="btn btn-sm" id="slow">${I("headphones")} ببطء</button>` : ""}</div>
+          <button type="button" class="mic-btn" id="rec" ${SR ? "" : "disabled"}><span class="mic-ic">${I("mic")}</span><span class="mic-t" id="recT">اضغط وتكلّم</span></button>
+          <div class="live small en" id="live" hidden></div>
+          <p class="small muted" style="margin:6px 0 0">تكلّم براحتك — ما يوقف إلا إذا سكتّ ثانيتين أو ضغطت «خلصت». الكلمات اللي تقولها صح تبقى خضراء، وتقدر تعيد الحمراء بس.</p>
           <div class="btn-row" style="justify-content:center;margin-top:10px"><button type="button" class="btn" id="skip">تخطَّ</button><button type="button" class="btn btn-primary" id="nx" hidden>التالي ←</button></div>
-          ${SR ? "" : `<div class="note warn"><span class="ic">${I("alert")}</span><p>التعرف على الصوت غير مدعوم في هذا المتصفح. استخدم Chrome على الجوال أو الكمبيوتر.</p></div>`}
+          ${SR ? "" : `<div class="note warn"><span class="ic">${I("alert")}</span><p>التعرف على الصوت غير مدعوم في هذا المتصفح. استخدم Chrome على الجوال أو الكمبيوتر، أو Safari على الآيفون.</p></div>`}
         </div>`);
-      if(!SR) $("#rec").disabled = true;
       if(T.auto) after(() => speak(ln[1], .8), 350);
       if(T.hint) $("#slow").addEventListener("click", () => speak(ln[1], .55));
       if(!T.ar) $("#showAr").addEventListener("click", e => { e.target.closest("button").outerHTML = `<div class="muted">${esc(ln[2])}</div>`; });
-      const advance = ok => { if(ok){ passedCount++; GEN.spk = spkDone() + 1; saveGen(); } total += best; pos++; show(); };
-      $("#skip").addEventListener("click", () => { total += best; pos++; show(); });
-      $("#nx").addEventListener("click", () => advance(best >= T.pass));
+      const finishLine = () => { if(counted) return; counted = true; total += best; if(best >= T.pass){ passedCount++; GEN.spk = spkDone() + 1; saveGen(); } if(best >= 100) perfect++; };
+      const stopRec = () => { if(rec){ rec.stop(); } };
+      timers.push({ clear(){ try{ stopRec(); }catch(e){} } });
+      $("#skip").addEventListener("click", () => { stopRec(); finishLine(); pos++; show(); });
+      $("#nx").addEventListener("click", () => { stopRec(); finishLine(); pos++; show(); });
+      const setBtn = on => { const b = $("#rec"); if(!b) return; b.classList.toggle("on", on); $("#recT").textContent = on ? "خلصت ⏹" : tries ? "أعد المحاولة" : "اضغط وتكلّم"; };
       $("#rec").addEventListener("click", () => {
-        const b = $("#rec"); hush(); b.textContent = "… أستمع"; b.disabled = true;
-        listen(res => {
-          b.disabled = false; b.innerHTML = `${I("mic")} حاول مرة أخرى`; hydrateIcons(b);
-          const h = $("#heard"); h.hidden = false; tries++;
-          if(!res){ h.className = "feedback bad"; h.innerHTML = "لم أسمع شيئًا. تأكد من إذن المايكروفون وتكلّم بصوت واضح."; $("#nx").hidden = false; return; }
-          const score = Math.max(...res.map(r => similarity(r, ln[1]))); best = Math.max(best, score);
-          const heard = res[0]; const pass = score >= T.pass;
-          Progress.record(`gd-${d.id}-${cur.i}`, pass); sfx(pass ? "correct" : "wrong");
-          const miss = missingWords(ln[1], heard);
-          h.className = "feedback " + (pass ? "ok" : "bad");
-          h.innerHTML = `<b>${pass ? I("check") + ` ${score}٪ — ${score >= 90 ? "نطق ممتاز!" : "أحسنت، مقبول"}` : I("x") + ` ${score}٪ — تحتاج ${T.pass}٪`}</b>
-            <div class="wq-line en">${wordsHtml(ln[1], heard)}</div>
-            <div class="small muted en">سمعت: ${esc(heard)}</div>
-            ${!pass && miss.length ? `<div class="small">ركّز على: <b class="en">${miss.slice(0, 5).map(esc).join(" · ")}</b>${T.hint ? " — اضغط «ببطء» واسمعها ثم أعد" : ""}</div>` : ""}
-            ${!pass && tries >= 2 ? `<div class="small muted">تقدر تتخطاها وترجع لها لاحقًا.</div>` : ""}`;
-          hydrateIcons(h);
-          if(pass){ $("#nx").hidden = false; $("#nx").focus({ preventScroll: true }); }
-          else $("#nx").hidden = tries < 2;
-        });
+        if(rec){ stopRec(); return; }
+        hush(); setBtn(true);
+        const live = $("#live"); live.hidden = false; live.textContent = "… أسمعك";
+        rec = Speech.listen(res => {
+          rec = null; setBtn(false); tries++;
+          const live2 = $("#live"); if(!live2) return;
+          const meter = $("#meter"); meter.hidden = false;
+          if(!res){ live2.hidden = true; $("#spMsg").innerHTML = `<b>ما سمعت شي.</b><div class="small">تأكد إن المايك مسموح، وقرّب الجوال وتكلّم بصوت واضح.</div>`; $("#nx").hidden = tries < 2 && best < T.pass; return; }
+          const r = Speech.evaluate(ln[1], res, hit);
+          hit = r.hit; const gained = r.score - best; best = Math.max(best, r.score);
+          const pass = best >= T.pass;
+          Progress.record(`gd-${d.id}-${cur.i}`, pass);
+          $("#tw").innerHTML = wordChips(words, r.state);
+          $("#ring").style.setProperty("--p", best); $("#ringN").textContent = best + "٪";
+          meter.className = "sp-meter " + (best >= 100 ? "perfect" : pass ? "ok" : "bad");
+          live2.textContent = "سمعت: " + res[0];
+          const miss = r.missing.filter(Boolean);
+          $("#spMsg").innerHTML = best >= 100 ? `<b>${emo("party")} ممتاز! ١٠٠٪</b>`
+            : pass ? `<b>أحسنت — ناجح</b><div class="small">${miss.length ? `تبي ١٠٠٪؟ قل بس: <b class="en">${miss.slice(0, 4).map(esc).join(" · ")}</b>` : ""}</div>`
+            : `<b>${gained > 0 && tries > 1 ? `تحسّنت +${gained}٪` : `تحتاج ${T.pass}٪`}</b><div class="small">${miss.length ? `قل الكلمات الحمراء: <b class="en">${miss.slice(0, 4).map(esc).join(" · ")}</b> — اضغطها تسمعها` : "حاول مرة ثانية بصوت أوضح"}</div>`;
+          sfx(best >= 100 ? "win" : pass ? "correct" : "wrong");
+          if(best >= 100) try{ confetti(); }catch(e){}
+          if(pass){ $("#nx").hidden = false; $("#nx").focus({ preventScroll: true }); } else $("#nx").hidden = tries < 3;
+        }, txt => { const l = $("#live"); if(l) l.textContent = "أسمع: " + txt; });
       });
     };
     show();

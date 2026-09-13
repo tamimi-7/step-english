@@ -112,6 +112,12 @@ const ICONS = {
   smile: 'M12 22a10 10 0 1 0 0-20 10 10 0 0 0 0 20zM8 14s1.5 2 4 2 4-2 4-2M9 9h.01M15 9h.01',
   award: 'M12 15a7 7 0 1 0 0-14 7 7 0 0 0 0 14zM8.2 13.9L7 23l5-3 5 3-1.2-9.1'
 };
+/* أيقونات ثلاثية الأبعاد (Microsoft Fluent Emoji — رخصة MIT) مع رجوع للإيموجي العادي لو ما تحمّلت */
+const EMO = { fire: ["1f525", "🔥"], books: ["1f4da", "📚"], memo: ["1f4dd", "📝"], talk: ["1f5e3-fe0f", "🗣️"], game: ["1f3ae", "🎮"], book: ["1f4d6", "📖"], repeat: ["1f501", "🔁"], trophy: ["1f3c6", "🏆"], check: ["2705", "✅"], review: ["1f504", "🔄"], star: ["2b50", "⭐"], gift: ["1f381", "🎁"], shield: ["1f6e1-fe0f", "🛡️"], sparkles: ["2728", "✨"], comet: ["2604-fe0f", "☄️"], volcano: ["1f30b", "🌋"], crown: ["1f451", "👑"], swords: ["2694-fe0f", "⚔️"], clock: ["23f0", "⏰"], target: ["1f3af", "🎯"], puzzle: ["1f9e9", "🧩"], headphones: ["1f3a7", "🎧"], chat: ["1f4ac", "💬"], party: ["1f389", "🎉"], muscle: ["1f4aa", "💪"], wave: ["1f44b", "👋"], rocket: ["1f680", "🚀"], brain: ["1f9e0", "🧠"], calendar: ["1f4c5", "📅"], user: ["1f464", "👤"], home: ["1f3e0", "🏠"] };
+function emo(name, cls){
+  const e = EMO[name]; if(!e) return "";
+  return `<img class="emo ${cls || ""}" src="https://cdn.jsdelivr.net/npm/@lobehub/fluent-emoji-3d@1.1.0/assets/${e[0]}.webp" alt="${e[1]}" loading="lazy" decoding="async" draggable="false" onerror="this.replaceWith(document.createTextNode(this.alt))">`;
+}
 function I(name, cls){ const d = ICONS[name] || ICONS.star; return `<svg class="i ${cls || ""}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="${d}"/></svg>`; }
 function hydrateIcons(root){ (root || document).querySelectorAll("i[data-i]").forEach(el => { el.outerHTML = I(el.dataset.i, el.className); }); }
 new MutationObserver(ms => { for(const m of ms) for(const n of m.addedNodes){ if(n.nodeType === 1){ if(n.matches && n.matches("i[data-i]")) hydrateIcons(n.parentNode); else if(n.querySelector && n.querySelector("i[data-i]")) hydrateIcons(n); } } }).observe(document.documentElement, { childList: true, subtree: true });
@@ -365,7 +371,7 @@ async function giftCheck(){
 }
 /* الحضور اليومي — بدون نقاط: شعلة تكبر، درع يحمي السلسلة، مفاجأة اليوم، ومين دخل من المشاركين */
 const riyadhDay = () => { try{ return new Date().toLocaleDateString("en-CA", { timeZone: "Asia/Riyadh" }); }catch(e){ return new Date().toISOString().slice(0, 10); } };
-const FLAMES = [{ n: 1, t: "شرارة", e: "✨" }, { n: 3, t: "شعلة", e: "🔥" }, { n: 7, t: "نار", e: "☄️" }, { n: 14, t: "بركان", e: "🌋" }, { n: 30, t: "أسطورة", e: "👑" }];
+const FLAMES = [{ n: 1, t: "شرارة", e: "✨", k: "sparkles" }, { n: 3, t: "شعلة", e: "🔥", k: "fire" }, { n: 7, t: "نار", e: "☄️", k: "comet" }, { n: 14, t: "بركان", e: "🌋", k: "volcano" }, { n: 30, t: "أسطورة", e: "👑", k: "crown" }];
 const flameOf = n => FLAMES.filter(f => n >= f.n).pop() || FLAMES[0];
 const SURPRISES = [
   ["r", "What has keys but can't open locks?", "وش الشي اللي عنده مفاتيح بس ما يفتح ولا قفل؟", "A piano 🎹 — مفاتيح البيانو اسمها keys"],
@@ -439,13 +445,13 @@ function showDaily(j, day){
   const note = !j.claimed ? "" : j.usedShield ? `<div class="note info"><span class="ic">${I("check")}</span><p>🛡️ الدرع حمى سلسلتك — فاتك يوم وما انطفت الشعلة!</p></div>`
     : j.gotShield ? `<div class="note tip"><span class="ic">${I("sparkles")}</span><p>🛡️ كسبت درع! لو فاتك يوم، الدرع يحمي شعلتك.</p></div>`
     : j.broke ? `<p class="small muted">انطفت شعلة الـ${j.lost} أيام… بس هذي فرصة تكسر رقمك 💪</p>` : "";
-  const el = modalCard(`<div class="flame-big" style="--s:${Math.min(1.6, 1 + j.streak / 30)}">${fl.e}<b>${j.streak}</b></div>
+  const el = modalCard(`<div class="flame-big" style="--s:${Math.min(1.5, 1 + j.streak / 30)}">${emo(fl.k)}<b>${j.streak}</b></div>
     <h3 style="margin:.2em 0">${title}</h3>
     <div class="small">مستواك: <b>${fl.t}</b>${nxt ? ` · باقي ${nxt.n - j.streak} ${nxt.n - j.streak === 1 ? "يوم" : "أيام"} وتصير «${nxt.t}» ${nxt.e}` : ""}</div>
     <div class="daily-days">${strip}</div>
     <div class="small muted">${j.shields ? "🛡️".repeat(j.shields) + " درع يحمي شعلتك" : "كل ٧ أيام ورا بعض تكسب درع 🛡️"}${j.best > j.streak ? ` · أطول سلسلة لك: ${j.best}` : ""}</div>
     ${note}
-    <div class="surprise" tabindex="0" role="button"><div class="sp-front">🎁<b>اضغط وافتح مفاجأة اليوم</b></div><div class="sp-back" hidden>${surpriseHtml(surpriseOf(day))}</div></div>
+    <div class="surprise" tabindex="0" role="button"><div class="sp-front">${emo("gift", "emo-lg")}<b>اضغط وافتح مفاجأة اليوم</b></div><div class="sp-back" hidden>${surpriseHtml(surpriseOf(day))}</div></div>
     ${F.today && F.today.length ? `<div class="fam-box"><div class="small"><b>دخلوا اليوم:</b></div>${F.today.map(chip).join("")}</div>` : ""}
     ${others.length ? `<div class="fam-box warn"><div class="small"><b>شعلتهم بتنطفي اليوم:</b></div>${others.map(chip).join("")}<a class="btn btn-sm" target="_blank" rel="noopener" href="${wa}">ذكّرهم 📲</a></div>` : ""}
     <div class="btn-row" style="justify-content:center"><a class="btn btn-warm btn-lg" href="general.html#/daily" data-close>${I("zap")} يلا نتعلم</a><button type="button" class="btn" data-close>لاحقًا</button></div>`);
@@ -494,7 +500,7 @@ function renderEventsBar(){
       if(!T.ended) bits.push(`<span class="ev-bit">${I("trophy")} ${esc(T.prize)}</span>`);
       const href = B && B.active ? "general.html#/battle" : "compete.html#tournament";
       const meU = Auth.user(), dl = meU ? Store.get("step_daily_last_" + meU.u, null) : null;
-      const flameBtn = dl && dl.day === riyadhDay() && dl.streak ? `<button type="button" class="ev-flame" title="سلسلة الأيام">${flameOf(dl.streak).e} ${dl.streak}</button>` : "";
+      const flameBtn = dl && dl.day === riyadhDay() && dl.streak ? `<button type="button" class="ev-flame" title="سلسلة الأيام">${emo(flameOf(dl.streak).k)} ${dl.streak}</button>` : "";
       host.innerHTML = (flameBtn || bits.length) ? `<div class="ev-wrap">${flameBtn}${bits.length ? `<a class="ev-strip" href="${href}">${bits.join("")}<span class="ev-go">${I("arrow")}</span></a>` : ""}</div>` : "";
       const fb = host.querySelector(".ev-flame"); if(fb) fb.addEventListener("click", () => showDaily(Object.assign({}, dl, { claimed: false }), dl.day));
       hydrateIcons(host); return;
