@@ -178,7 +178,7 @@ const MODE_AR = { general: "إنقلش عام", train: "تدريب STEP", gramma
 async function pointsLog(u){
   const ov = modalCard(`<div class="log-wrap"><p class="muted">جارٍ تحميل السجل…</p></div>`);
   const box = ov.querySelector(".log-wrap");
-  let j; try{ j = await Auth.api("/api/log?u=" + encodeURIComponent(u)); }catch(e){ box.innerHTML = `<p class="muted">${esc(e.message)}</p><button type="button" class="btn" data-close>إغلاق</button>`; ov.querySelector("[data-close]").addEventListener("click", () => ov.remove()); return; }
+  let j; try{ j = await Auth.api("/api/points?log=" + encodeURIComponent(u)); }catch(e){ box.innerHTML = `<p class="muted">${esc(e.message)}</p><button type="button" class="btn" data-close>إغلاق</button>`; ov.querySelector("[data-close]").addEventListener("click", () => ov.remove()); return; }
   const parts = [...j.areas, ...j.extras];
   const dayOf = t => new Date(t + 3 * 3600e3).toISOString().slice(0, 10);
   let lastDay = "";
@@ -521,7 +521,7 @@ async function giftCheck(){
     }));
   }
   if(me){
-    try{ const rc = await Auth.api("/api/recap"); const r = rc && rc.recap; const key = r && "step_recap_" + r.key + "_" + me.u;
+    try{ const rc = await Auth.api("/api/points?recap=1"); const r = rc && rc.recap; const key = r && "step_recap_" + r.key + "_" + me.u;
       if(r && r.me && r.me.gained > 0 && !Store.get(key, false)) queue.push(() => new Promise(done => showRecap(r, () => { Store.set(key, true); done(); })));
     }catch(e){}
   }

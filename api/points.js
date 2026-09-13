@@ -3,6 +3,8 @@ const A = require("../lib/auth");
 const H = require("../lib/http");
 const EV = require("../data/events.js");
 const AR = require("../lib/areas");
+const RC = require("../lib/recap");
+const LG = require("../lib/log");
 
 /* الحضور اليومي بدون نقاط: سلسلة أيام متتالية، ودرع يحمي السلسلة من يوم فائت (درع لكل ٧ أيام، حدّه ٢)،
    ومين من المشاركين دخل اليوم ومين سلسلته مهددة */
@@ -48,6 +50,17 @@ module.exports = H.handler(["GET", "POST"], async (req, res) => {
     const raw = id && await db.call("HGET", "notices:" + me.u, id);
     if(raw){ let n = null; try{ n = JSON.parse(raw); }catch(e){} if(n){ n.acked = Date.now(); await db.call("HSET", "notices:" + me.u, id, JSON.stringify(n)); } }
     return H.ok(res, { ok: true });
+  }
+  const q = H.query(req);
+  /* ?log=<user>: سجل نقاط أي مشارك · ?recap=1: ملخص آخر ساعة ذهب */
+  if(q.log !== undefined){
+    const lg = await LG.userLog(String(q.log || me.u).slice(0, 40));
+    return lg ? H.ok(res, lg) : H.err(res, 404, "المستخدم غير موجود");
+  }
+  if(q.recap){
+    const win = RC.lastGolden(Date.now()); if(!win) return H.ok(res, { recap: null });
+    const r = await RC.recap(win), active = r.list.filter(x => x.gained > 0), mine = r.list.find(x => x.u === me.u) || null;
+    return H.ok(res, { recap: { id: r.id, key: r.key, title: r.title, start: r.start, end: r.end, mult: r.mult, players: active.length, top: active.slice(0, 5).map(x => ({ name: x.name, gained: x.gained, me: x.u === me.u })), me: mine } });
   }
   const wk = db.weekKey(), mk = EV.monthKey();
   const [areasFlat, extraFlat, stages, noticesFlat, tp, mp, wp, rank, mrank, wrank, earnedN, gstart] = await db.pipeline([
