@@ -78,11 +78,13 @@
     const j = await loadPoints(true); if(!j){ host.innerHTML = `<p class="muted">تعذّر التحميل.</p>`; return; }
     const rows = [...j.areas, ...j.extras].filter(r => r.points);
     const max = Math.max(1, ...rows.map(r => r.points));
-    host.innerHTML = `<div class="card sheet">${rows.length ? rows.map(r => `<div class="pts-row"><div class="pr-l">${esc(r.label)}</div><div class="pr-bar"><div style="width:${Math.round(r.points / max * 100)}%"></div></div><div class="pr-n">${r.points}</div></div>`).join("") : `<p class="muted">ما جمعت نقاطًا بعد — ابدأ بأي نشاط عليه شارة «نقاط».</p>`}
+    host.innerHTML = `<div class="btn-row" style="margin:0 0 10px"><button type="button" class="btn btn-primary btn-sm" id="myLog">${I("list")} سجل نقاطي كامل (كل جولة ووقتها)</button></div>
+      <div class="card sheet">${rows.length ? rows.map(r => `<div class="pts-row"><div class="pr-l">${esc(r.label)}</div><div class="pr-bar"><div style="width:${Math.round(r.points / max * 100)}%"></div></div><div class="pr-n">${r.points}</div></div>`).join("") : `<p class="muted">ما جمعت نقاطًا بعد — ابدأ بأي نشاط عليه شارة «نقاط».</p>`}
         <div class="pts-row total"><div class="pr-l">المجموع</div><div class="pr-bar"></div><div class="pr-n">${j.sum}</div></div>
         <p class="small muted" style="margin:10px 0 0">${j.consistent ? `${I("check")} التفصيل يطابق مجموعك تمامًا.` : `${I("info")} فرق ${j.total - j.sum} نقطة من قبل تسجيل التفصيل.`} ${j.stages.length ? `· أتممت ${j.stages.length} ${j.stages.length === 1 ? "مرحلة" : "مراحل"}.` : ""}</p></div>
       <details class="pts-where acc-help"><summary>${I("info")} ليش الأرقام تختلف؟ وكيف تنحسب النقاط؟</summary><p><b>ليش تختلف؟</b> «المجموع الكلي» كل نقاطك من أول يوم. «البطولة» تبدأ من ٩ سبتمبر وهي اللي تحدد الفائز بالجائزة. «هذا الأسبوع» يرجع صفر كل اثنين. ما فيه شي ينقص من نقاطك أبدًا.</p><p><b>كيف تنحسب؟</b> كل سؤال تجيبه صح <b>لأول مرة</b> = نقطة (الإعادة ما تكرر). ساعة الذهب (٩–١٠ مساءً يوميًا) = نقطتين لكل إجابة جديدة. إتمام مرحلة = +${j.stagePoints}. معركة الكلمات (الجمعة ٨–١٠ مساءً): الأول +٣٠، الثاني +٢٠، الثالث +١٠.</p></details>`;
     hydrateIcons(host);
+    const ml = $("#myLog"); if(ml) ml.addEventListener("click", () => pointsLog(Auth.user().u));
     if(location.hash === "#points") host.scrollIntoView({ block: "start" });
   }
   function renderWeak(){

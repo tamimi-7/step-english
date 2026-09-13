@@ -173,6 +173,30 @@ function explainHtml(q, chosen){
   h += `<div class="btn-row" style="margin-top:8px">${typeof markBtn === "function" ? markBtn(q.id) : ""}${lessonLink(t, "افتح شرح القاعدة")}</div>`;
   return h;
 }
+/* ---- سجل النقاط: شفاف للجميع — تضغط أي اسم في الترتيب وتشوف من وين جات كل نقطة ---- */
+const MODE_AR = { general: "إنقلش عام", train: "تدريب STEP", grammar: "اختبار قواعد STEP", vocab: "مفردات", reading: "قراءة / قصة", mix: "اختبار STEP شامل", wrong: "مراجعة أخطاء", challenge: "تحدي", clistening: "تجميعات استماع", cgrammar: "تجميعات قرامر", creading: "تجميعات قطع" };
+async function pointsLog(u){
+  const ov = modalCard(`<div class="log-wrap"><p class="muted">جارٍ تحميل السجل…</p></div>`);
+  const box = ov.querySelector(".log-wrap");
+  let j; try{ j = await Auth.api("/api/log?u=" + encodeURIComponent(u)); }catch(e){ box.innerHTML = `<p class="muted">${esc(e.message)}</p><button type="button" class="btn" data-close>إغلاق</button>`; ov.querySelector("[data-close]").addEventListener("click", () => ov.remove()); return; }
+  const parts = [...j.areas, ...j.extras];
+  const dayOf = t => new Date(t + 3 * 3600e3).toISOString().slice(0, 10);
+  let lastDay = "";
+  const rows = j.rounds.map(r => {
+    const d = dayOf(r.at), head = d !== lastDay ? `<tr class="log-day"><td colspan="4">${new Date(r.at).toLocaleDateString("ar-SA", { weekday: "long", day: "numeric", month: "long" })}</td></tr>` : ""; lastDay = d;
+    const note = [r.stage ? "إتمام وحدة +10" : "", r.mult > 1 && r.bonus ? `×${r.mult} فعالية` : "", r.partial ? "إجابات انحفظت بعد الخروج" : "", r.challenge ? "تحدي" : ""].filter(Boolean).join(" · ");
+    return head + `<tr><td class="log-t">${new Date(r.at).toLocaleTimeString("ar-SA", { hour: "2-digit", minute: "2-digit" })}</td><td>${MODE_AR[r.mode] || esc(r.mode)}<div class="small muted">${note}</div></td><td class="log-s">${r.score}/${r.total}</td><td class="log-p ${r.points ? "" : "muted"}">${r.points ? "+" + r.points : "0"}${r.base != null && r.points && r.base !== r.points ? `<div class="small muted">${r.base} جديد</div>` : ""}</td></tr>`;
+  }).join("");
+  box.innerHTML = `<div class="log-head">${avatarHtml(j.name, j.u)}<div><h3 style="margin:0">${esc(j.name)}</h3><div class="small muted">${j.total} نقطة · ${j.uniqueQuestions} سؤال مختلف · ${j.rounds.length} جولة${j.streak ? ` · 🔥${j.streak}` : ""}</div></div></div>
+    <div class="log-breakdown">${parts.map(p => `<div class="pts-row"><div class="pr-l">${esc(p.label)}</div><div class="pr-bar"><div style="width:${Math.round(p.points / Math.max(1, ...parts.map(x => x.points)) * 100)}%"></div></div><div class="pr-n">${p.points}</div></div>`).join("")}<div class="pts-row total"><div class="pr-l">المجموع</div><div class="pr-bar"></div><div class="pr-n">${j.sum}</div></div>${j.consistent ? "" : `<p class="small muted">فرق ${j.total - j.sum} من قبل تسجيل التفصيل.</p>`}</div>
+    <p class="small muted log-rule">${I("info")} كل سؤال = نقطة <b>مرة واحدة في العمر</b> أول ما تجاوبه صح (الإعادة = 0). ساعة الذهب ٩–١٠ مساءً ونقاط الهدايا = ×٢. إتمام وحدة = +10. السيرفر يتأكد أن كل سؤال موجود فعلًا في الموقع قبل ما يحسبه.</p>
+    <div class="table-wrap log-table"><table><thead><tr><th>الوقت</th><th>وش سوى</th><th>النتيجة</th><th>النقاط</th></tr></thead><tbody>${rows || `<tr><td colspan="4" class="muted center">ما فيه جولات محفوظة</td></tr>`}</tbody></table></div>
+    <div class="btn-row" style="justify-content:center;margin-top:10px"><button type="button" class="btn btn-primary" data-close>إغلاق</button></div>`;
+  hydrateIcons(box);
+  box.querySelectorAll("[data-close]").forEach(b => b.addEventListener("click", () => ov.remove()));
+}
+document.addEventListener("click", e => { const row = e.target.closest(".lb-row[data-log]"); if(row && row.dataset.log){ if(!Auth.user()){ toast("سجّل الدخول لعرض سجل النقاط"); return; } pointsLog(row.dataset.log); } });
+document.addEventListener("keydown", e => { if(e.key === "Enter"){ const row = e.target.closest && e.target.closest(".lb-row[data-log]"); if(row && row.dataset.log && Auth.user()) pointsLog(row.dataset.log); } });
 /* ---- نقاط معلّقة: كل إجابة صحيحة تنحفظ فورًا، فلو علق الموقع أو خرجت قبل نهاية الاختبار ما تضيع ---- */
 const Pending = {
   key(){ const u = Auth.user(); return u ? "step_pending_" + u.u : null; },
@@ -399,12 +423,33 @@ function pointsExplain(j){
   if(j.base) rows.push(`<span class="px ok">${I("check")} ${j.base} ${j.base === 1 ? "إجابة جديدة" : "إجابات جديدة"} = +${j.base}</span>`);
   if(j.bonus) rows.push(`<span class="px bonus">${I(j.bonusSource === "gift" ? "gift" : "zap")} ${esc(j.bonusLabel || "مضاعف")} ×٢ = +${j.bonus}</span>`);
   if(j.stage) rows.push(`<span class="px stage">${I("trophy")} إتمام مرحلة = +${j.stage.points}</span>`);
-  if(j.repeated) rows.push(`<span class="px muted">${I("repeat")} ${j.repeated} ${j.repeated === 1 ? "سؤال سبق أخذ نقطته" : "أسئلة سبق أخذ نقاطها"} = 0</span>`);
+  if(j.repeated) rows.push(`<span class="px muted">${I("repeat")} ${j.repeated} ${j.repeated === 1 ? "سؤال سبق أخذ نقطته" : "أسئلة سبق أخذ نقاطها"}${j.repeatedAt ? ` (آخرها ${fmtDate(j.repeatedAt)})` : ""} = 0</span>`);
   if(!j.base && j.repeated) rows.push(`<span class="px muted">${I("info")} أحسنت! بس هذي الأسئلة أخذت نقاطها من قبل — النقاط الجديدة تلقاها في دروس ووحدات ما خلصتها</span>`);
   if(!rows.length) rows.push(`<span class="px muted">ما فيه إجابات صحيحة جديدة هذه المرة</span>`);
   return rows.join("");
 }
+/* كم جمعت في الفعالية الجارية (لعرضه في الشريط أثناء ساعة الذهب) */
+function trackEventGain(j){
+  try{ const me = Auth.user(); if(!me || !j || !j.points || j.bonusSource !== "events" || typeof EVENTS === "undefined") return; const a = EVENTS.status().active[0]; if(!a) return; const k = `step_evgain_${a.id}_${a.startsAt}_${me.u}`; Store.set(k, (Number(Store.get(k, 0)) || 0) + j.points); }catch(e){}
+}
+function eventGain(a){ try{ const me = Auth.user(); return me && a ? Number(Store.get(`step_evgain_${a.id}_${a.startsAt}_${me.u}`, 0)) || 0 : 0; }catch(e){ return 0; } }
+/* ملخص ساعة الذهب بعد انتهائها: تبريكات + كم ارتفع */
+function showRecap(r, done){
+  const m = r.me, pct = m.before > 0 ? Math.round(m.gained / m.before * 100) : null;
+  const rankTxt = m.rankBefore && m.rankAfter ? (m.rankAfter < m.rankBefore ? `ترتيبك صعد من #${m.rankBefore} إلى <b>#${m.rankAfter}</b> ⬆️` : m.rankAfter === 1 ? `ثبّت الصدارة <b>#1</b> 👑` : `ترتيبك <b>#${m.rankAfter}</b>`) : m.rankAfter ? `ترتيبك <b>#${m.rankAfter}</b>` : "";
+  const topOther = r.top.find(x => !x.me);
+  const cheer = m.rankAfter === 1 && r.top[0] && r.top[0].me ? "أنت الأول والأكثر تجميعًا! حافظ عليها بكرة 👑" : r.top[0] && !r.top[0].me ? `${esc(r.top[0].name)} جمع +${r.top[0].gained} الليلة — بكرة دورك 💪` : "بكرة ساعة ذهب جديدة الساعة ٩ ⭐";
+  modalCard(`<div class="gift-box live">${emo("party")}</div><h3>خلصت ${esc(r.title)}!</h3>
+    <div class="gift-mult">+${m.gained} نقطة</div>
+    <div class="recap-grid"><div><small>مجموعك</small><b>${m.before} ← ${m.after}</b>${pct != null ? `<span class="up">▲ ${pct}٪</span>` : ""}</div><div><small>أسئلة جديدة</small><b>${m.newQ}</b><span class="small muted">في ${m.rounds} ${m.rounds >= 3 && m.rounds <= 10 ? "جولات" : "جولة"}</span></div></div>
+    ${rankTxt ? `<p style="margin:6px 0">${rankTxt}</p>` : ""}
+    ${r.top.length > 1 ? `<div class="recap-top"><div class="small muted">الأكثر تجميعًا الليلة</div>${r.top.slice(0, 3).map((x, i) => `<div class="rt ${x.me ? "me" : ""}"><span>${["🥇", "🥈", "🥉"][i]} ${esc(x.name)}</span><b>+${x.gained}</b></div>`).join("")}</div>` : ""}
+    <p class="small muted">${cheer}</p>
+    <div class="btn-row" style="justify-content:center"><a class="btn btn-warm btn-lg" href="compete.html" data-close>${I("trophy")} شوف الترتيب</a><button type="button" class="btn" data-close>تمام</button></div>`, done);
+  try{ if(typeof SFX !== "undefined") SFX.win(); confetti(); }catch(e){}
+}
 function pointsReveal(j, host){
+  trackEventGain(j);
   if(!host) return;
   if(j.already){ host.innerHTML = `<div class="note warn" style="justify-content:center"><span class="ic">${I("info")}</span><p>سبق أن أنجزت هذا التحدي، فلم تُحسب هذه المحاولة.</p></div>`; hydrateIcons(host); return; }
   const gain = j.points || 0, total = j.totalPoints || 0, before = Math.max(0, total - gain);
@@ -474,6 +519,11 @@ async function giftCheck(){
         () => { Store.set(key, true); done(); });
       try{ if(typeof SFX !== "undefined") SFX.win(); confetti(); }catch(e){}
     }));
+  }
+  if(me){
+    try{ const rc = await Auth.api("/api/recap"); const r = rc && rc.recap; const key = r && "step_recap_" + r.key + "_" + me.u;
+      if(r && r.me && r.me.gained > 0 && !Store.get(key, false)) queue.push(() => new Promise(done => showRecap(r, () => { Store.set(key, true); done(); })));
+    }catch(e){}
   }
   for(const show of queue) await show();
   await dailyCheck();
@@ -606,7 +656,7 @@ function renderEventsBar(){
       if(!isHome && !(B && B.active) && !act && !gf){ host.innerHTML = ""; return; }
       const bits = [];
       if(B && B.active) bits.push(`<span class="ev-bit hot">${I("swords")} ${esc(B.title)} الآن!</span>`);
-      else if(act) bits.push(`<span class="ev-bit hot">${I("zap")} ${esc(act.title)}: نقاط ×${s.mult} · ${fmtLeft(act.endsAt - s.now)}</span>`);
+      else if(act){ const g = eventGain(act); bits.push(`<span class="ev-bit hot">${I("zap")} ${esc(act.title)}: ×${s.mult} · ${fmtLeft(act.endsAt - s.now)}${g ? ` · جمعت +${g}` : ""}</span>`); }
       else if(s.next && s.next.startsAt - s.now < 6 * 3600e3) bits.push(`<span class="ev-bit">${I("clock")} ${esc(s.next.title)} بعد ${fmtLeft(s.next.startsAt - s.now)}</span>`);
       else if(B && B.next) bits.push(`<span class="ev-bit">${I("swords")} ${esc(B.title)} بعد ${fmtLeft(B.next.start - s.now)}</span>`);
       if(gf) bits.push(`<span class="ev-bit gift">${I("gift")} هديتك ×${gf.mult} · ${fmtLeft(gf.endsAt - s.now)}</span>`);
@@ -634,7 +684,7 @@ const fmtDate = t => new Date(t).toLocaleDateString("ar-SA", { month: "short", d
 function masteryClass(p){ return p < 40 ? "m-low" : p < 70 ? "m-mid" : "m-high"; }
 function lbRow(r, showSub){
   const medal = r.rank <= 3 ? I("medal", "medal-" + r.rank) : r.rank;
-  return `<div class="lb-row ${r.me ? "me" : ""} ${r.rank <= 3 ? "top" + r.rank : ""}">
+  return `<div class="lb-row ${r.me ? "me" : ""} ${r.rank <= 3 ? "top" + r.rank : ""}" data-log="${esc(r.u || "")}" title="اضغط لعرض سجل النقاط" role="button" tabindex="0">
     <div class="rk ${r.rank <= 3 ? "medal" : ""}">${medal}</div>${avatarHtml(r.name, r.u)}
     <div class="nm">${esc(r.name)}${r.streak >= 2 ? ` <span class="lb-flame" title="${r.streak} أيام ورا بعض">${flameOf(r.streak).e}${r.streak}</span>` : ""}${showSub ? `<div class="sub">${r.quizzes || 0} اختبار · دقة ${r.avg || 0}٪${r.best ? " · أفضل نتيجة " + r.best + "٪" : ""}</div>` : ""}</div>
     <div class="pt">${r.points} نقطة</div></div>`;

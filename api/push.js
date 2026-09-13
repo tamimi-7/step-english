@@ -4,6 +4,7 @@ const A = require("../lib/auth");
 const H = require("../lib/http");
 const P = require("../lib/push");
 const EV = require("../data/events.js");
+const RC = require("../lib/recap");
 
 /* تذكير يومي واحد لكل مشترك (الساعة ٨ مساءً بتوقيت السعودية): الشعلة المهددة أولًا، ثم معركة الجمعة، ثم ساعة الذهب */
 async function dailyJob(){
@@ -23,6 +24,22 @@ async function dailyJob(){
   return { users: users.length, sent };
 }
 
+/* بعد ساعة الذهب: تبريكات لكل مشترك جمع نقاط، مع كم ارتفع */
+async function recapJob(){
+  const win = RC.lastGolden(Date.now()); if(!win) return { sent: 0, reason: "no-window" };
+  const r = await RC.recap(win);
+  const users = (await db.call("SMEMBERS", "push:users")) || [];
+  let sent = 0;
+  for(const u of users.slice(0, 200)){
+    const m = r.list.find(x => x.u === u); if(!m || !m.gained) continue;
+    const top = r.list[0];
+    const body = `ارتفع مجموعك من ${m.before} إلى ${m.after}${m.rankAfter ? ` · ترتيبك #${m.rankAfter}` : ""}${top && top.u !== u ? ` · الأكثر تجميعًا: ${top.name} +${top.gained}` : " · أنت الأكثر تجميعًا الليلة 👑"}`;
+    const rr = await P.sendToUser(u, { title: `🎉 جمعت +${m.gained} في ساعة الذهب!`, body, url: "/compete.html", tag: "recap" });
+    sent += rr.sent || 0;
+  }
+  return { sent, players: r.list.filter(x => x.gained > 0).length };
+}
+
 module.exports = H.handler(["GET", "POST"], async (req, res) => {
   const q = H.query(req);
   if(req.method === "GET"){
@@ -31,7 +48,7 @@ module.exports = H.handler(["GET", "POST"], async (req, res) => {
       const want = process.env.CRON_SECRET || "", got = String(req.headers.authorization || "").replace(/^Bearer\s+/i, "");
       const okSecret = want && got.length === want.length && crypto.timingSafeEqual(Buffer.from(got), Buffer.from(want));
       if(!okSecret) return H.err(res, 401, "غير مصرّح");
-      return H.ok(res, await dailyJob());
+      return H.ok(res, q.cron === "recap" ? await recapJob() : await dailyJob());
     }
     return H.ok(res, { key: P.publicKey(), enabled: P.enabled() });
   }

@@ -45,7 +45,7 @@
       if(j.stage){ GEN.units[j.stage.unit] = true; saveGen(); }
       const box = $("#ptsBox");
       if(box) pointsReveal(j, box);
-      else if(j.points > 0){ toast(`+${j.points} نقطة في المنافسة${j.mult > 1 ? " (×" + j.mult + " فعالية)" : ""}`); if(typeof SFX !== "undefined") SFX.coin(); }
+      else if(j.points > 0){ trackEventGain(j); toast(`+${j.points} نقطة في المنافسة${j.mult > 1 ? " (×" + j.mult + " فعالية)" : ""}`); if(typeof SFX !== "undefined") SFX.coin(); }
       Progress.sync(true);
     }catch(e){}
   }

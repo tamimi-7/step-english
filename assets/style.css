@@ -1286,3 +1286,27 @@ body.sheet-open{overflow:hidden}
   .q-card .quiz-nav{bottom:calc(66px + env(safe-area-inset-bottom))}
   body.focus-open .q-card .quiz-nav{bottom:calc(10px + env(safe-area-inset-bottom))}
 }
+
+/* سجل النقاط */
+.gift-card:has(.log-wrap){max-width:560px;width:calc(100% - 20px);max-height:88vh;overflow:auto;text-align:start}
+.log-head{display:flex;align-items:center;gap:10px;margin-bottom:8px}
+.log-breakdown{margin:8px 0}
+.log-rule{line-height:1.8}
+.log-table table{font-size:.86rem}
+.log-table td,.log-table th{padding:6px 6px;vertical-align:top}
+.log-table .log-t{white-space:nowrap;color:var(--muted)}
+.log-table .log-s{white-space:nowrap;direction:ltr;text-align:center}
+.log-table .log-p{font-weight:800;color:var(--ok);white-space:nowrap;text-align:center}
+.log-table .log-day td{background:var(--surface2);font-weight:700;font-size:.8rem}
+.lb-row[data-log]{cursor:pointer}
+.lb-row[data-log]:hover{outline:2px solid var(--primary)}
+
+/* ملخص الفعالية */
+.recap-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:8px 0}
+.recap-grid > div{background:var(--surface2);border-radius:12px;padding:8px}
+.recap-grid small{display:block;color:var(--muted);font-size:.75rem}
+.recap-grid b{display:block;font-size:1.05rem;direction:ltr}
+.recap-grid .up{color:var(--ok);font-weight:800;font-size:.85rem}
+.recap-top{margin:8px 0;text-align:start;background:var(--surface2);border-radius:12px;padding:6px 8px}
+.recap-top .rt{display:flex;justify-content:space-between;padding:4px 6px;border-radius:8px}
+.recap-top .rt.me{background:var(--ok-soft);font-weight:700}

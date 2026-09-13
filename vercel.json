@@ -20,6 +20,10 @@
     {
       "path": "/api/push?cron=daily",
       "schedule": "0 17 * * *"
+    },
+    {
+      "path": "/api/push?cron=recap",
+      "schedule": "5 19 * * *"
     }
   ]
 }
