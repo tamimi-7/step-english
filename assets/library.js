@@ -398,7 +398,7 @@
       const sb = $("#srv");
       if(!Auth.user()){ sb.innerHTML = `<p class="small muted">${I("lock")} <a href="account.html">سجّل الدخول</a> لتُحسب نقاطك في المنافسة.</p>`; hydrateIcons(sb); return; }
       if(!ids.length){ sb.innerHTML = `<p class="small muted">لا إجابات صحيحة هذه المرة — أعد قراءة القصة وحاول مجددًا.</p>`; return; }
-      try{ const j = await Auth.api("/api/result", { method: "POST", body: { mode: "reading", score, total: list.length, seconds: 0, ids, story: gloss ? null : id } }); pointsReveal(j, sb); Pending.remove(ids); if(typeof Progress !== "undefined") Progress.sync(true); }catch(e){ sb.innerHTML = `<p class="small" style="color:var(--bad)">${esc(e.message)}</p>`; }
+      try{ const j = await Auth.api("/api/result", { method: "POST", body: { mode: "reading", score, total: list.length, seconds: 0, ids, story: gloss ? null : id, tag: gloss ? "gloss" : "story" } }); pointsReveal(j, sb); Pending.remove(ids); if(typeof Progress !== "undefined") Progress.sync(true); }catch(e){ sb.innerHTML = `<p class="small" style="color:var(--bad)">${esc(e.message)}</p>`; }
     };
     show();
   };

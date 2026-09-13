@@ -14,6 +14,7 @@ const NAV_STEP = [
 ];
 const NAV_GEN = [
   { href: "general.html", label: "الرئيسية", icon: "home" },
+  { href: "general.html#/today", label: "اليوم", icon: "target" },
   { href: "general.html#/vocab", label: "المفردات", icon: "type" },
   { href: "general.html#/grammar", label: "القواعد", icon: "book" },
   { href: "general.html#/talk", label: "المحادثة", icon: "mic" },
@@ -28,7 +29,7 @@ const NAV_LANDING = [
   { href: "compete.html", label: "تنافس", icon: "trophy" }
 ];
 const TABS_STEP = ["step.html", "train.html", "quiz.html", "compete.html", "account.html"];
-const TABS_GEN = ["general.html", "library.html", "general.html#/games", "compete.html", "account.html"];
+const TABS_GEN = ["general.html", "general.html#/today", "library.html", "compete.html", "account.html"];
 const TABS_LANDING = ["index.html", "general.html", "step.html", "compete.html", "account.html"];
 const GEN_PAGES = ["general.html", "library.html"];
 const STEP_PAGES = ["step.html", "train.html", "quiz.html", "collections.html", "grammar.html", "vocabulary.html", "reading.html", "listening.html", "tips.html"];
@@ -368,7 +369,7 @@ function injectHead(){
 function genSectionOf(hash){
   const p = String(hash || "").replace(/^#\/?/, "").split("/"), k = p[0] || "";
   if(k === "game") return p[2] ? "vocab" : "games";
-  return ({ theme: "vocab", review: "vocab", vocab: "vocab", lesson: "grammar", practice: "grammar", grammar: "grammar", talk: "talk", dialogue: "talk", roleplay: "talk", speak: "talk", verbs: "verbs", verbquiz: "verbs", games: "games", battle: "games" })[k] || "";
+  return ({ theme: "vocab", review: "vocab", vocab: "vocab", lesson: "grammar", practice: "grammar", grammar: "grammar", talk: "talk", dialogue: "talk", roleplay: "talk", speak: "talk", verbs: "verbs", verbquiz: "verbs", games: "games", battle: "today", today: "today", wordle: "today", golden: "today" })[k] || "";
 }
 function navIsActive(h, cur){
   const [p, hs] = h.split("#"); if(p !== cur) return false;

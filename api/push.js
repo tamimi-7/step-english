@@ -5,6 +5,7 @@ const H = require("../lib/http");
 const P = require("../lib/push");
 const EV = require("../data/events.js");
 const RC = require("../lib/recap");
+const DL = require("../lib/daily");
 
 /* تذكير يومي واحد لكل مشترك (الساعة ٨ مساءً بتوقيت السعودية): الشعلة المهددة أولًا، ثم معركة الجمعة، ثم ساعة الذهب */
 async function dailyJob(){
@@ -16,6 +17,7 @@ async function dailyJob(){
     const [cur, last] = await db.call("HMGET", "streak:" + u, "cur", "last") || [];
     let msg;
     if(Number(cur) >= 2 && last === yest) msg = { title: `🔥 شعلتك ${cur} أيام بتنطفي الليلة!`, body: "ادخل الحين وحافظ على سلسلتك — دقيقة وحدة تكفي.", url: "/general.html#/next", tag: "streak" };
+    else if(await (async () => { try{ const qs = await DL.questState(u, now), w = await DL.wordleState(u, now); const left = qs.quests.filter(x => !x.done).length; if(!left && w.done) return false; msg = { title: `${qs.theme.e} ${qs.theme.t}: باقي لك ${left ? `${left} من مهام اليوم` : "كلمة اليوم"}`, body: `${left ? qs.quests.filter(x => !x.done).map(x => x.t).join(" · ") : ""}${!w.done ? (left ? " · " : "") + "وكلمة اليوم تنتظرك 🔤" : ""} — والصندوق +${qs.chest.pts} لو خلصتها كلها`, url: "/general.html#/today", tag: "quests" }; return true; }catch(e){ return false; } })()){ /* تم */ }
     else if(riyadhDow === 5) msg = { title: "⚔️ معركة الكلمات قائمة الحين", body: "٦٠ ثانية بنفس الكلمات للجميع، والأول يكسب +٣٠ نقطة. تنتهي الساعة ١٠.", url: "/general.html#/battle", tag: "battle" };
     else if(last !== today) msg = { title: "⭐ تحدي ساعة الذهب الساعة ٩ مساءً", body: "٢٠ سؤال جديد على مستواك، كل سؤال بنقطتين — مرة واحدة باليوم!", url: "/general.html#/golden", tag: "golden" };
     if(!msg) continue;

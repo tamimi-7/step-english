@@ -44,6 +44,8 @@ module.exports = H.handler(["GET", "POST"], async (req, res) => {
   let rejected = rawIds.length - rawIds.filter(VAL.isValid).length;
   const unit = b.unit && UNIT_RE.test(String(b.unit)) ? String(b.unit) : null;
   const story = b.story && /^[a-z0-9-]{1,40}$/.test(String(b.story)) ? String(b.story) : null;
+  const TAGS = ["daily", "unit", "story", "gloss", "practice", "review", "golden", "game", "roleplay", "verbs"];
+  let tag = TAGS.includes(b.tag) ? b.tag : null; if(!tag && unit) tag = "unit"; if(!tag && story) tag = "story";
   const ev = EV.status();
   const gift = await giftState(me);
   const giftMult = gift ? gift.mult : 1;
@@ -93,7 +95,7 @@ module.exports = H.handler(["GET", "POST"], async (req, res) => {
     const partial = !!b.partial;
     if(!partial){ stats.quizzes += 1; stats.correct += score; stats.answered += total; }
     if(!partial) stats.best = Math.max(stats.best || 0, Math.round(score / total * 100)); stats.last = at;
-    const rec = { mode, partial: partial || undefined, score, total, seconds, at, challenge: challengeId, points, base: newIds.length, bonus, mult, stage: stage ? stage.unit : null, story: storyBonus ? storyBonus.id : null };
+    const rec = { mode, partial: partial || undefined, score, total, seconds, at, challenge: challengeId, points, base: newIds.length, bonus, mult, stage: stage ? stage.unit : null, story: storyBonus ? storyBonus.id : null, tag: tag || undefined, golden: ids.some(id => id.startsWith("gh-")) || undefined };
     const cmds = [
       ["LPUSH", "results:" + me.u, JSON.stringify(rec)], ["LTRIM", "results:" + me.u, 0, 499],
       ["SET", "stats:" + me.u, JSON.stringify(stats)], ["HSET", "names", me.u, me.name]

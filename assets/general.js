@@ -37,10 +37,10 @@
   const xpNext = xp => { const l = xpLevel(xp); return { l, cur: xp - 60 * (l - 1) * (l - 1), need: 60 * (l * l) - 60 * (l - 1) * (l - 1) }; };
   const TITLES = ["مبتدئ", "متعلم", "مثابر", "متمكن", "متقدم", "طليق", "خبير", "أستاذ"];
   const levelTitle = l => TITLES[Math.min(TITLES.length - 1, Math.floor((l - 1) / 3))];
-  async function postPoints(score, total, seconds, ids, unit){
-    if(!Auth.user() || ((!ids || !ids.length) && !unit)) return;
+  async function postPoints(score, total, seconds, ids, unit, tag){
+    if(!Auth.user() || ((!ids || !ids.length) && !unit && !tag)) return;
     try{
-      const j = await Auth.api("/api/result", { method: "POST", body: { mode: "general", score, total, seconds: seconds || 0, ids: ids || [], unit: unit || null } });
+      const j = await Auth.api("/api/result", { method: "POST", body: { mode: "general", score, total, seconds: seconds || 0, ids: ids || [], unit: unit || null, tag: tag || null } });
       Pending.remove(ids || []);
       if(j.stage){ GEN.units[j.stage.unit] = true; saveGen(); }
       const box = $("#ptsBox");
@@ -201,8 +201,9 @@
       <section class="hero gen-hero gen-simple">
         <h1>تعلّم الإنجليزية <mark>خطوة بخطوة</mark></h1>
         <p>مستواك الآن <b>${cur} · ${LVN[cur]}</b> · الوحدة <b>${nuIdx} — ${esc(nu.t)}</b><br><span class="small">خطوتك التالية: ${esc(ns.label)}</span></p>
-        <div class="actions"><a class="btn btn-light" href="${ns.href}">${I("zap")} أكمل التعلّم</a><a class="btn btn-outline-light" href="#/daily">${I("calendar")} تحدي اليوم${daily ? " ✓" : ""} ${ptsTag()}</a>${due ? `<a class="btn btn-outline-light" href="#/review">${I("repeat")} راجع ${due} ${due > 10 || due < 3 ? "كلمة" : "كلمات"}</a>` : ""}</div>
+        <div class="actions"><a class="btn btn-light" href="${ns.href}">${I("zap")} أكمل التعلّم</a><a class="btn btn-outline-light" href="#/today">${I("target")} مهام اليوم</a>${due ? `<a class="btn btn-outline-light" href="#/review">${I("repeat")} راجع ${due} ${due > 10 || due < 3 ? "كلمة" : "كلمات"}</a>` : ""}</div>
       </section>
+      ${Auth.user() ? `<a class="card today-card" href="#/today" id="todayCard"><span class="tc-e">🎯</span><div class="tc-b"><b>مهام اليوم</b><div class="small muted">جارٍ التحميل…</div></div><span class="tc-go">${I("arrow")}</span></a>` : ""}
       <div class="gen-stats">
         <div class="gs">${emo("star", "gs-emo")}<div class="gs-b"><div class="gs-n">${GEN.xp}</div><div class="gs-l">XP · المستوى ${xp.l}</div>${bar(Math.round(xp.cur / xp.need * 100))}</div></div>
         <div class="gs">${emo("fire", "gs-emo")}<div class="gs-b"><div class="gs-n">${flame}</div><div class="gs-l">${flame === 1 ? "يوم ورا بعض" : "أيام ورا بعض"}</div></div></div>
@@ -224,6 +225,7 @@
           <a class="card link-card c-blue" href="#/verbs"><div class="menu-emo">${emo("repeat")}</div><h3>تصريف الأفعال</h3><p class="muted small">${(window.GEN_VERBS || []).length} فعلًا: الماضي، بعد have، وing — مع بحث واختبار</p></a>
         </div>
       </section></div>`);
+    if(Auth.user()) Auth.api("/api/points?today=1").then(t => { const c = $("#todayCard"); if(!c) return; const q = t.quests, n = q.quests.filter(x => x.claimed || x.done).length, toClaim = q.quests.filter(x => x.done && !x.claimed).length + (q.chest.ready && !q.chest.claimed ? 1 : 0); c.querySelector(".tc-e").textContent = q.theme.e; c.querySelector(".tc-b").innerHTML = `<b>${esc(q.theme.t)} · مهام اليوم ${n}/3</b><div class="small muted">${t.wordle.done ? (t.wordle.won ? `كلمة اليوم ✓ (${t.wordle.guesses.length}/6)` : "كلمة اليوم ✗") : "🔤 كلمة اليوم تنتظرك"} · ${q.chest.claimed ? "🎁 فتحت الصندوق" : `🎁 الصندوق +${q.chest.pts}`}${toClaim ? ` · <b class="tc-hot">${toClaim} جاهزة للاستلام!</b>` : ""}</div>`; }).catch(() => {});
     if(Auth.user()) Auth.api("/api/me").then(m => { const n = $("#ptsCardN"), sub = $("#ptsCardSub"); if(n) n.textContent = m.points || 0; if(sub) sub.textContent = "نقطة" + (m.monthRank ? ` · البطولة #${m.monthRank}` : m.rank ? ` · #${m.rank}` : ""); }).catch(() => {});
   };
 
@@ -567,7 +569,9 @@
   };
 
   /* ---------- daily ---------- */
-  routes.daily = () => {
+  routes.daily = () => { DAILY_TAG = true; return dailyRoute(); };
+  let DAILY_TAG = false;
+  const dailyRoute = () => {
     const key = dayKey(); const already = GEN.daily[key];
     const lv = currentLevel(); const ths = levelThemes(lv);
     const dueQs = shuffle(dueWordIds()).slice(0, 3).map(qFromWordId).filter(Boolean);
@@ -578,7 +582,7 @@
     const lessons = G.filter(l => l.lvl === lv); const gq = shuffle(lessons).slice(0, 3).map(l => grammarQ(l, Math.floor(Math.random() * l.practice.length)));
     const ds = shuffle(D.filter(d => d.lvl === lv)); const dq = []; for(const d of ds){ const cand = d.lines.map((_, i) => dialogQ(d, i)).filter(Boolean); if(cand.length) dq.push(cand[Math.floor(Math.random() * cand.length)]); if(dq.length === 2) break; }
     const list = shuffle([...dueQs, ...newQs, ...gq, ...dq]);
-    runQuiz({ title: "تحدي اليوم", header: already ? `<div class="note info"><span class="ic">${I("info")}</span><p>أنجزت تحدي اليوم (${already.score}/${already.total}). هذه جولة تدريب بدون نقاط.</p></div>` : "", list, backHref: "#/", xpPer: already ? 0 : 5, onDone: (s, n, secs, ids) => { if(!already){ GEN.daily[key] = { score: s, total: n }; gainXP(50, true); saveGen(); postPoints(s, n, secs, ids); } resultCard("تحدي اليوم", s, n, already ? "" : `<p class="muted">+${50 + s * 5} XP · عد غدًا لتحدٍ جديد وحافظ على سلسلتك ${I("fire")}</p>`, "#/", "#/daily"); } });
+    runQuiz({ title: "تحدي اليوم", header: already ? `<div class="note info"><span class="ic">${I("info")}</span><p>أنجزت تحدي اليوم (${already.score}/${already.total}). هذه جولة تدريب بدون نقاط.</p></div>` : "", list, backHref: "#/", xpPer: already ? 0 : 5, onDone: (s, n, secs, ids) => { if(!already){ GEN.daily[key] = { score: s, total: n }; gainXP(50, true); saveGen(); postPoints(s, n, secs, ids, null, DAILY_TAG ? "daily" : null); } resultCard("تحدي اليوم", s, n, already ? "" : `<p class="muted">+${50 + s * 5} XP · عد غدًا لتحدٍ جديد وحافظ على سلسلتك ${I("fire")}</p>`, "#/", "#/daily"); } });
   };
 
   /* ---------- unit test ---------- */
@@ -715,6 +719,94 @@
       postPoints(sc, n, secs, ids);
       resultCard("تحدي ساعة الذهب", sc, n, `<p class="muted">+${sc * 6} XP · باقي على نهاية الساعة ${fmtLeft(Math.max(0, act.endsAt - Date.now()))}</p>`, "#/golden", null, { href: "compete.html", label: "شوف الترتيب بعد التحدي" });
     } });
+  };
+
+  /* ---------- اليوم: مهام اليوم + كلمة اليوم + ساعة الذهب + هدف العائلة ---------- */
+  const QICON = { story: "📖", gloss: "🔤", daily: "📅", unit: "🏆", golden: "⭐", step: "🎯", wordle: "🧩", battle: "⚔️", perfect: "💯", rounds4: "🔁" };
+  routes.today = async () => {
+    if(!Auth.user()){ render(crumb([{ t: "اليوم" }]) + `<div class="card center sheet"><h2>سجّل الدخول</h2><p class="muted">مهام اليوم وكلمة اليوم تحتاج حساب عشان تنحسب نقاطك.</p><a class="btn btn-primary" href="account.html?next=general.html%23/today">تسجيل الدخول</a></div>`); return; }
+    render(crumb([{ t: "اليوم" }]) + `<div class="card center sheet"><p class="muted">جارٍ تجهيز يومك…</p></div>`);
+    let t; try{ t = await Auth.api("/api/points?today=1"); }catch(e){ render(crumb([{ t: "اليوم" }]) + `<div class="card center sheet"><p class="muted">${esc(e.message)}</p><button type="button" class="btn" onclick="location.reload()">حاول مرة ثانية</button></div>`); return; }
+    if(!location.hash.startsWith("#/today")) return;
+    const q = t.quests, w = t.wordle, f = t.family;
+    const s = EVENTS.status(), gAct = s.active.find(a => a.id === "golden"), gNext = (s.upcoming || []).find(a => a.id === "golden"), gDone = (GEN.golden || {})[EVENTS.dateKey(Date.now())];
+    const B = s.battle;
+    const qRow = x => `<div class="quest ${x.claimed ? "claimed" : x.done ? "done" : ""}"><span class="q-ic">${x.claimed ? "✅" : QICON[x.key] || "🎯"}</span><div class="q-b"><div class="q-t">${esc(x.t)}</div>${bar(Math.round(x.progress / x.goal * 100), x.done ? "ok" : "")}<div class="small muted">${x.progress}/${x.goal}</div></div><div class="q-a">${x.claimed ? `<span class="badge ok">+${x.pts}</span>` : x.done ? `<button type="button" class="btn btn-warm btn-sm" data-claim="${x.i}">استلم +${x.pts}</button>` : x.href ? `<a class="btn btn-sm" href="${x.href}">ابدأ</a>` : `<span class="small muted">+${x.pts}</span>`}</div></div>`;
+    const claimedN = q.quests.filter(x => x.claimed).length;
+    render(crumb([{ t: "اليوم" }]) + `
+      <div class="card sheet today-head"><div class="th-e">${q.theme.e}</div><div><h1 style="margin:0">${esc(q.theme.t)}</h1><p class="muted small" style="margin:2px 0 0">كل يوم له طابع ومهام جديدة — خلّص الثلاث وافتح الصندوق</p></div></div>
+      <div class="card sheet"><div class="section-title"><h2 style="margin:0">🎯 مهام اليوم</h2><span class="badge">${claimedN}/3</span></div>${q.quests.map(qRow).join("")}
+        <div class="chest ${q.chest.claimed ? "open" : q.chest.ready ? "ready" : ""}"><span class="ch-e">${q.chest.claimed ? "🎉" : "🎁"}</span><div class="ch-b"><b>${q.chest.claimed ? `فتحت صندوق اليوم (+${q.chest.pts})` : q.chest.ready ? "الصندوق جاهز!" : "صندوق اليوم"}</b><div class="small muted">${q.chest.claimed ? "تعال بكرة لمهام جديدة" : `خلّص المهام الثلاث واستلمها عشان يفتح (+${q.chest.pts})`}</div></div>${q.chest.ready && !q.chest.claimed ? `<button type="button" class="btn btn-warm" data-claim="chest">افتح 🎁</button>` : ""}</div>
+      </div>
+      <div class="today-grid">
+        <a class="card link-card today-tile wordle-tile" href="#/wordle"><div class="tt-e">🧩</div><h3>كلمة اليوم</h3><p class="small muted">${w.done ? (w.won ? `حليتها بـ ${w.guesses.length} محاولات ✓ · +${w.points}` : "ما لحقت عليها — بكرة كلمة جديدة") : w.guesses.length ? `محاولة ${w.guesses.length}/6 — كمّل!` : "خمّن الكلمة الإنجليزية بـ ٦ محاولات · حتى +٦"}</p>${w.family.length ? `<div class="small">${w.family.slice(0, 4).map(x => `${esc(x.name)} ${x.won ? "✓" + x.tries : x.done ? "✗" : "…"}`).join(" · ")}</div>` : ""}${w.streak > 1 ? `<div class="small">🔥 ${w.streak} أيام ورا بعض</div>` : ""}</a>
+        <a class="card link-card today-tile" href="#/golden"><div class="tt-e">⭐</div><h3>تحدي ساعة الذهب</h3><p class="small muted">${gDone ? `خلصته اليوم: ${gDone.score}/${gDone.total} ✓` : gAct ? `قائم الحين! باقي ${fmtLeft(gAct.endsAt - s.now)}` : gNext ? `يبدأ بعد ${fmtLeft(gNext.startsAt - s.now)} (٩–١٠ مساءً)` : "كل يوم ٩–١٠ مساءً"} · ٢٠ سؤال × نقطتين</p></a>
+        ${B ? `<a class="card link-card today-tile" href="#/battle"><div class="tt-e">⚔️</div><h3>معركة الكلمات</h3><p class="small muted">${B.active ? "قائمة الحين! ادخل" : B.next ? `الجمعة ٨–١٠ مساءً · بعد ${fmtLeft(B.next.start - s.now)}` : ""} · الأول +٣٠</p></a>` : ""}
+      </div>
+      <div class="card sheet family-goal"><div class="section-title"><h2 style="margin:0">👨‍👩‍👧 هدف العائلة لهالأسبوع</h2><span class="badge ${f.reached ? "ok" : ""}">${f.reached ? "وصلنا! 🎉" : `${f.sum}/${f.target}`}</span></div>
+        <p class="small muted" style="margin:4px 0 8px">كلنا مع بعض نتعلّم <b>${f.target}</b> سؤال جديد هالأسبوع، وكل واحد ساهم بـ ${f.minShare}+ ياخذ <b>+${f.pts}</b>. تعاون مو منافسة 🤝</p>
+        ${bar(Math.min(100, Math.round(f.sum / f.target * 100)), f.reached ? "ok" : "")}
+        <div class="fam-list">${f.members.length ? f.members.map(m => `<span class="fam ${m.me ? "me" : ""}">${esc(m.name)} <b>${m.got}</b></span>`).join("") : `<span class="small muted">ما أحد بدأ هالأسبوع — كن الأول!</span>`}</div>
+        ${f.reached ? (f.claimed ? `<div class="note ok"><span class="ic">${I("check")}</span><p>استلمت +${f.pts}</p></div>` : f.eligible ? `<button type="button" class="btn btn-warm" data-family="1">استلم +${f.pts} 🤝</button>` : `<p class="small muted">تحتاج ${f.minShare} سؤال جديد على الأقل هالأسبوع عشان تستلم (عندك ${f.mine}).</p>`) : `<p class="small muted">ساهمتك هالأسبوع: <b>${f.mine}</b> سؤال جديد${f.mine < f.minShare ? ` (تحتاج ${f.minShare} عشان تستلم الجائزة)` : " ✓"}</p>`}
+      </div>`);
+    const again = () => { if(location.hash.startsWith("#/today")) routes.today(); };
+    document.querySelectorAll("#app [data-claim]").forEach(b => b.addEventListener("click", async () => {
+      b.disabled = true;
+      try{ const r = await Auth.api("/api/points", { method: "POST", body: { quest: b.dataset.claim } }); sfx("coin"); if(b.dataset.claim === "chest"){ try{ confetti(); }catch(e){} } toast(`+${r.points} نقطة — مجموعك ${r.total}`, 2600); if(typeof loadPoints === "function") loadPoints(true); after(again, 500); }
+      catch(e){ toast(e.message, 3500); b.disabled = false; }
+    }));
+    const fb = document.querySelector("#app [data-family]");
+    if(fb) fb.addEventListener("click", async () => { fb.disabled = true; try{ const r = await Auth.api("/api/points", { method: "POST", body: { family: 1 } }); sfx("coin"); try{ confetti(); }catch(e){} toast(`+${r.points} من هدف العائلة 🤝`, 3000); after(again, 500); }catch(e){ toast(e.message, 3500); fb.disabled = false; } });
+  };
+
+  /* كلمة اليوم (مثل وردل): ٦ محاولات، نفس الكلمة للجميع، والخادم هو اللي يعرف الجواب */
+  routes.wordle = async () => {
+    if(!Auth.user()){ location.hash = "#/today"; return; }
+    let st; try{ st = await Auth.api("/api/points?wordle=1"); }catch(e){ render(crumb([{ t: "اليوم", href: "#/today" }, { t: "كلمة اليوم" }]) + `<div class="card center sheet"><p class="muted">${esc(e.message)}</p></div>`); return; }
+    let cur = "", busy = false;
+    const KEYS = ["qwertyuiop", "asdfghjkl", "zxcvbnm"];
+    const keyState = () => { const m = {}; st.guesses.forEach(g => [...g.w].forEach((ch, i) => { const v = g.fb[i]; if(m[ch] === "g") return; if(v === "g" || (v === "y" && m[ch] !== "g") || !m[ch]) m[ch] = v === "b" && m[ch] ? m[ch] : v; })); return m; };
+    const shareText = () => `إنقلش — كلمة اليوم ${st.date} ${st.won ? st.guesses.length : "X"}/6\n` + st.guesses.map(g => [...g.fb].map(c => c === "g" ? "🟩" : c === "y" ? "🟨" : "⬛").join("")).join("\n");
+    let revealRow = -1;
+    const draw = () => {
+      if(!location.hash.startsWith("#/wordle")) return;
+      const rows = Array.from({ length: 6 }, (_, r) => { const g = st.guesses[r]; const letters = g ? [...g.w] : r === st.guesses.length && !st.done ? [...cur.padEnd(5)] : Array(5).fill(" "); return `<div class="wd-row ${r === st.guesses.length && !st.done ? "cur" : ""} ${r === revealRow ? "reveal" : ""}">${letters.map((ch, i) => `<span class="wd-tile ${g ? "t-" + g.fb[i] : ch.trim() ? "filled" : ""}" style="--d:${i * 90}ms">${ch.trim() ? esc(ch.toUpperCase()) : ""}</span>`).join("")}</div>`; }).join("");
+      const ks = keyState();
+      const kb = st.done ? "" : `<div class="wd-kb">${KEYS.map((row, ri) => `<div class="wd-kr">${ri === 2 ? `<button type="button" class="wd-k wide" data-k="enter">إدخال</button>` : ""}${[...row].map(ch => `<button type="button" class="wd-k ${ks[ch] ? "t-" + ks[ch] : ""}" data-k="${ch}">${ch.toUpperCase()}</button>`).join("")}${ri === 2 ? `<button type="button" class="wd-k wide" data-k="back">⌫</button>` : ""}</div>`).join("")}</div>`;
+      const fam = st.family.filter(x => !x.me);
+      const end = st.done ? `<div class="card center sheet wd-end">${st.won ? `<h2 style="margin:.2em 0">🎉 حليتها بـ ${st.guesses.length} ${st.guesses.length === 1 ? "محاولة" : "محاولات"}!</h2><div class="gift-mult">+${st.points} نقطة</div>` : `<h2 style="margin:.2em 0">ما لحقت عليها 😅</h2>`}
+          <div class="wd-ans"><span class="en">${esc(st.answer.w.toUpperCase())}</span> ${spk(st.answer.w, "sm")} = <b>${esc(st.answer.ar)}</b></div>
+          ${st.answer.ex ? `<div class="ex right"><span class="en">${esc(st.answer.ex)} ${spk(st.answer.ex, "sm")}</span><span class="ar">${esc(st.answer.exAr)}</span></div>` : ""}
+          ${st.streak > 1 ? `<p>🔥 ${st.streak} أيام ورا بعض حليتها</p>` : ""}
+          <div class="btn-row" style="justify-content:center"><button type="button" class="btn btn-primary" id="wdShare">${I("link")} شارك نتيجتك</button><a class="btn" href="#/today">مهام اليوم</a></div>
+          <p class="small muted">كلمة جديدة كل يوم الساعة ١٢ بالليل</p></div>` : "";
+      render(crumb([{ t: "اليوم", href: "#/today" }, { t: "كلمة اليوم" }]) + `<div class="wordle">
+        <div class="wd-top"><h1 style="margin:0">🧩 كلمة اليوم</h1><span class="badge">${st.guesses.length}/6</span></div>
+        <p class="small muted wd-help">خمّن الكلمة الإنجليزية (٥ حروف). 🟩 الحرف في مكانه · 🟨 موجود بس بمكان ثاني · ⬛ مو موجود. كل ما قلّت محاولاتك زادت نقاطك (حتى +٦).</p>
+        ${st.hint ? `<div class="note tip"><span class="ic">${I("bulb")}</span><p>تلميح: معناها «<b>${esc(st.hint)}</b>»</p></div>` : ""}
+        <div class="wd-grid">${rows}</div>${kb}${end}
+        ${fam.length ? `<div class="card sheet"><h3 style="margin:0 0 6px">العائلة اليوم</h3>${fam.map(x => `<div class="wd-fam"><span>${esc(x.name)}</span><span class="small muted">${x.won ? `✓ ${x.tries}/6` : x.done ? "✗" : `يحاول… ${x.tries}/6`}</span>${x.grid ? `<span class="wd-mini">${x.grid.map(r => `<i>${[...r].map(c => `<b class="t-${c}"></b>`).join("")}</i>`).join("")}</span>` : ""}</div>`).join("")}</div>` : ""}
+      </div>`);
+      document.querySelectorAll("#app .wd-k").forEach(b => b.addEventListener("click", () => press(b.dataset.k)));
+      const sh = $("#wdShare"); if(sh) sh.addEventListener("click", async () => { const txt = shareText(); try{ if(navigator.share) await navigator.share({ text: txt }); else { await navigator.clipboard.writeText(txt); toast("انتسخت النتيجة — الصقها لأهلك 📋"); } }catch(e){ try{ await navigator.clipboard.writeText(txt); toast("انتسخت النتيجة 📋"); }catch(err){} } });
+    };
+    const shake = () => { const r = document.querySelector("#app .wd-row.cur"); if(r){ r.classList.remove("shake"); void r.offsetWidth; r.classList.add("shake"); } };
+    const press = async k => {
+      if(st.done || busy) return;
+      if(k === "back"){ cur = cur.slice(0, -1); return draw(); }
+      if(k === "enter"){
+        if(cur.length < 5){ shake(); toast("الكلمة لازم ٥ حروف"); return; }
+        busy = true;
+        try{ const r = await Auth.api("/api/points", { method: "POST", body: { wordle: cur } }); st = r.state; cur = ""; sfx(st.won ? "win" : st.done ? "wrong" : "tick"); revealRow = st.guesses.length - 1; draw(); revealRow = -1; if(st.won){ try{ confetti(); }catch(e){} if(typeof loadPoints === "function") loadPoints(true); } }
+        catch(e){ toast(e.message, 3000); shake(); }
+        busy = false; return;
+      }
+      if(/^[a-z]$/.test(k) && cur.length < 5){ cur += k; sfx("tick"); draw(); }
+    };
+    const onKey = e => { if(e.ctrlKey || e.metaKey || e.altKey) return; const k = e.key === "Enter" ? "enter" : e.key === "Backspace" ? "back" : String(e.key).toLowerCase(); if(k === "enter" || k === "back" || /^[a-z]$/.test(k)){ e.preventDefault(); press(k); } };
+    addEventListener("keydown", onKey);
+    timers.push({ clear(){ removeEventListener("keydown", onKey); } });
+    draw();
   };
 
   /* ---------- TALK ---------- */

@@ -5,6 +5,7 @@ const EV = require("../data/events.js");
 const AR = require("../lib/areas");
 const RC = require("../lib/recap");
 const LG = require("../lib/log");
+const DL = require("../lib/daily");
 
 /* الحضور اليومي بدون نقاط: سلسلة أيام متتالية، ودرع يحمي السلسلة من يوم فائت (درع لكل ٧ أيام، حدّه ٢)،
    ومين من المشاركين دخل اليوم ومين سلسلته مهددة */
@@ -46,6 +47,10 @@ module.exports = H.handler(["GET", "POST"], async (req, res) => {
   if(req.method === "POST"){
     const b = await H.body(req);
     if(b.daily) return H.ok(res, await claimDaily(me));
+    /* فعاليات اليوم */
+    if(b.quest !== undefined){ const r = await DL.claimQuest(me.u, String(b.quest)); return r.error ? H.err(res, 400, r.error) : H.ok(res, r); }
+    if(b.wordle !== undefined){ const r = await DL.wordleGuess(me.u, b.wordle); return r.error ? H.err(res, 400, r.error) : H.ok(res, r); }
+    if(b.family){ const r = await DL.claimFamily(me.u); return r.error ? H.err(res, 400, r.error) : H.ok(res, r); }
     const id = String(b.ack || "").slice(0, 60);
     const raw = id && await db.call("HGET", "notices:" + me.u, id);
     if(raw){ let n = null; try{ n = JSON.parse(raw); }catch(e){} if(n){ n.acked = Date.now(); await db.call("HSET", "notices:" + me.u, id, JSON.stringify(n)); } }
@@ -57,6 +62,8 @@ module.exports = H.handler(["GET", "POST"], async (req, res) => {
     const lg = await LG.userLog(String(q.log || me.u).slice(0, 40));
     return lg ? H.ok(res, lg) : H.err(res, 404, "المستخدم غير موجود");
   }
+  if(q.today){ const [quests, wordle, family] = await Promise.all([DL.questState(me.u), DL.wordleState(me.u), DL.familyState(me.u)]); return H.ok(res, { quests, wordle, family }); }
+  if(q.wordle){ return H.ok(res, await DL.wordleState(me.u)); }
   if(q.recap){
     const win = RC.lastGolden(Date.now()); if(!win) return H.ok(res, { recap: null });
     const r = await RC.recap(win), active = r.list.filter(x => x.gained > 0), mine = r.list.find(x => x.u === me.u) || null;
