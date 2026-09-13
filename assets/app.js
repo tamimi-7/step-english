@@ -285,7 +285,7 @@ function pointsExplain(j){
   if(j.bonus) rows.push(`<span class="px bonus">${I(j.bonusSource === "gift" ? "gift" : "zap")} ${esc(j.bonusLabel || "مضاعف")} ×٢ = +${j.bonus}</span>`);
   if(j.stage) rows.push(`<span class="px stage">${I("trophy")} إتمام مرحلة = +${j.stage.points}</span>`);
   if(j.repeated) rows.push(`<span class="px muted">${I("repeat")} ${j.repeated} ${j.repeated === 1 ? "سؤال سبق أخذ نقطته" : "أسئلة سبق أخذ نقاطها"} = 0</span>`);
-  if(!j.base && j.repeated) rows.push(`<span class="px muted">${I("info")} أحسنت! بس هذي الأسئلة أخذت نقاطها من قبل — النقاط الجديدة تلقاها في دروس ووحدات ما خلصتها، وفي مكافأة الدخول اليومي</span>`);
+  if(!j.base && j.repeated) rows.push(`<span class="px muted">${I("info")} أحسنت! بس هذي الأسئلة أخذت نقاطها من قبل — النقاط الجديدة تلقاها في دروس ووحدات ما خلصتها</span>`);
   if(!rows.length) rows.push(`<span class="px muted">ما فيه إجابات صحيحة جديدة هذه المرة</span>`);
   return rows.join("");
 }
@@ -363,33 +363,101 @@ async function giftCheck(){
   for(const show of queue) await show();
   await dailyCheck();
 }
-/* مكافأة الدخول اليومي + حماس المنافسة: تُطلب مرة واحدة يوميًا */
+/* الحضور اليومي — بدون نقاط: شعلة تكبر، درع يحمي السلسلة، مفاجأة اليوم، ومين دخل من المشاركين */
 const riyadhDay = () => { try{ return new Date().toLocaleDateString("en-CA", { timeZone: "Asia/Riyadh" }); }catch(e){ return new Date().toISOString().slice(0, 10); } };
-const DAILY_CHEERS = ["كل يوم دقائق بسيطة تفرق كثير 💪", "اللي يداوم يوميًا يسبق اللي يذاكر مرة بالأسبوع", "كلمة اليوم أفضل من عشر بكرة", "سلسلتك نار — لا تطفيها!", "المنافسة حامية، وأنت قدها"];
+const FLAMES = [{ n: 1, t: "شرارة", e: "✨" }, { n: 3, t: "شعلة", e: "🔥" }, { n: 7, t: "نار", e: "☄️" }, { n: 14, t: "بركان", e: "🌋" }, { n: 30, t: "أسطورة", e: "👑" }];
+const flameOf = n => FLAMES.filter(f => n >= f.n).pop() || FLAMES[0];
+const SURPRISES = [
+  ["r", "What has keys but can't open locks?", "وش الشي اللي عنده مفاتيح بس ما يفتح ولا قفل؟", "A piano 🎹 — مفاتيح البيانو اسمها keys"],
+  ["i", "It's raining cats and dogs", "حرفيًا: تمطر قطط وكلاب 🐱🐶", "معناها: تمطر بغزارة"],
+  ["t", "She sells seashells by the seashore.", "قلها ٣ مرات بسرعة بدون ما تتلخبط"],
+  ["w", "Hangry", "جوعان لدرجة إنك معصّب 😤 (hungry + angry)"],
+  ["f", "كلمات إنجليزية أصلها عربي: algebra (الجبر)، coffee (قهوة)، sugar (سكّر)، cotton (قطن)، giraffe (زرافة)."],
+  ["r", "What gets wetter the more it dries?", "وش الشي اللي كل ما نشّف غيره تبلل أكثر؟", "A towel — المنشفة"],
+  ["i", "Break a leg!", "حرفيًا: اكسر رجلك!", "معناها: بالتوفيق — يقولونها قبل عرض أو اختبار"],
+  ["t", "Red lorry, yellow lorry.", "قلها ٥ مرات ورا بعض بسرعة"],
+  ["w", "Bookworm", "دودة كتب 🐛📚 = الشخص اللي يحب القراءة"],
+  ["f", "جملة «The quick brown fox jumps over the lazy dog» فيها كل حروف الإنجليزي الـ26!"],
+  ["r", "What has hands but can't clap?", "وش اللي له أيدين وما يقدر يصفّق؟", "A clock ⏰ — عقارب الساعة اسمها hands"],
+  ["i", "A piece of cake", "حرفيًا: قطعة كيك 🍰", "معناها: سهلة مرّة"],
+  ["t", "Six sticky skeletons.", "قلها بسرعة ٣ مرات — أصعب مما تتوقع!"],
+  ["w", "Couch potato", "بطاطس الكنبة 🥔 = اللي يقضي يومه قدام التلفزيون"],
+  ["f", "أكثر حرف يتكرر في الإنجليزي هو E، ومن أقلها Q."],
+  ["r", "What can you catch but not throw?", "وش الشي اللي «تمسكه» وما تقدر ترميه؟", "A cold 🤧 — catch a cold = يجيك زكام"],
+  ["i", "Hit the books", "حرفيًا: اضرب الكتب 📚", "معناها: ذاكر بجد"],
+  ["t", "Peter Piper picked a peck of pickled peppers.", "تحدَّ نفسك: مرتين بدون غلط"],
+  ["w", "Butterfingers", "أصابع زبدة 🧈 = اللي كل شي يطيح من يده"],
+  ["f", "كلمة SWIMS تنقرأ نفس الشي لو قلبت الشاشة راس على عقب 🙃"],
+  ["r", "What goes up but never comes down?", "وش اللي يطلع وما ينزل أبدًا؟", "Your age 🎂 — عمرك"],
+  ["i", "Under the weather", "حرفيًا: تحت الطقس ☁️", "معناها: تعبان شوي"],
+  ["t", "Fresh French fried fish.", "قلها ٤ مرات بسرعة"],
+  ["w", "Brunch", "breakfast + lunch = وجبة بين الفطور والغدا 🥞"],
+  ["f", "كلمة queue (طابور) تنطق مثل حرف Q بس، والحروف ueue بعده كلها صامتة!"],
+  ["r", "What has a neck but no head?", "وش اللي له رقبة وما له راس؟", "A bottle 🍾 — عنق القارورة"],
+  ["i", "Spill the beans", "حرفيًا: كبّ الفول 🫘", "معناها: فضح السر"],
+  ["t", "How can a clam cram in a clean cream can?", "جرّبها بصوت عالي وشوف كم مرة تتلخبط"],
+  ["w", "Selfie", "صورة تاخذها لنفسك 🤳"],
+  ["f", "كلمة Go! لحالها جملة كاملة: فعل أمر والفاعل (you) مفهوم."],
+  ["r", "Which building has the most stories?", "أي مبنى فيه أكثر stories؟", "The library 📚 — story = قصة، و storey = طابق وتنطق نفسها!"],
+  ["i", "Once in a blue moon", "حرفيًا: مرة كل قمر أزرق 🌙", "معناها: نادرًا جدًا"],
+  ["i", "Cost an arm and a leg", "حرفيًا: كلّف ذراع ورجل 💸", "معناها: غالي مرّة"],
+  ["r", "What has many teeth but can't bite?", "وش اللي له أسنان كثير وما يعض؟", "A comb — المشط"],
+  ["i", "The ball is in your court", "حرفيًا: الكورة في ملعبك 🎾", "معناها: القرار صار عندك"],
+  ["i", "Call it a day", "حرفيًا: سمّها يوم", "معناها: خلاص نوقف الشغل لليوم"]
+];
+function surpriseOf(day){
+  const n = Math.floor(Date.parse(day + "T00:00:00Z") / 864e5) || 0;
+  return SURPRISES[((n % SURPRISES.length) + SURPRISES.length) % SURPRISES.length];
+}
+function surpriseHtml(x){
+  const say = t => `<button type="button" class="btn btn-sm sp-say" data-say="${esc(t)}">${I("volume")} اسمعها</button>`;
+  if(x[0] === "r") return `<div class="sp-kind">لغز اليوم 🧩</div><div class="en sp-en">${esc(x[1])}</div><div class="small">${esc(x[2])}</div><button type="button" class="btn btn-sm sp-ans">اكشف الجواب</button><div class="sp-hidden" hidden>${esc(x[3])}</div>`;
+  if(x[0] === "i") return `<div class="sp-kind">عبارة غريبة 🤔</div><div class="en sp-en">${esc(x[1])}</div><div class="small">${esc(x[2])}</div><button type="button" class="btn btn-sm sp-ans">وش معناها؟</button><div class="sp-hidden" hidden>${esc(x[3])}</div>`;
+  if(x[0] === "t") return `<div class="sp-kind">تحدي اللسان 👅</div><div class="en sp-en">${esc(x[1])}</div><div class="small">${esc(x[2])}</div>${say(x[1])}`;
+  if(x[0] === "w") return `<div class="sp-kind">كلمة ظريفة 😄</div><div class="en sp-en">${esc(x[1])}</div><div class="small">${esc(x[2])}</div>${say(x[1])}`;
+  return `<div class="sp-kind">تعرف؟ 💡</div><p>${esc(x[1])}</p>`;
+}
 async function dailyCheck(){
   const me = Auth.user(); if(!me) return;
   const key = "step_daily_" + me.u, day = riyadhDay();
   if(Store.get(key, "") === day) return;
   let j; try{ j = await Auth.api("/api/points", { method: "POST", body: { daily: 1 } }); }catch(e){ return; }
   if(!j || j.error) return;
-  Store.set(key, day); Store.set("step_streak_" + me.u, { day, streak: j.streak, best: j.best });
-  if(!j.claimed) return;
-  loadPoints(true);
-  const r = j.rivals || {}, R = j.rewards || [3, 4, 5, 6, 7, 8, 15];
-  const rival = r.rank === 1 ? (r.below ? `أنت <b>الأول</b> في البطولة! ${esc(r.below.name)} وراك بـ <b>${r.below.gap}</b> ${r.below.gap === 1 ? "نقطة" : "نقاط"} بس — حافظ على الصدارة` : "أنت الأول في البطولة — حافظ على الصدارة")
-    : r.above ? `أنت <b>#${r.rank}</b> في البطولة، وباقي لك <b>${r.above.gap + 1}</b> ${r.above.gap + 1 === 1 ? "نقطة" : "نقاط"} وتتجاوز <b>${esc(r.above.name)}</b> 🔥`
-    : "حل أول تحدٍ اليوم وادخل البطولة على جائزة ٣٠٠ ريال";
-  const strip = R.map((pts, i) => `<div class="dd ${i + 1 < j.day ? "done" : i + 1 === j.day ? "now" : ""}"><small>${i === 6 ? "صندوق" : "يوم " + (i + 1)}</small><b>+${pts}</b></div>`).join("");
-  const next = R[j.day % 7];
-  const title = j.broke ? "سلسلة جديدة بدأت!" : j.streak > 1 ? `${j.streak} ${j.streak > 10 ? "يوم" : "أيام"} ورا بعض 🔥` : "مكافأة الدخول اليومي";
-  modalCard(`<div class="gift-box daily">${I(j.day === 7 ? "gift" : "fire")}</div><h3>${title}</h3>
-    <div class="gift-mult">+${j.reward} نقطة</div>
+  Store.set(key, day); Store.set("step_daily_last_" + me.u, Object.assign({}, j, { day }));
+  document.dispatchEvent(new Event("points:loaded"));
+  if(j.claimed) showDaily(j, day);
+}
+function showDaily(j, day){
+  const fl = flameOf(j.streak), nxt = FLAMES.find(f => f.n > j.streak);
+  const cyc = ((Math.max(1, j.streak) - 1) % 7) + 1;
+  const strip = Array.from({ length: 7 }, (_, i) => `<div class="dd ${i < cyc ? "done" : ""} ${i === cyc - 1 ? "now" : ""}"><span>${i < cyc ? "🔥" : "·"}</span><small>${i === 6 ? "🛡️" : i + 1}</small></div>`).join("");
+  const title = j.broke ? "بدأت شعلة جديدة!" : j.streak > 1 ? `${j.streak} ${j.streak > 10 ? "يوم" : "أيام"} ورا بعض!` : "أول يوم في سلسلتك!";
+  const F = j.family || { today: [], waiting: [] };
+  const chip = r => `<span class="fam ${r.me ? "me" : ""}">${esc(r.name)} ${r.streak >= 2 ? "🔥" + r.streak : "✨"}</span>`;
+  const others = (F.waiting || []).filter(r => !r.me);
+  const wa = others.length ? `https://wa.me/?text=${encodeURIComponent(`${others.map(r => r.name).join(" و")} 🔥 شعلتكم بتنطفي! ادخلوا قبل نهاية اليوم 😄 ${location.origin}`)}` : "";
+  const note = !j.claimed ? "" : j.usedShield ? `<div class="note info"><span class="ic">${I("check")}</span><p>🛡️ الدرع حمى سلسلتك — فاتك يوم وما انطفت الشعلة!</p></div>`
+    : j.gotShield ? `<div class="note tip"><span class="ic">${I("sparkles")}</span><p>🛡️ كسبت درع! لو فاتك يوم، الدرع يحمي شعلتك.</p></div>`
+    : j.broke ? `<p class="small muted">انطفت شعلة الـ${j.lost} أيام… بس هذي فرصة تكسر رقمك 💪</p>` : "";
+  const el = modalCard(`<div class="flame-big" style="--s:${Math.min(1.6, 1 + j.streak / 30)}">${fl.e}<b>${j.streak}</b></div>
+    <h3 style="margin:.2em 0">${title}</h3>
+    <div class="small">مستواك: <b>${fl.t}</b>${nxt ? ` · باقي ${nxt.n - j.streak} ${nxt.n - j.streak === 1 ? "يوم" : "أيام"} وتصير «${nxt.t}» ${nxt.e}` : ""}</div>
     <div class="daily-days">${strip}</div>
-    <p class="small">${j.day === 7 ? "فتحت صندوق الأسبوع! بكرة تبدأ جولة جديدة" : `ارجع بكرة وتاخذ <b>+${next}</b>${j.day === 6 ? " — صندوق الأسبوع" : ""}`}. ${j.broke ? "فاتك يوم فرجعت السلسلة من أولها." : ""}</p>
-    <div class="note info daily-rival"><span class="ic">${I("trophy")}</span><p>${rival}</p></div>
-    <p class="small muted">${DAILY_CHEERS[Math.floor(Math.random() * DAILY_CHEERS.length)]}${j.best > 1 ? ` · أطول سلسلة لك: ${j.best}` : ""}</p>
-    <div class="btn-row" style="justify-content:center"><a class="btn btn-warm btn-lg" href="general.html#/daily" data-close>${I("zap")} ابدأ تحدي اليوم</a><button type="button" class="btn" data-close>لاحقًا</button></div>`);
-  try{ if(typeof SFX !== "undefined") SFX.win(); confetti(); }catch(e){}
+    <div class="small muted">${j.shields ? "🛡️".repeat(j.shields) + " درع يحمي شعلتك" : "كل ٧ أيام ورا بعض تكسب درع 🛡️"}${j.best > j.streak ? ` · أطول سلسلة لك: ${j.best}` : ""}</div>
+    ${note}
+    <div class="surprise" tabindex="0" role="button"><div class="sp-front">🎁<b>اضغط وافتح مفاجأة اليوم</b></div><div class="sp-back" hidden>${surpriseHtml(surpriseOf(day))}</div></div>
+    ${F.today && F.today.length ? `<div class="fam-box"><div class="small"><b>دخلوا اليوم:</b></div>${F.today.map(chip).join("")}</div>` : ""}
+    ${others.length ? `<div class="fam-box warn"><div class="small"><b>شعلتهم بتنطفي اليوم:</b></div>${others.map(chip).join("")}<a class="btn btn-sm" target="_blank" rel="noopener" href="${wa}">ذكّرهم 📲</a></div>` : ""}
+    <div class="btn-row" style="justify-content:center"><a class="btn btn-warm btn-lg" href="general.html#/daily" data-close>${I("zap")} يلا نتعلم</a><button type="button" class="btn" data-close>لاحقًا</button></div>`);
+  const sp = el.querySelector(".surprise");
+  const open = () => { if(sp.classList.contains("open")) return; sp.classList.add("open"); sp.querySelector(".sp-front").hidden = true; sp.querySelector(".sp-back").hidden = false; try{ if(typeof SFX !== "undefined") SFX.win(); }catch(e){} };
+  sp.addEventListener("click", e => {
+    open();
+    const ans = e.target.closest(".sp-ans"); if(ans){ ans.hidden = true; sp.querySelector(".sp-hidden").hidden = false; }
+    const s2 = e.target.closest(".sp-say"); if(s2 && window.speechSynthesis){ speechSynthesis.cancel(); const u = new SpeechSynthesisUtterance(s2.dataset.say); u.lang = "en-US"; u.rate = .9; speechSynthesis.speak(u); }
+  });
+  sp.addEventListener("keydown", e => { if(e.key === "Enter") open(); });
+  try{ if(j.claimed){ if(typeof SFX !== "undefined") SFX.win(); if(j.streak > 1) confetti(); } }catch(e){}
 }
 /* إعلان بداية فعالية أو قرب موعدها — مرة واحدة لكل موعد */
 function announce(kind, id, start, title, body, href, btn){
@@ -425,7 +493,10 @@ function renderEventsBar(){
       if(gf) bits.push(`<span class="ev-bit gift">${I("gift")} هديتك ×${gf.mult} · ${fmtLeft(gf.endsAt - s.now)}</span>`);
       if(!T.ended) bits.push(`<span class="ev-bit">${I("trophy")} ${esc(T.prize)}</span>`);
       const href = B && B.active ? "general.html#/battle" : "compete.html#tournament";
-      host.innerHTML = bits.length ? `<a class="ev-strip" href="${href}">${bits.join("")}<span class="ev-go">${I("arrow")}</span></a>` : "";
+      const meU = Auth.user(), dl = meU ? Store.get("step_daily_last_" + meU.u, null) : null;
+      const flameBtn = dl && dl.day === riyadhDay() && dl.streak ? `<button type="button" class="ev-flame" title="سلسلة الأيام">${flameOf(dl.streak).e} ${dl.streak}</button>` : "";
+      host.innerHTML = (flameBtn || bits.length) ? `<div class="ev-wrap">${flameBtn}${bits.length ? `<a class="ev-strip" href="${href}">${bits.join("")}<span class="ev-go">${I("arrow")}</span></a>` : ""}</div>` : "";
+      const fb = host.querySelector(".ev-flame"); if(fb) fb.addEventListener("click", () => showDaily(Object.assign({}, dl, { claimed: false }), dl.day));
       hydrateIcons(host); return;
     }
     const tHtml = T.ended ? "" : `<a class="ev-card tour" href="compete.html#tournament"><span class="ev-ic">${I("trophy")}</span><div><b>${esc(T.title)} — ${esc(T.prize)}</b><div class="small">${T.upcoming ? "تبدأ بعد " + fmtLeft(T.startsAt - s.now) : "المركز الأول في ترتيب الشهر يفوز · تنتهي بعد " + fmtLeft(T.endsAt - s.now)}</div></div><span class="ev-go">${I("arrow")}</span></a>`;
@@ -445,7 +516,7 @@ function lbRow(r, showSub){
   const medal = r.rank <= 3 ? I("medal", "medal-" + r.rank) : r.rank;
   return `<div class="lb-row ${r.me ? "me" : ""} ${r.rank <= 3 ? "top" + r.rank : ""}">
     <div class="rk ${r.rank <= 3 ? "medal" : ""}">${medal}</div>${avatarHtml(r.name, r.u)}
-    <div class="nm">${esc(r.name)}${showSub ? `<div class="sub">${r.quizzes || 0} اختبار · دقة ${r.avg || 0}٪${r.best ? " · أفضل نتيجة " + r.best + "٪" : ""}</div>` : ""}</div>
+    <div class="nm">${esc(r.name)}${r.streak >= 2 ? ` <span class="lb-flame" title="${r.streak} أيام ورا بعض">${flameOf(r.streak).e}${r.streak}</span>` : ""}${showSub ? `<div class="sub">${r.quizzes || 0} اختبار · دقة ${r.avg || 0}٪${r.best ? " · أفضل نتيجة " + r.best + "٪" : ""}</div>` : ""}</div>
     <div class="pt">${r.points} نقطة</div></div>`;
 }
 

@@ -4,36 +4,36 @@ const H = require("../lib/http");
 const EV = require("../data/events.js");
 const AR = require("../lib/areas");
 
-/* مكافأة الدخول اليومي: مرة واحدة كل يوم (بتوقيت السعودية)، تكبر مع الأيام المتتالية، واليوم السابع صندوق */
-const DAILY = [3, 4, 5, 6, 7, 8, 15];
-async function rivals(me){
-  const mk = EV.monthKey();
-  const [flat, namesFlat] = await db.pipeline([["ZREVRANGE", "lb:month:" + mk, 0, -1, "WITHSCORES"], ["HGETALL", "names"]]);
-  const names = db.flatToObj(namesFlat), board = db.flatToPairs(flat);
-  const i = board.findIndex(x => x.member === me.u);
-  const nm = x => x ? (names[x.member] || x.member) : null;
-  if(i < 0) return { rank: null, players: board.length, leader: board[0] ? { name: nm(board[0]), points: board[0].score } : null };
-  const above = i > 0 ? board[i - 1] : null, below = board[i + 1] || null;
-  return { rank: i + 1, players: board.length, points: board[i].score,
-    above: above ? { name: nm(above), gap: above.score - board[i].score } : null,
-    below: below ? { name: nm(below), gap: board[i].score - below.score } : null };
+/* الحضور اليومي بدون نقاط: سلسلة أيام متتالية، ودرع يحمي السلسلة من يوم فائت (درع لكل ٧ أيام، حدّه ٢)،
+   ومين من المشاركين دخل اليوم ومين سلسلته مهددة */
+async function family(me, today, yest){
+  const [users, namesFlat] = await db.pipeline([["SMEMBERS", "users"], ["HGETALL", "names"]]);
+  const names = db.flatToObj(namesFlat), list = (users || []).slice(0, 60);
+  const st = list.length ? await db.pipeline(list.map(u => ["HMGET", "streak:" + u, "cur", "last"])) : [];
+  const today_ = [], waiting = [];
+  list.forEach((u, i) => {
+    const [cur, last] = st[i] || [];
+    const row = { name: names[u] || u, streak: Number(cur || 0), me: u === me.u };
+    if(last === today) today_.push(row); else if(last === yest && row.streak >= 2) waiting.push(row);
+  });
+  today_.sort((a, b) => b.streak - a.streak); waiting.sort((a, b) => b.streak - a.streak);
+  return { today: today_, waiting };
 }
 async function claimDaily(me){
-  const now = Date.now(), today = EV.dateKey(now), yest = EV.dateKey(now - 864e5);
+  const now = Date.now(), today = EV.dateKey(now), yest = EV.dateKey(now - 864e5), before = EV.dateKey(now - 2 * 864e5);
   const lock = await db.call("SET", `daily:${me.u}:${today}`, "1", "NX", "EX", 172800);
   const st = db.flatToObj(await db.call("HGETALL", "streak:" + me.u));
-  let cur = Number(st.cur || 0), best = Number(st.best || 0);
-  if(lock !== "OK") return { claimed: false, today, streak: cur, best, rewards: DAILY, day: ((Math.max(cur, 1) - 1) % 7) + 1, rivals: await rivals(me) };
-  cur = st.last === yest ? cur + 1 : 1;
+  let cur = Number(st.cur || 0), best = Number(st.best || 0), shields = Number(st.shields || 0);
+  if(lock !== "OK") return { claimed: false, today, streak: cur, best, shields, family: await family(me, today, yest) };
+  let usedShield = false, gotShield = false;
+  if(st.last === yest) cur += 1;
+  else if(st.last === before && shields > 0 && cur > 0){ cur += 1; shields -= 1; usedShield = true; }
+  else cur = 1;
+  if(cur % 7 === 0 && shields < 2){ shields += 1; gotShield = true; }
   best = Math.max(best, cur);
-  const day = ((cur - 1) % 7) + 1, reward = DAILY[day - 1];
-  const wk = db.weekKey(), mk = EV.monthKey();
-  await db.pipeline([
-    ["HSET", "streak:" + me.u, "cur", cur, "best", best, "last", today],
-    ["ZINCRBY", "lb:total", reward, me.u], ["ZINCRBY", "lb:week:" + wk, reward, me.u], ["ZINCRBY", "lb:month:" + mk, reward, me.u],
-    ["HINCRBY", "ptsx:" + me.u, "daily", reward], ["HSET", "names", me.u, me.name]
-  ]);
-  return { claimed: true, today, reward, streak: cur, best, day, rewards: DAILY, broke: !!st.last && st.last !== yest && cur === 1 && Number(st.cur || 0) > 1, rivals: await rivals(me) };
+  await db.pipeline([["HSET", "streak:" + me.u, "cur", cur, "best", best, "last", today, "shields", shields], ["HSET", "names", me.u, me.name]]);
+  const broke = !!st.last && !usedShield && st.last !== yest && Number(st.cur || 0) > 1;
+  return { claimed: true, today, streak: cur, best, shields, usedShield, gotShield, broke, lost: broke ? Number(st.cur) : 0, family: await family(me, today, yest) };
 }
 
 /* تفصيل نقاط المستخدم: لكل منطقة + البنود الإضافية، والمجموع يطابق الترتيب.

@@ -13,11 +13,16 @@ module.exports = H.handler(["GET"], async (req, res) => {
   ]);
   const names = db.flatToObj(namesFlat);
   const total = db.flatToPairs(totalFlat), week = db.flatToPairs(weekFlat), month = db.flatToPairs(monthFlat);
+  /* شعلة السلسلة بجانب الاسم (فعّالة إذا دخل اليوم أو أمس) */
+  const today = EV.dateKey(Date.now()), yest = EV.dateKey(Date.now() - 864e5);
+  const members = [...new Set([...total, ...week, ...month].map(r => r.member))];
+  const stRaw = members.length ? await db.pipeline(members.map(u => ["HMGET", "streak:" + u, "cur", "last"])) : [];
+  const flame = {}; members.forEach((u, i) => { const [c, last] = stRaw[i] || []; flame[u] = last === today || last === yest ? Number(c || 0) : 0; });
   const statsRaw = total.length ? await db.pipeline(total.map(r => ["GET", "stats:" + r.member])) : [];
   const rows = total.map((r, i) => {
     let s = null; try{ s = JSON.parse(statsRaw[i]); }catch(e){}
-    return { rank: i + 1, u: r.member, name: names[r.member] || r.member, points: r.score, quizzes: s ? s.quizzes : 0, avg: s && s.answered ? Math.round(s.correct / s.answered * 100) : 0, best: s ? s.best : 0, me: me && me.u === r.member };
+    return { rank: i + 1, u: r.member, name: names[r.member] || r.member, points: r.score, quizzes: s ? s.quizzes : 0, avg: s && s.answered ? Math.round(s.correct / s.answered * 100) : 0, best: s ? s.best : 0, streak: flame[r.member] || 0, me: me && me.u === r.member };
   });
-  const simple = list => list.map((r, i) => ({ rank: i + 1, u: r.member, name: names[r.member] || r.member, points: r.score, me: me && me.u === r.member }));
+  const simple = list => list.map((r, i) => ({ rank: i + 1, u: r.member, name: names[r.member] || r.member, points: r.score, streak: flame[r.member] || 0, me: me && me.u === r.member }));
   H.ok(res, { week: wk, month: mk, users: Number(nUsers || 0), total: rows, weekly: simple(week), monthly: simple(month), events: ev });
 });
