@@ -168,6 +168,17 @@
 
   /* مسار الوحدة في الشريط العلوي: A1 › الوحدة 3 › ... */
   const unitPath = u => u ? [{ t: u.lvl, href: `#/level/${u.lvl}` }, { t: `الوحدة ${U.filter(x => x.lvl === u.lvl).indexOf(u) + 1}`, href: `#/unit/${u.id}` }] : [];
+  /* تبويبات المستويات: تعرض مستواك الحالي أولًا بدل قائمة طويلة */
+  function levelTabs(key){
+    const secs = [...document.querySelectorAll("#app .section[data-lv]")]; if(secs.length < 2) return;
+    const lvls = secs.map(x => x.dataset.lv);
+    let cur = Store.get("gen_tab_" + key, null); if(cur !== "all" && !lvls.includes(cur)) cur = lvls.includes(currentLevel()) ? currentLevel() : lvls[0];
+    secs[0].insertAdjacentHTML("beforebegin", `<div class="seg lv-tabs">${lvls.map(lv => `<button type="button" data-v="${lv}" style="--c:${LVC[lv]}">${lv}</button>`).join("")}<button type="button" data-v="all">الكل</button></div>`);
+    const bar_ = $("#app .lv-tabs");
+    const apply = () => { secs.forEach(x => { x.hidden = cur !== "all" && x.dataset.lv !== cur; }); bar_.querySelectorAll("button").forEach(b => b.classList.toggle("on", b.dataset.v === cur)); };
+    bar_.addEventListener("click", e => { const b = e.target.closest("button"); if(!b) return; cur = b.dataset.v; Store.set("gen_tab_" + key, cur); apply(); });
+    apply();
+  }
   /* ---------- HOME ---------- */
   /* يوديك مباشرة لخطوتك التالية (من نافذة الحضور اليومي وغيرها) */
   routes.next = () => { const ns = nextStepOf(nextUnit()); location.replace(ns ? ns.href : "#/"); };
@@ -246,7 +257,8 @@
     if(!LV.includes(lv)) return routes.home();
     const units = U.filter(u => u.lvl === lv), done = units.filter(u => GEN.units[u.id]).length, pct = levelPct(lv);
     render(crumb([{ t: `${lv} — ${LVN[lv]}` }]) + `<div class="card sheet lvl-top" style="--c:${LVC[lv]}"><div class="section-title"><div class="lvl-badge" style="background:${LVC[lv]}">${lv}</div><h1 style="margin:0">${LVN[lv]}</h1><span class="lvl-pct big">${pct}%</span></div>${bar(pct)}<p class="muted small" style="margin:8px 0 0">${done}/${units.length} وحدة مكتملة. أكمل الوحدات بالترتيب: مفردات ← قاعدة ← محادثة ← اختبار قصير.</p></div>
-      <div class="units">${units.map((u, i) => { const d = !!GEN.units[u.id], p = unitPct(u); return `<a class="unit ${d ? "done" : ""}" href="#/unit/${u.id}">${d ? `<span class="stamp">${I("check")} مكتملة</span>` : ""}<div class="unit-n" style="background:${d ? "var(--ok)" : LVC[lv]}">${d ? I("check") : i + 1}</div><div class="unit-body"><div class="unit-head"><span class="unit-t">${esc(u.t)}</span><span class="lvl-pct">${p}%</span></div><div class="muted small">${esc(u.goal)}</div>${bar(p)}</div></a>`; }).join("")}</div>`);
+      <div class="units">${units.map((u, i) => { const d = !!GEN.units[u.id], p = unitPct(u), here = !d && u === units.find(x => !GEN.units[x.id]); const dots = unitSteps(u).map(st => `<span class="ustep ${st.done ? "ok" : ""}" title="${esc(st.label)}">${st.kind === "theme" ? "📚" : st.kind === "lesson" ? "📝" : st.kind === "dialogue" ? "💬" : "🏆"}</span>`).join(""); return `<a class="unit ${d ? "done" : ""} ${here ? "here" : ""}" href="#/unit/${u.id}">${d ? `<span class="stamp">${I("check")} مكتملة</span>` : ""}<div class="unit-n" style="background:${d ? "var(--ok)" : LVC[lv]}">${d ? I("check") : i + 1}</div><div class="unit-body"><div class="unit-head"><span class="unit-t">${esc(u.t)}</span>${here ? `<span class="badge accent">أنت هنا</span>` : `<span class="lvl-pct">${p}%</span>`}</div>${here ? `<div class="muted small">${esc(u.goal)}</div>` : ""}<div class="ustep-row">${dots}</div>${bar(p)}</div></a>`; }).join("")}</div>`);
+    const hereEl = $("#app .unit.here"); if(hereEl && units.indexOf(units.find(x => !GEN.units[x.id])) > 2) after(() => hereEl.scrollIntoView({ block: "center", behavior: "smooth" }), 250);
   };
 
   /* ---------- UNIT ---------- */
@@ -270,7 +282,8 @@
   /* ---------- VOCAB ---------- */
   routes.vocab = () => {
     render(crumb([{ t: "المفردات" }]) + `<h1>${I("type")} المفردات</h1><p class="muted">اختر موضوعًا. الشريط يوضح نسبة الكلمات التي تعرفها (أجبت عليها صحيحًا مرة على الأقل).</p>` +
-      LV.map(lv => `<div class="section"><div class="section-title"><h2 style="color:${LVC[lv]}">${lv} · ${LVN[lv]}</h2></div><div class="grid grid-3">${levelThemes(lv).map(t => { const s = themeStats(t); return `<a class="card link-card theme-card" href="#/theme/${t.id}" style="--c:${LVC[lv]}"><div class="icon" style="background:${LVC[lv]}22">${I(t.icon || "star")}</div><h3>${esc(t.t)}</h3><p class="muted small">${t.words.length} كلمة · ${s.k} تعرفها</p>${bar(s.pct)}</a>`; }).join("")}</div></div>`).join(""));
+      LV.map(lv => `<div class="section" data-lv="${lv}"><div class="section-title"><h2 style="color:${LVC[lv]}">${lv} · ${LVN[lv]}</h2></div><div class="grid grid-3 theme-grid">${levelThemes(lv).map(t => { const s = themeStats(t); return `<a class="card link-card theme-card" href="#/theme/${t.id}" style="--c:${LVC[lv]}"><div class="icon" style="background:${LVC[lv]}22">${I(t.icon || "star")}</div><h3>${esc(t.t)}</h3><p class="muted small">${t.words.length} كلمة · ${s.k} تعرفها</p>${bar(s.pct)}</a>`; }).join("")}</div></div>`).join(""));
+    levelTabs("vocab");
   };
 
   routes.theme = id => {
@@ -537,7 +550,8 @@
   /* ---------- GRAMMAR ---------- */
   routes.grammar = () => {
     render(crumb([{ t: "القواعد" }]) + `<h1>${I("book")} كيف تقولها صح</h1><p class="muted">بدون مسميات معقدة: كل درس يعلّمك متى تقول الشيء، ويعطيك قوالب جاهزة تعبّيها وتنطقها، ثم تجرّبها.</p><a class="card link-card c-blue" href="#/verbs" style="margin-bottom:14px"><div class="icon p-blue">${I("list")}</div><h3>تصريف الأفعال</h3><p class="muted small">go → went → gone: جدول ${VB.length} فعلًا مع البحث والنطق واختبار</p></a>` +
-      LV.map(lv => { const ls = G.filter(l => l.lvl === lv); return ls.length ? `<div class="section"><div class="section-title"><h2 style="color:${LVC[lv]}">${lv} · ${LVN[lv]}</h2></div><div class="grid grid-2">${ls.map(l => { const ids = l.practice.map((_, i) => `gg-${l.id}-${i}`); const k = ids.filter(known).length; return `<a class="card link-card" href="#/lesson/${l.id}" style="--c:${LVC[lv]}"><h3>${esc(l.t)}</h3><p class="muted small en" style="direction:ltr;text-align:left">${esc(l.en)}</p><p class="small">${esc(l.why)}</p>${bar(Math.round(k / ids.length * 100))}</a>`; }).join("")}</div></div>` : ""; }).join(""));
+      LV.map(lv => { const ls = G.filter(l => l.lvl === lv); return ls.length ? `<div class="section" data-lv="${lv}"><div class="section-title"><h2 style="color:${LVC[lv]}">${lv} · ${LVN[lv]}</h2></div><div class="grid grid-2">${ls.map(l => { const ids = l.practice.map((_, i) => `gg-${l.id}-${i}`); const k = ids.filter(known).length; return `<a class="card link-card" href="#/lesson/${l.id}" style="--c:${LVC[lv]}"><h3>${esc(l.t)}</h3><p class="muted small en" style="direction:ltr;text-align:left">${esc(l.en)}</p><p class="small">${esc(l.why)}</p>${bar(Math.round(k / ids.length * 100))}</a>`; }).join("")}</div></div>` : ""; }).join(""));
+    levelTabs("grammar");
   };
   /* يعزل المقاطع الإنجليزية داخل النص العربي ويقسّم الشرح إلى نقاط */
   const mixed = txt => esc(txt).replace(/([A-Za-z][A-Za-z0-9'’.\-]*(?:\s+[A-Za-z][A-Za-z0-9'’.\-]*)*)/g, m => `<bdi class="${m.trim().split(/\s+/).length > 3 ? "en-line" : "en-in"}">${m}</bdi>`);
@@ -588,9 +602,10 @@
 
   /* ---------- TALK ---------- */
   routes.talk = () => {
-    render(crumb([{ t: "تكلّم" }]) + `<h1>${I("mic")} محادثات المواقف</h1><p class="muted">استمع للحوار جملة جملة، أخفِ الترجمة وتحدَّ نفسك، مثّل دورك بالاختيار، ثم انطق الجمل ويقيّمك المتصفح (يحتاج Chrome ومايكروفون).</p>
+    render(crumb([{ t: "تكلّم" }]) + `<h1>${I("mic")} محادثات المواقف</h1><p class="muted">استمع للحوار جملة جملة، أخفِ الترجمة وتحدَّ نفسك، مثّل دورك بالاختيار، ثم انطق الجمل ويقيّمك الموقع كلمة كلمة (يشتغل على Chrome وSafari الآيفون).</p>
       <div class="card sheet"><div class="section-title"><h3 style="margin:0">${I("mic")} مستوى النطق: ${SPK_TIERS[spkTierIdx()].t}</h3><span class="badge">${spkDone()} جملة ناجحة</span></div><p class="muted small" style="margin:0">${SPK_TIERS[spkTierIdx()].desc}. ${SPK_TIERS[spkTierIdx()].upto === Infinity ? "أنت في أعلى مستوى — أحسنت!" : `كل جملة تنجح فيها تقرّبك، وبعد ${Math.max(0, SPK_TIERS[spkTierIdx()].upto - spkDone())} جملة يرتفع المستوى وتصير أصعب شوي.`}</p>${bar(SPK_TIERS[spkTierIdx()].upto === Infinity ? 100 : Math.round(spkDone() / SPK_TIERS[spkTierIdx()].upto * 100))}</div>` +
-      LV.map(lv => { const ds = D.filter(d => d.lvl === lv); return ds.length ? `<div class="section"><div class="section-title"><h2 style="color:${LVC[lv]}">${lv} · ${LVN[lv]}</h2></div><div class="grid grid-3">${ds.map(d => `<a class="card link-card" href="#/dialogue/${d.id}" style="--c:${LVC[lv]}"><div class="icon" style="background:${LVC[lv]}22">${I(d.icon || "chat")}</div><h3>${esc(d.t)}</h3><p class="muted small">${d.roles[0]} و ${d.roles[1]} · ${d.lines.length} جملة</p></a>`).join("")}</div></div>` : ""; }).join(""));
+      LV.map(lv => { const ds = D.filter(d => d.lvl === lv); return ds.length ? `<div class="section" data-lv="${lv}"><div class="section-title"><h2 style="color:${LVC[lv]}">${lv} · ${LVN[lv]}</h2></div><div class="grid grid-3">${ds.map(d => `<a class="card link-card" href="#/dialogue/${d.id}" style="--c:${LVC[lv]}"><div class="icon" style="background:${LVC[lv]}22">${I(d.icon || "chat")}</div><h3>${esc(d.t)}</h3><p class="muted small">${d.roles[0]} و ${d.roles[1]} · ${d.lines.length} جملة</p></a>`).join("")}</div></div>` : ""; }).join(""));
+    levelTabs("talk");
   };
   routes.dialogue = id => {
     const d = dialog(id); if(!d) return routes.talk();

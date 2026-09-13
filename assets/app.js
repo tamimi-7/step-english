@@ -230,6 +230,22 @@ function injectHead(){
 }
 
 /* ---- nav + bottom tab bar ---- */
+/* أي قسم في القائمة يتعلّم عليه (صفحات إنقلش عام الداخلية تتبع قسمها) */
+function genSectionOf(hash){
+  const p = String(hash || "").replace(/^#\/?/, "").split("/"), k = p[0] || "";
+  if(k === "game") return p[2] ? "vocab" : "games";
+  return ({ theme: "vocab", review: "vocab", vocab: "vocab", lesson: "grammar", practice: "grammar", grammar: "grammar", talk: "talk", dialogue: "talk", roleplay: "talk", speak: "talk", verbs: "verbs", verbquiz: "verbs", games: "games", battle: "games" })[k] || "";
+}
+function navIsActive(h, cur){
+  const [p, hs] = h.split("#"); if(p !== cur) return false;
+  if(p === "general.html") return genSectionOf(hs ? "#" + hs : "") === genSectionOf(location.hash);
+  if(hs) return location.hash.startsWith("#" + hs);
+  return true;
+}
+function refreshNavActive(){
+  const cur = curPage();
+  document.querySelectorAll(".nav a.link[href], .tabbar a[href], .drawer a[href]").forEach(a => { const h = a.getAttribute("href"); if(!h || /^https?:/.test(h)) return; a.classList.toggle("active", navIsActive(h, cur)); });
+}
 function renderNav(){
   injectHead();
   const host = document.getElementById("nav");
@@ -238,7 +254,7 @@ function renderNav(){
   const sec = section(), info = SECTION_INFO[sec];
   NAV = sec === "gen" ? NAV_GEN : sec === "step" ? NAV_STEP : NAV_LANDING;
   TABS = sec === "gen" ? TABS_GEN : sec === "step" ? TABS_STEP : TABS_LANDING;
-  const isActive = h => { const [p, hs] = h.split("#"); if(p !== cur) return false; if(hs) return location.hash.startsWith("#" + hs); return !NAV.some(n => n.href.includes("#") && n.href.split("#")[0] === cur && location.hash.startsWith("#" + n.href.split("#")[1])); };
+  const isActive = h => navIsActive(h, cur);
   const sw = info.other ? `<a class="link sw" href="${info.other}" title="الانتقال إلى القسم الآخر"><span class="ni">${I(info.otherIcon)} </span>${info.otherLabel}</a>` : "";
   if(host){
     host.className = "nav";
@@ -620,6 +636,7 @@ document.addEventListener("DOMContentLoaded", () => {
   renderMiniQuizzes();
   initToc();
   focusLessonFromHash();
+  window.addEventListener("hashchange", refreshNavActive);
   window.addEventListener("hashchange", () => { document.querySelectorAll(".lesson.focus").forEach(e => e.classList.remove("focus")); document.querySelectorAll(".lesson-back").forEach(e => e.remove()); focusLessonFromHash(); });
   renderHomeStats();
   renderHomeBoard();
