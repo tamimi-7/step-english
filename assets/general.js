@@ -297,6 +297,19 @@
 
   let LAST_WRONG = [], LAST_OPTS = null;
   /* ---------- generic quiz runner (immediate feedback) ---------- */
+  /* سبب قصير ليش الخيار اللي اخترته غلط */
+  let WMAP = null;
+  const wordMaps = () => { if(WMAP) return WMAP; const en = {}, ar = {}; V.forEach(t => t.words.forEach(w => { const e = w[0].toLowerCase(); if(!en[e]) en[e] = w[1]; if(!ar[w[1]]) ar[w[1]] = w[0]; })); return (WMAP = { en, ar }); };
+  function whyWrong(q, k){
+    if(k === q.a || k == null) return "";
+    const o = String(q.opts[k]);
+    if(q.kind === "grammar"){ const w = (window.GEN_WHY || {})[String(q.id).replace(/^gg-/, "")]; return w && w[k] ? w[k] : ""; }
+    if(q.kind === "meaning"){ const e = wordMaps().ar[o]; return e ? `«${o}» هذي معنى كلمة ${e}` : ""; }
+    if(q.kind === "reverse" || q.kind === "sentence"){ const a = wordMaps().en[o.toLowerCase()]; return a ? `${o} معناها «${a}»` : ""; }
+    if(q.kind === "verb"){ const forms = x => x.split("/").map(y => y.trim()); const past = VB.find(v => forms(v[1]).includes(o)), part = VB.find(v => forms(v[2]).includes(o)); return past && part && past === part ? `${o} ماضي ${past[0]} وتجي بعد have كذلك، بس هذا فعل ثاني` : past ? `${o} هي ماضي ${past[0]} (${past[3]})` : part ? `${o} تجي بعد have مع ${part[0]} (${part[3]})` : ""; }
+    if(q.kind === "dialog") return "هذا الرد ما يناسب الكلام اللي قبله";
+    return "";
+  }
   function runQuiz(opts){
     // opts: {title, list, backHref, onDone(score,total,secs), xpPer, timed}
     const S = { i: 0, score: 0, done: false, start: Date.now(), list: opts.list, ids: [], lastLeft: null, wrong: [] };
@@ -320,7 +333,8 @@
       const wasM = mastered(q.id); Progress.record(q.id, ok); sfx(ok ? "correct" : "wrong"); if(!ok) S.wrong.push({ q, chosen: k }); if(ok){ S.score++; S.ids.push(q.id); if(opts.xpPer && !wasM) gainXP(opts.xpPer, true); else saveGen(); }
       const fb = $("#gfb"); fb.hidden = false; fb.className = "feedback " + (ok ? "ok" : "bad");
       const sayNow = q.sayAfter || (!opts.autoSay && q.kind !== "dialog" ? q.say : null);
-      fb.innerHTML = `<b>${ok ? I("check") + " صحيح!" : I("x") + " الصحيح: " + esc(q.opts[q.a])}</b>${esc(q.ex || "")} ${sayNow ? spk(sayNow, "sm") : ""}${q.lesson ? ` <a class="mini-link" href="#/lesson/${q.lesson}">${I("book")} افهم القاعدة</a>` : ""}`;
+      const why = ok ? "" : whyWrong(q, k);
+      fb.innerHTML = `<b>${ok ? I("check") + " صحيح!" : I("x") + " الصحيح: " + esc(q.opts[q.a])}</b>${why ? `<div class="why-mini">${I("x")} ليش «${esc(q.opts[k])}» غلط؟ ${esc(why)}</div>` : ""}${esc(q.ex || "")} ${sayNow ? spk(sayNow, "sm") : ""}${q.lesson ? ` <a class="mini-link" href="#/lesson/${q.lesson}">${I("book")} افهم القاعدة</a>` : ""}`;
       hydrateIcons(fb); $("#gnext").disabled = false; $("#gnext").focus({ preventScroll: true });
       if(sayNow) after(() => speak(sayNow), 350);
       /* الإجابة الصحيحة تنتقل تلقائيًا (الخطأ ينتظرك تقرأ التصحيح) */
