@@ -1176,3 +1176,10 @@ details.mistakes > summary{cursor:pointer;font-weight:700;padding:8px 0;display:
   .papers .stack::before,.papers .stack::after{display:none}
 }
 @media (max-width:640px){.hero .actions .btn{white-space:nowrap}}
+/* مشغّل القصة مرتّب */
+.pl-main{display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between;margin-top:12px}
+.pl-speed-wrap{display:flex;align-items:center;gap:6px}
+.pl-more{margin-top:12px;border-top:2px dashed var(--line);padding-top:8px}
+.pl-more > summary{cursor:pointer;font-weight:700;display:flex;gap:6px;align-items:center;color:var(--muted);font-size:.92rem}
+.pl-more[open] > summary{color:inherit;margin-bottom:8px}
+.pl-opt{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:8px}

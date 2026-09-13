@@ -282,7 +282,7 @@
   /* ---------- VOCAB ---------- */
   routes.vocab = () => {
     render(crumb([{ t: "المفردات" }]) + `<h1>${I("type")} المفردات</h1><p class="muted">اختر موضوعًا. الشريط يوضح نسبة الكلمات التي تعرفها (أجبت عليها صحيحًا مرة على الأقل).</p>` +
-      LV.map(lv => `<div class="section" data-lv="${lv}"><div class="section-title"><h2 style="color:${LVC[lv]}">${lv} · ${LVN[lv]}</h2></div><div class="grid grid-3 theme-grid">${levelThemes(lv).map(t => { const s = themeStats(t); return `<a class="card link-card theme-card" href="#/theme/${t.id}" style="--c:${LVC[lv]}"><div class="icon" style="background:${LVC[lv]}22">${I(t.icon || "star")}</div><h3>${esc(t.t)}</h3><p class="muted small">${t.words.length} كلمة · ${s.k} تعرفها</p>${bar(s.pct)}</a>`; }).join("")}</div></div>`).join(""));
+      LV.map(lv => `<div class="section" data-lv="${lv}"><div class="section-title"><h2 style="color:${LVC[lv]}">${lv} · ${LVN[lv]}</h2></div><div class="grid grid-3 theme-grid">${levelThemes(lv).map(t => { const s = themeStats(t); return `<a class="card link-card theme-card" href="#/theme/${t.id}" style="--c:${LVC[lv]}"><div class="icon" style="background:${LVC[lv]}22">${I(t.icon || "star")}</div><h3>${esc(t.t)}</h3><p class="muted small">${arN(t.words.length, "كلمة", "كلمات")} · ${s.k} تعرفها</p>${bar(s.pct)}</a>`; }).join("")}</div></div>`).join(""));
     levelTabs("vocab");
   };
 
@@ -516,7 +516,7 @@
         <div class="forecast">${days.map((n, i) => `<div class="fc"><div class="fc-bar" style="height:${Math.round(n / max * 60) + 6}px"></div><div class="fc-n">${n}</div><div class="fc-d">${i === 0 ? "اليوم" : i === 1 ? "غدًا" : "+" + i}</div></div>`).join("")}</div>
         <div class="btn-row" style="justify-content:center;margin-top:14px"><a class="btn btn-primary" href="#/vocab">${I("type")} تعلّم كلمات جديدة</a><a class="btn" href="#/daily">${I("calendar")} تحدي اليوم</a></div></div>`);
     }
-    runQuiz({ title: "مراجعة " + list.length + " كلمة", list, backHref: "#/", xpPer: 4, autoSay: true, onDone: (s, n, secs, ids) => { postPoints(s, n, secs, ids); resultCard("المراجعة", s, n, `<p class="muted">+${s * 4} XP · الكلمات الصحيحة تأجلت لموعد أبعد، والخاطئة سترجع قريبًا.</p>`, "#/", "#/review"); } });
+    runQuiz({ title: "مراجعة " + arN(list.length, "كلمة", "كلمات"), list, backHref: "#/", xpPer: 4, autoSay: true, onDone: (s, n, secs, ids) => { postPoints(s, n, secs, ids); resultCard("المراجعة", s, n, `<p class="muted">+${s * 4} XP · الكلمات الصحيحة تأجلت لموعد أبعد، والخاطئة سترجع قريبًا.</p>`, "#/", "#/review"); } });
   };
 
   /* ---------- daily ---------- */

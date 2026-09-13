@@ -114,6 +114,8 @@ const ICONS = {
 };
 /* أيقونات ثلاثية الأبعاد (Microsoft Fluent Emoji — رخصة MIT) مع رجوع للإيموجي العادي لو ما تحمّلت */
 const EMO = { fire: ["1f525", "🔥"], books: ["1f4da", "📚"], memo: ["1f4dd", "📝"], talk: ["1f5e3-fe0f", "🗣️"], game: ["1f3ae", "🎮"], book: ["1f4d6", "📖"], repeat: ["1f501", "🔁"], trophy: ["1f3c6", "🏆"], check: ["2705", "✅"], review: ["1f504", "🔄"], star: ["2b50", "⭐"], gift: ["1f381", "🎁"], shield: ["1f6e1-fe0f", "🛡️"], sparkles: ["2728", "✨"], comet: ["2604-fe0f", "☄️"], volcano: ["1f30b", "🌋"], crown: ["1f451", "👑"], swords: ["2694-fe0f", "⚔️"], clock: ["23f0", "⏰"], target: ["1f3af", "🎯"], puzzle: ["1f9e9", "🧩"], headphones: ["1f3a7", "🎧"], chat: ["1f4ac", "💬"], party: ["1f389", "🎉"], muscle: ["1f4aa", "💪"], wave: ["1f44b", "👋"], rocket: ["1f680", "🚀"], brain: ["1f9e0", "🧠"], calendar: ["1f4c5", "📅"], user: ["1f464", "👤"], home: ["1f3e0", "🏠"], stopwatch: ["23f1-fe0f", "⏱️"], abc: ["1f524", "🔤"], link: ["1f517", "🔗"], cards: ["1f3b4", "🎴"], bulb: ["1f4a1", "💡"], mic: ["1f3a4", "🎤"], globe: ["1f30d", "🌍"], bluebook: ["1f4d8", "📘"] };
+/* عدد + تمييز بالعربي: ٣–١٠ جمع، غيرها مفرد (5 كلمات، 12 كلمة) */
+const arN = (n, one, many) => `${n} ${n >= 3 && n <= 10 ? many : one}`;
 function emo(name, cls){
   const e = EMO[name]; if(!e) return "";
   return `<img class="emo ${cls || ""}" src="https://cdn.jsdelivr.net/npm/@lobehub/fluent-emoji-3d@1.1.0/assets/${e[0]}.webp" alt="${e[1]}" decoding="async" draggable="false" onerror="this.replaceWith(document.createTextNode(this.alt))">`;
@@ -507,6 +509,9 @@ function renderEventsBar(){
     try{ eventAnnouncements(s); }catch(e){}
     const gf = window.PTS && window.PTS.gift && !window.PTS.gift.pending ? window.PTS.gift : null;
     if(!full){ /* سطر واحد رفيع حتى لا يزاحم محتوى الصفحة */
+      const cp = curPage(), hh = location.hash.replace(/^#\/?/, "");
+      const isHome = ["index.html", "step.html"].includes(cp) || ((cp === "general.html" || cp === "library.html") && !hh);
+      if(!isHome && !(B && B.active) && !act && !gf){ host.innerHTML = ""; return; }
       const bits = [];
       if(B && B.active) bits.push(`<span class="ev-bit hot">${I("swords")} ${esc(B.title)} الآن!</span>`);
       else if(act) bits.push(`<span class="ev-bit hot">${I("zap")} ${esc(act.title)}: نقاط ×${s.mult} · ${fmtLeft(act.endsAt - s.now)}</span>`);
@@ -530,6 +535,7 @@ function renderEventsBar(){
   };
   draw(); setInterval(draw, 20000);
   document.addEventListener("points:loaded", draw);
+  window.addEventListener("hashchange", draw);
 }
 function recordAnswer(id, correct){ if(typeof Progress !== "undefined") Progress.record(id, correct); }
 const fmtDate = t => new Date(t).toLocaleDateString("ar-SA", { month: "short", day: "numeric" }) + " " + new Date(t).toLocaleTimeString("ar-SA", { hour: "2-digit", minute: "2-digit" });
