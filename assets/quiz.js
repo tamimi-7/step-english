@@ -35,6 +35,7 @@
   }
   function renderStats(){
     const hist = Store.get("step_history", []), host = $("#stats");
+    const cb = $("#clearBtn"); if(cb) cb.hidden = !hist.length;
     if(!hist.length){ host.innerHTML = `<h3>آخر النتائج</h3><p class="muted small">لا توجد نتائج سابقة على هذا الجهاز.</p>`; return; }
     host.innerHTML = `<h3>آخر النتائج</h3><div class="table-wrap"><table><thead><tr><th>التاريخ</th><th>النوع</th><th class="en">الدرجة</th><th>النسبة</th></tr></thead><tbody>${hist.slice(-8).reverse().map(h => `<tr><td>${fmtDate(h.d)}</td><td>${MODES[h.mode] || label(h.mode)}</td><td class="en">${h.score} / ${h.total}</td><td><span class="badge ${h.score / h.total >= .7 ? "ok" : "bad"}">${Math.round(h.score / h.total * 100)}٪</span></td></tr>`).join("")}</tbody></table></div>`;
   }

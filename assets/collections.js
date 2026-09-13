@@ -21,7 +21,7 @@
       : `<span class="ic"><i data-i='bookopen'></i></span><p><b>${c.models.length} نموذج قطع</b> — لكل نموذج عناوين القطع التي جاءت، وتحت كل قطعة الأسئلة التي سُئلت مع الإجابة المتوقعة (وترجمتها). احفظ فكرة القطعة وإجاباتها، فالقطع تتكرر بنفس الأسئلة.</p>`;
     const grid = $("#modelGrid"); grid.hidden = false; $("#modelView").hidden = true;
     grid.innerHTML = c.models.map(m => { const n = countQ(m), solved = m.items.filter(i => i.q && (typeof i.a === "number" || (typeof i.a === "string" && i.a))).length; const titles = m.items.filter(i => i.t).slice(0, 4).map(i => i.te || i.t).join(" · ");
-      return `<button type="button" class="mode-card" data-m="${m.n}" style="display:block"><span class="mt">النموذج ${m.n} <span class="badge">${n} سؤال</span>${solved < n ? `<span class="badge accent">${n - solved} غير محلول</span>` : ""}</span>${titles ? `<span class="md en" style="direction:ltr;text-align:left;font-size:.85rem">${esc(titles)}</span>` : ""}</button>`; }).join("");
+      return `<button type="button" class="mode-card" data-m="${m.n}" style="display:block"><span class="mt">النموذج ${m.n} ${n ? `<span class="badge">${n} سؤال</span>` : `<span class="badge">ملاحظات المختبرين</span>`}${solved < n ? `<span class="badge accent">${n - solved} غير محلول</span>` : ""}</span>${titles ? `<span class="md en" style="direction:ltr;text-align:left;font-size:.85rem">${esc(titles)}</span>` : ""}</button>`; }).join("");
     grid.querySelectorAll("[data-m]").forEach(b => b.addEventListener("click", () => openModel(+b.dataset.m)));
   }
   function openModel(n){
