@@ -1,0 +1,927 @@
+{
+ "totals": {
+  "themes": 46,
+  "words": 1126
+ },
+ "dupWordSameLevel": [],
+ "dupWordCrossLevel": [
+  {
+   "word": "fine",
+   "entries": [
+    "A1:greetings[11] = بخير",
+    "B1:crime-law[6] = غرامة"
+   ]
+  },
+  {
+   "word": "take off",
+   "entries": [
+    "A1:clothes[9] = يخلع",
+    "A2:travel[21] = يقلع"
+   ]
+  },
+  {
+   "word": "degree",
+   "entries": [
+    "A1:weather[15] = درجة (وحدة قياس الحرارة)",
+    "A2:education[7] = شهادة جامعية"
+   ]
+  },
+  {
+   "word": "right",
+   "entries": [
+    "A1:town[19] = يمين / صحيح",
+    "B2:society[5] = حق"
+   ]
+  },
+  {
+   "word": "straight",
+   "entries": [
+    "A1:town[20] = مستقيم / على طول",
+    "A2:describing-people[6] = مستقيم / ناعم (للشعر)"
+   ]
+  }
+ ],
+ "dupWordSameTheme": [],
+ "sameArSameLevel": [],
+ "sameArSameTheme": [],
+ "exampleMissing": [
+  {
+   "where": "A1:numbers-time[7] minute",
+   "word": "minute",
+   "ex": "I'll be there in five minutes."
+  },
+  {
+   "where": "A1:family[3] brother",
+   "word": "brother",
+   "ex": "I have two brothers."
+  },
+  {
+   "where": "A1:daily-routine[9] cook",
+   "word": "cook",
+   "ex": "My mother cooks rice."
+  },
+  {
+   "where": "A1:daily-routine[18] drive",
+   "word": "drive",
+   "ex": "My father drives to work."
+  },
+  {
+   "where": "A1:food[5] egg",
+   "word": "egg",
+   "ex": "I eat two eggs for breakfast."
+  },
+  {
+   "where": "A1:home[17] key",
+   "word": "key",
+   "ex": "I lost my keys."
+  },
+  {
+   "where": "A1:clothes[7] wear",
+   "word": "wear",
+   "ex": "What are you wearing today?"
+  },
+  {
+   "where": "A1:body-health[1] hand",
+   "word": "hand",
+   "ex": "Wash your hands."
+  },
+  {
+   "where": "A1:body-health[2] eye",
+   "word": "eye",
+   "ex": "She has beautiful eyes."
+  },
+  {
+   "where": "A1:weather[9] rain",
+   "word": "rain",
+   "ex": "It rains a lot in winter."
+  },
+  {
+   "where": "A1:weather[15] degree",
+   "word": "degree",
+   "ex": "It's 25 degrees today."
+  },
+  {
+   "where": "A1:jobs[21] earn",
+   "word": "earn",
+   "ex": "He earns a good salary."
+  },
+  {
+   "where": "A1:jobs[22] hire",
+   "word": "hire",
+   "ex": "The company hired ten people."
+  },
+  {
+   "where": "A1:basic-verbs[26] start",
+   "word": "start",
+   "ex": "The class starts at eight."
+  },
+  {
+   "where": "A1:basic-verbs[29] learn",
+   "word": "learn",
+   "ex": "I'm learning to swim."
+  },
+  {
+   "where": "A2:travel[8] arrive",
+   "word": "arrive",
+   "ex": "We arrived at noon."
+  },
+  {
+   "where": "A2:travel[9] depart",
+   "word": "depart",
+   "ex": "The train departs at six."
+  },
+  {
+   "where": "A2:travel[14] tourist",
+   "word": "tourist",
+   "ex": "Many tourists visit AlUla."
+  },
+  {
+   "where": "A2:travel[18] passenger",
+   "word": "passenger",
+   "ex": "All passengers must sit down."
+  },
+  {
+   "where": "A2:travel[20] land",
+   "word": "land",
+   "ex": "The plane landed safely."
+  },
+  {
+   "where": "A2:travel[21] take off",
+   "word": "take off",
+   "ex": "The plane took off on time."
+  },
+  {
+   "where": "A2:hotel-restaurant[0] check in",
+   "word": "check in",
+   "ex": "We checked in at 3 p.m."
+  },
+  {
+   "where": "A2:hotel-restaurant[5] towel",
+   "word": "towel",
+   "ex": "Can I have more towels?"
+  },
+  {
+   "where": "A2:hotel-restaurant[17] reserve",
+   "word": "reserve",
+   "ex": "I reserved a table for four."
+  },
+  {
+   "where": "A2:hotel-restaurant[19] complain",
+   "word": "complain",
+   "ex": "He complained about the noise."
+  },
+  {
+   "where": "A2:doctor[1] symptom",
+   "word": "symptom",
+   "ex": "What are your symptoms?"
+  },
+  {
+   "where": "A2:doctor[6] hurt",
+   "word": "hurt",
+   "ex": "My back hurts."
+  },
+  {
+   "where": "A2:doctor[17] recover",
+   "word": "recover",
+   "ex": "She recovered quickly."
+  },
+  {
+   "where": "A2:feelings[20] laugh",
+   "word": "laugh",
+   "ex": "We laughed at the joke."
+  },
+  {
+   "where": "A2:feelings[21] cry",
+   "word": "cry",
+   "ex": "The baby is crying."
+  },
+  {
+   "where": "A2:sports[4] score",
+   "word": "score",
+   "ex": "He scored two goals."
+  },
+  {
+   "where": "A2:sports[7] lose",
+   "word": "lose",
+   "ex": "They lost the final."
+  },
+  {
+   "where": "A2:sports[16] draw",
+   "word": "draw",
+   "ex": "She draws very well."
+  },
+  {
+   "where": "A2:technology[5] download",
+   "word": "download",
+   "ex": "I downloaded a new game."
+  },
+  {
+   "where": "A2:technology[17] delete",
+   "word": "delete",
+   "ex": "I deleted the old photos."
+  },
+  {
+   "where": "A2:technology[23] device",
+   "word": "device",
+   "ex": "Turn off all devices."
+  },
+  {
+   "where": "A2:shopping-money[10] lend",
+   "word": "lend",
+   "ex": "He lent me 100 riyals."
+  },
+  {
+   "where": "A2:shopping-money[11] save",
+   "word": "save",
+   "ex": "I'm saving for a car."
+  },
+  {
+   "where": "A2:shopping-money[16] withdraw",
+   "word": "withdraw",
+   "ex": "I withdrew 500 riyals."
+  },
+  {
+   "where": "A2:nature[1] flower",
+   "word": "flower",
+   "ex": "She planted flowers."
+  },
+  {
+   "where": "A2:nature[10] star",
+   "word": "star",
+   "ex": "Look at the stars!"
+  },
+  {
+   "where": "A2:nature[15] camel",
+   "word": "camel",
+   "ex": "Camels can live in the desert."
+  },
+  {
+   "where": "A2:nature[16] bird",
+   "word": "bird",
+   "ex": "Birds sing in the morning."
+  },
+  {
+   "where": "A2:nature[18] insect",
+   "word": "insect",
+   "ex": "There are many insects in summer."
+  },
+  {
+   "where": "A2:chores[15] neighbor",
+   "word": "neighbor",
+   "ex": "My neighbors are very friendly."
+  },
+  {
+   "where": "A2:chores[16] move",
+   "word": "move",
+   "ex": "We moved to a new apartment."
+  },
+  {
+   "where": "A2:chores[18] curtain",
+   "word": "curtain",
+   "ex": "Close the curtains."
+  },
+  {
+   "where": "A2:phrasal-1[3] look for",
+   "word": "look for",
+   "ex": "I'm looking for my keys."
+  },
+  {
+   "where": "A2:phrasal-1[4] look after",
+   "word": "look after",
+   "ex": "She looks after her little brother."
+  },
+  {
+   "where": "A2:phrasal-1[6] pick up",
+   "word": "pick up",
+   "ex": "I'll pick you up at 8."
+  },
+  {
+   "where": "A2:phrasal-1[8] find out",
+   "word": "find out",
+   "ex": "I found out the truth."
+  },
+  {
+   "where": "A2:phrasal-1[15] run out of",
+   "word": "run out of",
+   "ex": "We ran out of milk."
+  },
+  {
+   "where": "A2:phrasal-1[18] call back",
+   "word": "call back",
+   "ex": "I'll call you back later."
+  },
+  {
+   "where": "A2:education[5] pass",
+   "word": "pass",
+   "ex": "I passed the test!"
+  },
+  {
+   "where": "A2:education[6] fail",
+   "word": "fail",
+   "ex": "He failed the driving test."
+  },
+  {
+   "where": "A2:education[22] mistake",
+   "word": "mistake",
+   "ex": "Everyone makes mistakes."
+  },
+  {
+   "where": "B1:work-office[1] colleague",
+   "word": "colleague",
+   "ex": "My colleagues are helpful."
+  },
+  {
+   "where": "B1:work-office[3] task",
+   "word": "task",
+   "ex": "I finished all my tasks."
+  },
+  {
+   "where": "B1:work-office[6] apply",
+   "word": "apply",
+   "ex": "I applied for the job."
+  },
+  {
+   "where": "B1:work-office[12] employee",
+   "word": "employee",
+   "ex": "The company has 200 employees."
+  },
+  {
+   "where": "B1:work-office[16] resign",
+   "word": "resign",
+   "ex": "He resigned last month."
+  },
+  {
+   "where": "B1:work-office[22] achieve",
+   "word": "achieve",
+   "ex": "We achieved our goals."
+  },
+  {
+   "where": "B1:opinions[4] argue",
+   "word": "argue",
+   "ex": "They argued about money."
+  },
+  {
+   "where": "B1:opinions[5] convince",
+   "word": "convince",
+   "ex": "She convinced me to come."
+  },
+  {
+   "where": "B1:opinions[24] depend on",
+   "word": "depend on",
+   "ex": "It depends on the weather."
+  },
+  {
+   "where": "B1:opinions[25] make sense",
+   "word": "make sense",
+   "ex": "That makes sense."
+  },
+  {
+   "where": "B1:media[6] advertisement",
+   "word": "advertisement",
+   "ex": "There are too many advertisements."
+  },
+  {
+   "where": "B1:media[10] influencer",
+   "word": "influencer",
+   "ex": "Influencers earn money from ads."
+  },
+  {
+   "where": "B1:media[11] follower",
+   "word": "follower",
+   "ex": "She has a million followers."
+  },
+  {
+   "where": "B1:media[12] post",
+   "word": "post",
+   "ex": "I posted a photo yesterday."
+  },
+  {
+   "where": "B1:media[14] comment",
+   "word": "comment",
+   "ex": "Read the comments below."
+  },
+  {
+   "where": "B1:science[1] discover",
+   "word": "discover",
+   "ex": "Scientists discovered a new planet."
+  },
+  {
+   "where": "B1:science[2] invent",
+   "word": "invent",
+   "ex": "Who invented the telephone?"
+  },
+  {
+   "where": "B1:science[7] chemical",
+   "word": "chemical",
+   "ex": "Be careful with chemicals."
+  },
+  {
+   "where": "B1:science[12] cell",
+   "word": "cell",
+   "ex": "The body is made of cells."
+  },
+  {
+   "where": "B1:science[15] increase",
+   "word": "increase",
+   "ex": "Temperatures are increasing."
+  },
+  {
+   "where": "B1:science[16] decrease",
+   "word": "decrease",
+   "ex": "Pollution decreased this year."
+  },
+  {
+   "where": "B1:science[17] develop",
+   "word": "develop",
+   "ex": "They developed a new vaccine."
+  },
+  {
+   "where": "B1:science[18] solve",
+   "word": "solve",
+   "ex": "Science solves many problems."
+  },
+  {
+   "where": "B1:science[21] robot",
+   "word": "robot",
+   "ex": "Robots build cars."
+  },
+  {
+   "where": "B1:crime-law[3] steal",
+   "word": "steal",
+   "ex": "Someone stole my bike."
+  },
+  {
+   "where": "B1:crime-law[5] arrest",
+   "word": "arrest",
+   "ex": "The police arrested the man."
+  },
+  {
+   "where": "B1:crime-law[14] rule",
+   "word": "rule",
+   "ex": "Follow the rules."
+  },
+  {
+   "where": "B1:crime-law[15] allow",
+   "word": "allow",
+   "ex": "Smoking is not allowed here."
+  },
+  {
+   "where": "B1:crime-law[16] forbid",
+   "word": "forbid",
+   "ex": "The school forbids phones."
+  },
+  {
+   "where": "B1:idioms-1[18] get out of hand",
+   "word": "get out of hand",
+   "ex": "The party got out of hand."
+  },
+  {
+   "where": "B1:phrasal-2[2] come up with",
+   "word": "come up with",
+   "ex": "She came up with a great idea."
+  },
+  {
+   "where": "B1:phrasal-2[6] give away",
+   "word": "give away",
+   "ex": "He gave away his old clothes."
+  },
+  {
+   "where": "B1:phrasal-2[9] let down",
+   "word": "let down",
+   "ex": "Don't let me down."
+  },
+  {
+   "where": "B1:phrasal-2[12] make up",
+   "word": "make up",
+   "ex": "They made up after the fight."
+  },
+  {
+   "where": "B1:phrasal-2[13] pass away",
+   "word": "pass away",
+   "ex": "His grandfather passed away."
+  },
+  {
+   "where": "B1:phrasal-2[14] point out",
+   "word": "point out",
+   "ex": "She pointed out a mistake."
+  },
+  {
+   "where": "B1:phrasal-2[16] run into",
+   "word": "run into",
+   "ex": "I ran into an old friend."
+  },
+  {
+   "where": "B1:phrasal-2[18] take up",
+   "word": "take up",
+   "ex": "I took up swimming."
+  },
+  {
+   "where": "B1:phrasal-2[19] turn down",
+   "word": "turn down",
+   "ex": "She turned down the offer."
+  },
+  {
+   "where": "B1:phrasal-2[20] turn up",
+   "word": "turn up",
+   "ex": "He turned up late."
+  },
+  {
+   "where": "B1:phrasal-2[22] break down",
+   "word": "break down",
+   "ex": "My car broke down."
+  },
+  {
+   "where": "B1:collocations[1] do homework",
+   "word": "do homework",
+   "ex": "I do my homework at night."
+  },
+  {
+   "where": "B1:collocations[4] make a mistake",
+   "word": "make a mistake",
+   "ex": "Don't worry, everyone makes mistakes."
+  },
+  {
+   "where": "B1:collocations[5] catch a cold",
+   "word": "catch a cold",
+   "ex": "I caught a cold last week."
+  },
+  {
+   "where": "B1:collocations[6] keep a promise",
+   "word": "keep a promise",
+   "ex": "He always keeps his promises."
+  },
+  {
+   "where": "B1:collocations[8] save time",
+   "word": "save time",
+   "ex": "This app saves time."
+  },
+  {
+   "where": "B1:collocations[14] get married",
+   "word": "get married",
+   "ex": "They got married last year."
+  },
+  {
+   "where": "B1:collocations[16] do exercise",
+   "word": "do exercise",
+   "ex": "Do some exercise every day."
+  },
+  {
+   "where": "B1:collocations[17] give advice",
+   "word": "give advice",
+   "ex": "My father gave me good advice."
+  },
+  {
+   "where": "B1:collocations[21] reach a goal",
+   "word": "reach a goal",
+   "ex": "She reached her goal."
+  },
+  {
+   "where": "B1:collocations[22] run a business",
+   "word": "run a business",
+   "ex": "He runs a small business."
+  },
+  {
+   "where": "B1:collocations[23] break a record",
+   "word": "break a record",
+   "ex": "She broke the world record."
+  },
+  {
+   "where": "B1:city-life[10] skyscraper",
+   "word": "skyscraper",
+   "ex": "Riyadh has many skyscrapers."
+  },
+  {
+   "where": "B1:city-life[15] donate",
+   "word": "donate",
+   "ex": "We donated food to the poor."
+  },
+  {
+   "where": "B1:city-life[18] culture",
+   "word": "culture",
+   "ex": "I love learning about other cultures."
+  },
+  {
+   "where": "B2:business[3] invest",
+   "word": "invest",
+   "ex": "I invested in stocks."
+  },
+  {
+   "where": "B2:business[8] competitor",
+   "word": "competitor",
+   "ex": "Our competitors are strong."
+  },
+  {
+   "where": "B2:business[9] launch",
+   "word": "launch",
+   "ex": "They launched a new phone."
+  },
+  {
+   "where": "B2:business[12] expand",
+   "word": "expand",
+   "ex": "The company expanded into Egypt."
+  },
+  {
+   "where": "B2:business[15] shareholder",
+   "word": "shareholder",
+   "ex": "Shareholders receive dividends."
+  },
+  {
+   "where": "B2:business[20] export",
+   "word": "export",
+   "ex": "Saudi Arabia exports oil."
+  },
+  {
+   "where": "B2:business[24] stakeholder",
+   "word": "stakeholder",
+   "ex": "All stakeholders were consulted."
+  },
+  {
+   "where": "B2:society[21] minority",
+   "word": "minority",
+   "ex": "Minorities need protection."
+  },
+  {
+   "where": "B2:psychology[2] habit",
+   "word": "habit",
+   "ex": "Bad habits are hard to break."
+  },
+  {
+   "where": "B2:psychology[9] emotion",
+   "word": "emotion",
+   "ex": "Music affects our emotions."
+  },
+  {
+   "where": "B2:psychology[11] reward",
+   "word": "reward",
+   "ex": "The brain loves rewards."
+  },
+  {
+   "where": "B2:psychology[12] procrastinate",
+   "word": "procrastinate",
+   "ex": "Stop procrastinating and start."
+  },
+  {
+   "where": "B2:environment[4] emission",
+   "word": "emission",
+   "ex": "Car emissions harm the air."
+  },
+  {
+   "where": "B2:environment[11] ecosystem",
+   "word": "ecosystem",
+   "ex": "Coral reefs are rich ecosystems."
+  },
+  {
+   "where": "B2:environment[19] landfill",
+   "word": "landfill",
+   "ex": "Most waste ends up in landfills."
+  },
+  {
+   "where": "B2:academic[4] consist of",
+   "word": "consist of",
+   "ex": "The team consists of five people."
+  },
+  {
+   "where": "B2:academic[7] establish",
+   "word": "establish",
+   "ex": "The university was established in 1957."
+  },
+  {
+   "where": "B2:academic[14] obtain",
+   "word": "obtain",
+   "ex": "We obtained good results."
+  },
+  {
+   "where": "B2:academic[17] require",
+   "word": "require",
+   "ex": "The job requires experience."
+  },
+  {
+   "where": "B2:idioms-2[0] beat around the bush",
+   "word": "beat around the bush",
+   "ex": "Stop beating around the bush."
+  },
+  {
+   "where": "B2:idioms-2[1] bite off more than you can chew",
+   "word": "bite off more than you can chew",
+   "ex": "I bit off more than I could chew."
+  },
+  {
+   "where": "B2:idioms-2[3] go the extra mile",
+   "word": "go the extra mile",
+   "ex": "She always goes the extra mile."
+  },
+  {
+   "where": "B2:idioms-2[8] pull someone's leg",
+   "word": "pull someone's leg",
+   "ex": "I'm just pulling your leg."
+  },
+  {
+   "where": "B2:idioms-2[10] sit on the fence",
+   "word": "sit on the fence",
+   "ex": "Stop sitting on the fence."
+  },
+  {
+   "where": "B2:idioms-2[11] take it with a grain of salt",
+   "word": "take it with a grain of salt",
+   "ex": "Take his story with a grain of salt."
+  },
+  {
+   "where": "B2:idioms-2[22] get cold feet",
+   "word": "get cold feet",
+   "ex": "He got cold feet before the wedding."
+  },
+  {
+   "where": "B2:idioms-2[23] burn the midnight oil",
+   "word": "burn the midnight oil",
+   "ex": "I burned the midnight oil last night."
+  },
+  {
+   "where": "B2:phrasal-3[0] account for",
+   "word": "account for",
+   "ex": "Oil accounts for most exports."
+  },
+  {
+   "where": "B2:phrasal-3[2] bring about",
+   "word": "bring about",
+   "ex": "The law brought about change."
+  },
+  {
+   "where": "B2:phrasal-3[3] call off",
+   "word": "call off",
+   "ex": "They called off the meeting."
+  },
+  {
+   "where": "B2:phrasal-3[4] come across",
+   "word": "come across",
+   "ex": "I came across an old photo."
+  },
+  {
+   "where": "B2:phrasal-3[7] get away with",
+   "word": "get away with",
+   "ex": "He got away with it."
+  },
+  {
+   "where": "B2:phrasal-3[8] go through",
+   "word": "go through",
+   "ex": "She went through a hard time."
+  },
+  {
+   "where": "B2:phrasal-3[11] lay off",
+   "word": "lay off",
+   "ex": "The company laid off 50 workers."
+  },
+  {
+   "where": "B2:phrasal-3[12] live up to",
+   "word": "live up to",
+   "ex": "The hotel lived up to expectations."
+  },
+  {
+   "where": "B2:phrasal-3[14] opt for",
+   "word": "opt for",
+   "ex": "I opted for the cheaper one."
+  },
+  {
+   "where": "B2:phrasal-3[15] phase out",
+   "word": "phase out",
+   "ex": "They phased out plastic bags."
+  },
+  {
+   "where": "B2:phrasal-3[17] stand out",
+   "word": "stand out",
+   "ex": "Her work stands out."
+  },
+  {
+   "where": "B2:phrasal-3[18] step down",
+   "word": "step down",
+   "ex": "The manager stepped down."
+  },
+  {
+   "where": "B2:phrasal-3[19] take over",
+   "word": "take over",
+   "ex": "She took over the company."
+  },
+  {
+   "where": "B2:phrasal-3[20] turn out",
+   "word": "turn out",
+   "ex": "It turned out well."
+  },
+  {
+   "where": "B2:phrasal-3[22] wind up",
+   "word": "wind up",
+   "ex": "We wound up at a cafe."
+  },
+  {
+   "where": "B2:health-b2[6] diagnose",
+   "word": "diagnose",
+   "ex": "The doctor diagnosed the problem."
+  },
+  {
+   "where": "B2:health-b2[9] prevent",
+   "word": "prevent",
+   "ex": "Exercise prevents many diseases."
+  },
+  {
+   "where": "B2:health-b2[20] side effect",
+   "word": "side effect",
+   "ex": "The drug has side effects."
+  },
+  {
+   "where": "B2:communication[1] persuade",
+   "word": "persuade",
+   "ex": "She persuaded me to join."
+  },
+  {
+   "where": "B2:communication[5] emphasize",
+   "word": "emphasize",
+   "ex": "He emphasized the importance of time."
+  },
+  {
+   "where": "B2:communication[6] mention",
+   "word": "mention",
+   "ex": "She mentioned your name."
+  },
+  {
+   "where": "B2:communication[13] negotiate",
+   "word": "negotiate",
+   "ex": "We negotiated the terms."
+  },
+  {
+   "where": "B2:communication[22] respond",
+   "word": "respond",
+   "ex": "He responded quickly."
+  }
+ ],
+ "badArity": [],
+ "emptyField": [],
+ "suspiciousPos": [
+  "B1:collocations[0] make a decision pos=collocation",
+  "B1:collocations[1] do homework pos=collocation",
+  "B1:collocations[2] take a break pos=collocation",
+  "B1:collocations[3] have a look pos=collocation",
+  "B1:collocations[4] make a mistake pos=collocation",
+  "B1:collocations[5] catch a cold pos=collocation",
+  "B1:collocations[6] keep a promise pos=collocation",
+  "B1:collocations[7] pay attention pos=collocation",
+  "B1:collocations[8] save time pos=collocation",
+  "B1:collocations[9] waste money pos=collocation",
+  "B1:collocations[10] strong coffee pos=collocation",
+  "B1:collocations[11] heavy rain pos=collocation",
+  "B1:collocations[12] fast food pos=collocation",
+  "B1:collocations[13] take a photo pos=collocation",
+  "B1:collocations[14] get married pos=collocation",
+  "B1:collocations[15] make friends pos=collocation",
+  "B1:collocations[16] do exercise pos=collocation",
+  "B1:collocations[17] give advice pos=collocation",
+  "B1:collocations[18] have fun pos=collocation",
+  "B1:collocations[19] tell the truth pos=collocation",
+  "B1:collocations[20] take responsibility pos=collocation",
+  "B1:collocations[21] reach a goal pos=collocation",
+  "B1:collocations[22] run a business pos=collocation",
+  "B1:collocations[23] break a record pos=collocation"
+ ],
+ "longPhrase": [
+  "B1:opinions[23] on the other hand",
+  "B1:idioms-1[0] a piece of cake",
+  "B1:idioms-1[4] once in a blue moon",
+  "B1:idioms-1[5] cost an arm and a leg",
+  "B1:idioms-1[6] call it a day",
+  "B1:idioms-1[7] on the same page",
+  "B1:idioms-1[8] keep an eye on",
+  "B1:idioms-1[11] get the hang of it",
+  "B1:idioms-1[12] make up your mind",
+  "B1:idioms-1[14] speak of the devil",
+  "B1:idioms-1[15] better late than never",
+  "B1:idioms-1[16] a blessing in disguise",
+  "B1:idioms-1[17] easier said than done",
+  "B1:idioms-1[18] get out of hand",
+  "B1:idioms-1[19] no pain, no gain",
+  "B1:idioms-1[21] it's not rocket science",
+  "B2:idioms-2[0] beat around the bush",
+  "B2:idioms-2[1] bite off more than you can chew",
+  "B2:idioms-2[3] go the extra mile",
+  "B2:idioms-2[4] hit the nail on the head",
+  "B2:idioms-2[5] let the cat out of the bag",
+  "B2:idioms-2[9] see eye to eye",
+  "B2:idioms-2[10] sit on the fence",
+  "B2:idioms-2[11] take it with a grain of salt",
+  "B2:idioms-2[12] the ball is in your court",
+  "B2:idioms-2[13] throw in the towel",
+  "B2:idioms-2[16] back to square one",
+  "B2:idioms-2[17] in the long run",
+  "B2:idioms-2[18] out of the blue",
+  "B2:idioms-2[20] the tip of the iceberg",
+  "B2:idioms-2[21] think outside the box",
+  "B2:idioms-2[23] burn the midnight oil"
+ ],
+ "themeSize": [],
+ "arDupSets": [
+  {
+   "lvl": "B1",
+   "seg": "في الواقع",
+   "entries": [
+    "opinions[17] actually = في الواقع",
+    "opinions[22] in fact = في الحقيقة / في الواقع"
+   ]
+  }
+ ]
+}
