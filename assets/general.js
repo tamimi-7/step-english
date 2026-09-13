@@ -139,7 +139,7 @@
   let timers = []; const after = (fn, ms) => { const t = setTimeout(fn, ms); timers.push(t); return t; }; const every = (fn, ms) => { const t = setInterval(fn, ms); timers.push(t); return t; };
   function stopTimers(){ timers.forEach(t => { if(t && typeof t.clear === "function") t.clear(); else { clearTimeout(t); clearInterval(t); } }); timers = []; clearTimeout(speakTimer); hush(); }
   const render = html => { $("#app").innerHTML = html; hydrateIcons($("#app")); };
-  const crumb = (items) => `<div class="crumbs"><a href="#/">${I("home")} إنقلش عام</a>${items.map(x => ` <span>›</span> ${x.href ? `<a href="${x.href}">${x.t}</a>` : `<b>${x.t}</b>`}`).join("")}</div>`;
+  const crumb = (items) => { const back = [...items].reverse().find(x => x.href); return `<div class="crumbs"><a class="back-btn" href="${back ? back.href : "#/"}">${I("arrow")} رجوع</a><a href="#/">${I("home")} إنقلش عام</a>${items.map(x => ` <span>›</span> ${x.href ? `<a href="${x.href}">${x.t}</a>` : `<b>${x.t}</b>`}`).join("")}</div>`; };
   const bar = (pct, cls) => `<div class="progress"><div class="${cls || ""}" style="width:${pct}%"></div></div>`;
 
   /* ---------- progress helpers ---------- */
@@ -200,8 +200,33 @@
           <a class="card link-card c-teal" href="#/talk"><div class="icon p-teal">${I("mic")}</div><h3>المحادثة</h3><p class="muted small">${D.length} حوارًا تسمعه وتنطقه</p></a>
           <a class="card link-card c-rose" href="#/games"><div class="icon p-rose">${I("timer")}</div><h3>الألعاب</h3><p class="muted small">سباق، طابق، رتّب الحروف</p></a>
           <a class="card link-card c-amber" href="library.html"><div class="icon p-amber">${I("bookopen")}</div><h3>القصص والروايات</h3><p class="muted small">اقرأ واستمع بصوت قارئ — من A1 إلى C2</p></a>
+          <a class="card link-card c-blue" href="#/verbs"><div class="icon p-blue">${I("list")}</div><h3>تصريف الأفعال</h3><p class="muted small">${(window.GEN_VERBS || []).length} فعلًا: الماضي، بعد have، وing — مع بحث واختبار</p></a>
         </div>
       </section>`);
+  };
+
+  /* ---------- تصريف الأفعال ---------- */
+  const VB = window.GEN_VERBS || [];
+  const CVC = /[^aeiou][aeiou][^aeiouwxy]$/;
+  const ingOf = b => b === "be" ? "being" : /ie$/.test(b) ? b.slice(0, -2) + "ying" : /[^e]e$/.test(b) ? b.slice(0, -1) + "ing" : (b.length <= 5 && CVC.test(b) && !/^(open|visit|enter|offer|order|cover|answer|listen|happen|travel|suffer|wonder)$/.test(b)) ? b + b.slice(-1) + "ing" : b + "ing";
+  const thirdOf = b => b === "be" ? "is" : b === "have" ? "has" : /[^aeiou]y$/.test(b) ? b.slice(0, -1) + "ies" : /(s|x|z|ch|sh|o)$/.test(b) ? b + "es" : b + "s";
+  routes.verbs = () => {
+    let f = "all", q = "";
+    const rows = () => VB.filter(v => f === "all" || (f === "irr") === !!v[4]).filter(v => !q || [v[0], v[1], v[2], v[3]].join(" ").toLowerCase().includes(q))
+      .map(v => `<tr><td class="en"><b>${esc(v[0])}</b> ${spk(v[0], "sm")}</td><td class="en">${esc(v[1])}</td><td class="en">${esc(v[2])}</td><td class="en">${esc(ingOf(v[0]))}</td><td class="en">${esc(thirdOf(v[0]))}</td><td>${esc(v[3])}${v[5] ? `<div class="small muted en" style="direction:ltr;text-align:left">${esc(v[5])}</div><div class="small muted">${esc(v[6] || "")}</div>` : ""}</td></tr>`).join("");
+    render(crumb([{ t: "تصريف الأفعال" }]) + `<div class="card sheet"><div class="section-title"><h1 style="margin:0">${I("list")} تصريف الأفعال</h1><span class="badge">${VB.length} فعلًا</span></div>
+      <p class="muted small" style="margin:6px 0 10px">الأفعال الشاذة أولًا (اللي ما تأخذ ed)، ثم أفعال منتظمة شائعة. اضغط ${I("headphones")} لتسمع الفعل، وابحث بالإنجليزي أو العربي.</p>
+      <input class="input" id="vq" placeholder="ابحث: go, went, ذهب…" autocomplete="off">
+      <div class="btn-row" style="margin-top:10px"><span class="seg seg-sm" id="vf"><button type="button" data-f="all" class="on">الكل</button><button type="button" data-f="irr">الشاذة</button><button type="button" data-f="reg">المنتظمة</button></span><a class="btn btn-sm btn-warm" href="#/verbquiz">${I("pencil")} اختبرني</a></div></div>
+      <div class="table-wrap"><table class="gtable vtable"><thead><tr><th>الفعل</th><th>الماضي<div class="small muted">yesterday</div></th><th>بعد have / was<div class="small muted">have gone</div></th><th>ing<div class="small muted">is going</div></th><th>مع he / she / it</th><th>المعنى ومثال</th></tr></thead><tbody id="vbody">${rows()}</tbody></table></div>`);
+    const refresh = () => { $("#vbody").innerHTML = rows(); hydrateIcons($("#vbody")); };
+    $("#vq").addEventListener("input", e => { q = e.target.value.trim().toLowerCase(); refresh(); });
+    $("#vf").addEventListener("click", e => { const b = e.target.closest("button"); if(!b) return; f = b.dataset.f; $("#vf").querySelectorAll("button").forEach(x => x.classList.toggle("on", x === b)); refresh(); });
+  };
+  routes.verbquiz = () => {
+    const pool = shuffle(VB.filter(v => v[4])).slice(0, 12);
+    const list = pool.map(v => { const kind = Math.random() < .6 ? 1 : 2; const correct = v[kind].split("/")[0].trim(); const dis = shuffle(VB.filter(x => x !== v).map(x => x[kind].split("/")[0].trim()).filter(x => x !== correct)).slice(0, 3); const opts = shuffle([correct, ...dis]); return { id: `vb-${v[0]}-${kind}`, kind: "verb", q: kind === 1 ? `${v[0]}  →  yesterday I ___` : `${v[0]}  →  I have ___`, sub: v[3], opts, a: opts.indexOf(correct), ex: `${v[0]} · ${v[1]} · ${v[2]} — ${v[3]}`, sayAfter: `${v[0]}, ${v[1].split("/")[0].trim()}, ${v[2].split("/")[0].trim()}` }; });
+    runQuiz({ title: "اختبار تصريف الأفعال", list, backHref: "#/verbs", xpPer: 4, onDone: (s, n, secs, ids) => { postPoints(s, n, secs, ids); resultCard("تصريف الأفعال", s, n, `<p class="muted">+${s * 4} XP</p>`, "#/verbs", "#/verbquiz"); } });
   };
 
   /* ---------- GAMES ---------- */
@@ -461,7 +486,7 @@
 
   /* ---------- GRAMMAR ---------- */
   routes.grammar = () => {
-    render(crumb([{ t: "القواعد" }]) + `<h1>${I("book")} كيف تقولها صح</h1><p class="muted">بدون مسميات معقدة: كل درس يعلّمك متى تقول الشيء، ويعطيك قوالب جاهزة تعبّيها وتنطقها، ثم تجرّبها.</p>` +
+    render(crumb([{ t: "القواعد" }]) + `<h1>${I("book")} كيف تقولها صح</h1><p class="muted">بدون مسميات معقدة: كل درس يعلّمك متى تقول الشيء، ويعطيك قوالب جاهزة تعبّيها وتنطقها، ثم تجرّبها.</p><a class="card link-card c-blue" href="#/verbs" style="margin-bottom:14px"><div class="icon p-blue">${I("list")}</div><h3>تصريف الأفعال</h3><p class="muted small">go → went → gone: جدول ${VB.length} فعلًا مع البحث والنطق واختبار</p></a>` +
       LV.map(lv => { const ls = G.filter(l => l.lvl === lv); return ls.length ? `<div class="section"><div class="section-title"><h2 style="color:${LVC[lv]}">${lv} · ${LVN[lv]}</h2></div><div class="grid grid-2">${ls.map(l => { const ids = l.practice.map((_, i) => `gg-${l.id}-${i}`); const k = ids.filter(known).length; return `<a class="card link-card" href="#/lesson/${l.id}" style="--c:${LVC[lv]}"><h3>${esc(l.t)}</h3><p class="muted small en" style="direction:ltr;text-align:left">${esc(l.en)}</p><p class="small">${esc(l.why)}</p>${bar(Math.round(k / ids.length * 100))}</a>`; }).join("")}</div></div>` : ""; }).join(""));
   };
   /* يعزل المقاطع الإنجليزية داخل النص العربي ويقسّم الشرح إلى نقاط */
@@ -489,6 +514,7 @@
       <details class="shape" open><summary>${I("list")} شكل الجملة كامل</summary><div class="formula-rows">${formRows(l.form).map(x => `<div class="frow">${mixed(x)}</div>`).join("")}</div></details>
       <h3>${I("alert")} أخطاء يقع فيها الكثير</h3><div class="table-wrap"><table><thead><tr><th class="en">✗ خطأ</th><th class="en">✓ صحيح</th><th>ليش</th></tr></thead><tbody>${l.mistakes.map(m => `<tr><td class="en" style="color:var(--bad)">${esc(m[0])}</td><td class="en" style="color:var(--ok)">${esc(m[1])}</td><td>${mixed(m[2])}</td></tr>`).join("")}</tbody></table></div>
       <div class="note tip"><span class="ic">${I("sparkles")}</span><p>${mixed(l.tip)}</p></div>
+      ${/past|perfect|passive|third|used-to/.test(l.id) ? `<div class="note info"><span class="ic">${I("list")}</span><p>تبي تعرف ماضي أي فعل و«بعد have»؟ <a href="#/verbs"><b>جدول تصريف الأفعال</b></a> فيه ${VB.length} فعلًا مع البحث والنطق.</p></div>` : ""}
       ${l.jargon ? `<p class="small muted jargon">اسمها في كتب القواعد (للمرجع فقط، ما تحتاج تحفظه): ${mixed(l.jargon)}</p>` : ""}
       <div class="btn-row"><a class="btn btn-primary" href="#/practice/${l.id}">${I("pencil")} جرّبها (${l.practice.length} أسئلة)</a><a class="btn" href="#/grammar">كل الدروس</a></div></article>`);
   };

@@ -17,6 +17,7 @@ const NAV_GEN = [
   { href: "general.html#/vocab", label: "المفردات", icon: "type" },
   { href: "general.html#/grammar", label: "القواعد", icon: "book" },
   { href: "general.html#/talk", label: "المحادثة", icon: "mic" },
+  { href: "general.html#/verbs", label: "الأفعال", icon: "list" },
   { href: "library.html", label: "القصص", icon: "bookopen" },
   { href: "general.html#/games", label: "الألعاب", icon: "timer" },
   { href: "compete.html", label: "تنافس", icon: "trophy" }
@@ -102,6 +103,10 @@ const ICONS = {
   list: 'M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01',
   arrow: 'M19 12H5M12 19l-7-7 7-7',
   volume: 'M11 5L6 9H2v6h4l5 4V5zM15.5 8.5a5 5 0 0 1 0 7M19 5a9 9 0 0 1 0 14',
+  play: 'M6 4l14 8-14 8z',
+  pause: 'M7 4h4v16H7zM13 4h4v16h-4z',
+  next: 'M5 4l10 8-10 8zM17 4h2v16h-2z',
+  prev: 'M19 4L9 12l10 8zM5 4h2v16H5z',
   mute: 'M11 5L6 9H2v6h4l5 4V5zM23 9l-6 6M17 9l6 6',
   smile: 'M12 22a10 10 0 1 0 0-20 10 10 0 0 0 0 20zM8 14s1.5 2 4 2 4-2 4-2M9 9h.01M15 9h.01',
   award: 'M12 15a7 7 0 1 0 0-14 7 7 0 0 0 0 14zM8.2 13.9L7 23l5-3 5 3-1.2-9.1'

@@ -26,21 +26,29 @@
     const out = []; s.paras.forEach((p, pi) => { let at = 0; sentences(p.en).forEach(txt => { const i = p.en.indexOf(txt, at); if(i < 0) return; at = i + txt.length; out.push({ pi, cs: i, ce: at }); }); });
     return out;
   }
-  const words = txt => txt.replace(/[A-Za-z][A-Za-z'-]*/g, m => `<span class="w">${m}</span>`);
+  /* يلفّ كل كلمة إنجليزية بـ span مع تهريب صحيح (لا يكسر علامات التنصيص والرموز) */
+  const words = txt => String(txt).replace(/([A-Za-z][A-Za-z'’-]*)|([^A-Za-z]+)/g, (m, w, o) => w ? `<span class="w">${esc(w)}</span>` : esc(o));
   function paraHtml(p, pi, spans){
     const mine = spans.map((sp, k) => ({ ...sp, k })).filter(sp => sp.pi === pi).sort((a, b) => a.cs - b.cs);
-    if(!mine.length) return words(esc(p.en));
+    if(!mine.length) return words(p.en);
     let out = "", at = 0;
-    mine.forEach(sp => { if(sp.cs > at) out += words(esc(p.en.slice(at, sp.cs))); out += `<span class="sent" data-k="${sp.k}">${words(esc(p.en.slice(sp.cs, sp.ce)))}</span>`; at = sp.ce; });
-    if(at < p.en.length) out += words(esc(p.en.slice(at)));
+    mine.forEach(sp => { if(sp.cs > at) out += words(p.en.slice(at, sp.cs)); out += `<span class="sent" data-k="${sp.k}">${words(p.en.slice(sp.cs, sp.ce))}</span>`; at = sp.ce; });
+    if(at < p.en.length) out += words(p.en.slice(at));
     return out;
   }
   /* ---------- قاموس: معنى أي كلمة إنجليزية بضغطة ---------- */
   const DICT = (() => {
     const m = {};
     (window.GEN_VOCAB || []).forEach(t => t.words.forEach(w => { const k = w[0].toLowerCase(); if(!m[k]) m[k] = { ar: w[1], pos: w[2], ex: w[3], exAr: w[4], lvl: t.lvl }; }));
+    (window.STORIES || []).forEach(st => (st.glossary || []).forEach(g => { const k = g.w.toLowerCase().replace(/\s*\(.*\)\s*$/, ""); if(!m[k]) m[k] = { ar: g.ar, pos: g.pos || "", lvl: "قصة " + st.ar }; }));
+    (window.CORE_WORDS || []).forEach(w => { const k = w[0].toLowerCase(); if(!m[k]) m[k] = { ar: w[1], pos: w[2] || "", lvl: "الكلمات الأساسية" }; });
+    (window.GEN_VERBS || []).forEach(v => { const k = v[0].toLowerCase(); if(!m[k]) m[k] = { ar: v[3], pos: "verb", ex: v[5], exAr: v[6], lvl: "تصريف الأفعال" }; });
     return m;
   })();
+  /* الأفعال: كل صيغة (went, gone) ترجع إلى أصلها (go) */
+  const VERBS = window.GEN_VERBS || [];
+  const VFORM = {}; VERBS.forEach(v => { [v[1], v[2]].forEach(f => String(f).split("/").map(x => x.trim().toLowerCase()).forEach(x => { if(x && !VFORM[x]) VFORM[x] = v[0]; })); });
+  const verbOf = base => VERBS.find(v => v[0] === base);
   const STRIP = w => {
     const out = [w];
     if(/ies$/.test(w)) out.push(w.slice(0, -3) + "y");
@@ -56,7 +64,7 @@
     if(!w) return null;
     const g = story && story.glossary && story.glossary.find(x => x.w.toLowerCase() === w);
     if(g) return { ar: g.ar, pos: g.pos, src: "قاموس القصة", word: g.w };
-    const cands = [w, IRREG_BASE[w], ...STRIP(w)].filter(Boolean);
+    const cands = [w, IRREG_BASE[w], VFORM[w], ...STRIP(w)].filter(Boolean);
     for(const cand of cands){
       const g2 = story && story.glossary && story.glossary.find(x => x.w.toLowerCase() === cand);
       if(g2) return { ar: g2.ar, pos: g2.pos, src: "قاموس القصة", word: g2.w };
@@ -64,6 +72,8 @@
     }
     return null;
   }
+  const CVC = /[^aeiou][aeiou][^aeiouwxy]$/;
+  const ingOf = b => b === "be" ? "being" : /ie$/.test(b) ? b.slice(0, -2) + "ying" : /[^e]e$/.test(b) ? b.slice(0, -1) + "ing" : (b.length <= 5 && CVC.test(b) && !/^(open|visit|enter|offer|order|cover|answer|listen|happen|travel|suffer|wonder)$/.test(b)) ? b + b.slice(-1) + "ing" : b + "ing";
   const MYW = () => { LIB.words = LIB.words || {}; return LIB.words; };
   const saveWord = (w, ar, sid) => { MYW()[w.toLowerCase()] = { ar, s: sid, at: Date.now() }; save(); };
   const dropWord = w => { delete MYW()[w.toLowerCase()]; save(); };
@@ -77,10 +87,10 @@
   const routes = {}; let timers = [];
   const after = (fn, ms) => { const t = setTimeout(fn, ms); timers.push(t); return t; };
   let player = null;
-  function stopAll(){ timers.forEach(t => { if(t && typeof t.clear === "function") t.clear(); else clearTimeout(t); }); timers = []; if(player){ player.destroy(); player = null; } try{ speechSynthesis.cancel(); }catch(e){} }
+  function stopAll(){ timers.forEach(t => { if(t && typeof t.clear === "function") t.clear(); else clearTimeout(t); }); timers = []; if(player){ player.destroy(); player = null; } ["minibar", "focus"].forEach(id => { const e = document.getElementById(id); if(e) e.remove(); }); document.body.classList.remove("has-minibar"); try{ speechSynthesis.cancel(); }catch(e){} }
   function route(){ const parts = (location.hash.replace(/^#\/?/, "") || "").split("/"); const fn = routes[parts[0] || "home"] || routes.home; stopAll(); window.scrollTo(0, 0); fn(...parts.slice(1)); }
   const render = html => { $("#lib").innerHTML = html; hydrateIcons($("#lib")); };
-  const crumb = items => `<div class="crumbs"><a href="#/">${I("bookopen")} مكتبة القصص</a>${items.map(x => ` <span>›</span> ${x.href ? `<a href="${x.href}">${x.t}</a>` : `<b>${x.t}</b>`}`).join("")}</div>`;
+  const crumb = items => { const back = [...items].reverse().find(x => x.href); return `<div class="crumbs"><a class="back-btn" href="${back ? back.href : "#/"}">${I("arrow")} رجوع</a><a href="#/">${I("bookopen")} مكتبة القصص</a>${items.map(x => ` <span>›</span> ${x.href ? `<a href="${x.href}">${x.t}</a>` : `<b>${x.t}</b>`}`).join("")}</div>`; };
   const bar = (pct, cls) => `<div class="progress"><div class="${cls || ""}" style="width:${pct}%"></div></div>`;
   const lvBadge = lv => `<span class="badge" style="background:${LVC[lv]};color:#fff">${lv}</span>`;
 
@@ -168,7 +178,7 @@
     const sents = spans.map(sp => ({ t: s.paras[sp.pi].en.slice(sp.cs, sp.ce), pi: sp.pi }));
     const times = TIMES[id] && TIMES[id].length ? spans : null;
     const hasAudio = !!times;
-    let listenMode = false, arMode = LIB.arMode || (LIB.ar === false ? "off" : "on"), showGloss = false, dictMode = LIB.dict !== false;
+    let listenMode = false, arMode = LIB.arMode || (LIB.ar === false ? "off" : "on"), showGloss = false, dictMode = LIB.dict !== false, curK = -1, focusOn = false, isPlaying = false;
     LIB.last = { id, para: LIB.pos[id] || 0 }; save();
     const draw = () => {
       render(crumb([{ t: `${s.lvl} — ${LVN[s.lvl]}`, href: `#/level/${s.lvl}` }, { t: s.ar }]) + `
@@ -183,9 +193,9 @@
         </div>
         ${hasAudio && LIB.at && LIB.at[id] > 20 ? `<button type="button" class="btn btn-sm resume-chip" id="resumeBtn">${I("clock")} استأنف من ${fmt(LIB.at[id])}</button>` : ""}
         <div class="pl-bar" id="plBar"><div id="plFill"></div></div>
-        <div class="btn-row pl-tools"><button type="button" class="btn btn-sm ${listenMode ? "on" : ""}" id="modeBtn">${I("headphones")} ${listenMode ? "أظهر النص" : "وضع الاستماع (أخفِ النص)"}</button><span class="seg seg-sm" id="arSeg"><button type="button" data-v="on" class="${arMode === "on" ? "on" : ""}">الترجمة</button><button type="button" data-v="tap" class="${arMode === "tap" ? "on" : ""}">عند الطلب</button><button type="button" data-v="off" class="${arMode === "off" ? "on" : ""}">بدون</button></span><button type="button" class="btn btn-sm ${dictMode ? "on" : ""}" id="dictBtn">${I("search")} ${dictMode ? "القاموس مفعّل" : "اضغط كلمة لمعناها"}</button><button type="button" class="btn btn-sm" id="glossBtn">${I("type")} المفردات (${s.glossary.length})</button></div>
+        <div class="btn-row pl-tools"><button type="button" class="btn btn-sm btn-primary" id="focusBtn">${I("headphones")} وضع التركيز</button><button type="button" class="btn btn-sm ${listenMode ? "on" : ""}" id="modeBtn">${listenMode ? "أظهر النص" : "أخفِ النص"}</button><span class="seg seg-sm" id="arSeg"><button type="button" data-v="on" class="${arMode === "on" ? "on" : ""}">الترجمة</button><button type="button" data-v="tap" class="${arMode === "tap" ? "on" : ""}">عند الطلب</button><button type="button" data-v="off" class="${arMode === "off" ? "on" : ""}">بدون</button></span><button type="button" class="btn btn-sm ${dictMode ? "on" : ""}" id="dictBtn">${I("search")} ${dictMode ? "القاموس مفعّل" : "اضغط كلمة لمعناها"}</button><button type="button" class="btn btn-sm" id="glossBtn">${I("type")} المفردات (${s.glossary.length})</button></div>
         ${hasAudio ? "" : `<p class="small muted" style="margin:8px 0 0">${I("info")} الصوت المسجّل غير متوفر لهذه القصة بعد، سيقرأها صوت المتصفح.</p>`}
-        <p class="small muted" style="margin:8px 0 0">اضغط أي جملة ليقرأها القارئ من عندها. الجملة الحالية تتلوّن أثناء الاستماع.</p>
+        <p class="small muted" style="margin:8px 0 0">اضغط أي جملة ليقرأها القارئ من عندها. «وضع التركيز» يعرض جملة جملة بخط كبير مع أزرار كبيرة للتوقف والرجوع.</p>
       </div>
       ${showGloss ? `<div class="card gloss"><h3>${I("type")} كلمات القصة</h3><div class="gloss-grid">${s.glossary.map(g => `<div class="gl"><b class="en">${esc(g.w)}</b> <span class="muted small">${esc(g.pos || "")}</span><button type="button" class="spk sm" data-say="${esc(g.w)}">${I("headphones")}</button><div>${esc(g.ar)}</div></div>`).join("")}</div></div>` : ""}
       <article class="story-text ${listenMode ? "listen" : ""}" id="text">${s.paras.map((p, pi) => `<div class="para" data-pi="${pi}"><p class="en">${paraHtml(p, pi, spans)}</p>${arMode === "on" ? `<p class="ar-t">${esc(p.ar)}</p>` : arMode === "tap" ? `<details class="ar-tap"><summary>الترجمة</summary><p class="ar-t">${esc(p.ar)}</p></details>` : ""}</div>`).join("")}
@@ -195,7 +205,7 @@
       bindReader();
     };
     const fmt = t => `${Math.floor(t / 60)}:${String(Math.floor(t % 60)).padStart(2, "0")}`;
-    const highlight = k => { document.querySelectorAll(".sent.now").forEach(e => e.classList.remove("now")); const el = document.querySelector(`.sent[data-k="${k}"]`); if(el){ el.classList.add("now"); const r = el.getBoundingClientRect(); if(r.top < 90 || r.bottom > innerHeight - 90) el.scrollIntoView({ block: "center", behavior: "smooth" }); const pi = +el.closest(".para").dataset.pi; if(pi !== LIB.pos[id]){ LIB.pos[id] = pi; LIB.last = { id, para: pi }; save(); } } };
+    const highlight = k => { curK = k; paintFocus(); document.querySelectorAll(".sent.now").forEach(e => e.classList.remove("now")); const el = document.querySelector(`.sent[data-k="${k}"]`); if(el){ el.classList.add("now"); const r = el.getBoundingClientRect(); if(r.top < 90 || r.bottom > innerHeight - 90) el.scrollIntoView({ block: "center", behavior: "smooth" }); const pi = +el.closest(".para").dataset.pi; if(pi !== LIB.pos[id]){ LIB.pos[id] = pi; LIB.last = { id, para: pi }; save(); } } };
     const bindReader = () => {
       $("#modeBtn").addEventListener("click", () => { listenMode = !listenMode; const st = player ? player.snapshot() : null; draw(); if(st) player.restore(st); });
       $("#arSeg").addEventListener("click", e => { const b = e.target.closest("button"); if(!b || b.dataset.v === arMode) return; arMode = b.dataset.v; LIB.arMode = arMode; save(); const st = player ? player.snapshot() : null; draw(); if(st) player.restore(st); });
@@ -208,6 +218,8 @@
         const el = e.target.closest(".sent"); if(!el) return; ensurePlayer().playFrom(+el.dataset.k);
       });
       $("#playBtn").addEventListener("click", () => ensurePlayer().toggle());
+      $("#focusBtn").addEventListener("click", () => openFocus());
+      mountMinibar();
       const rb = $("#resumeBtn"); if(rb) rb.addEventListener("click", () => { ensurePlayer().seekSec(LIB.at[id]); rb.remove(); });
       $("#plBar").addEventListener("click", e => { if(!hasAudio) return; const r = e.currentTarget.getBoundingClientRect(); const frac = 1 - (e.clientX - r.left) / r.width; ensurePlayer().seekFrac(frac); });
       if(player) player.rebind();
@@ -227,9 +239,10 @@
            <div class="wp-ar">${esc(hit.ar)}</div>
            ${hit.word && hit.word.toLowerCase() !== key ? `<div class="small muted">الأصل: <span class="en">${esc(hit.word)}</span></div>` : ""}
            ${hit.ex ? `<div class="small muted en">${esc(hit.ex)}</div>` : ""}
+           ${(() => { const v = verbOf((hit.word || key).toLowerCase()); return v ? `<div class="wp-forms en"><span>${esc(v[1])}</span><span>${esc(v[2])}</span><span>${esc(ingOf(v[0]))}</span></div>` : ""; })()}
            <div class="wp-actions"><button type="button" class="btn btn-sm ${saved ? "" : "btn-primary"}" id="wpSave">${saved ? I("check") + " في كلماتي" : I("bookmark") + " احفظها"}</button></div>
            <div class="small muted">${esc(hit.src)}</div>`
-        : `<div class="wp-top"><b class="en">${esc(raw)}</b><button type="button" class="spk sm" data-say="${esc(raw)}">${I("headphones")}</button><button type="button" class="wp-x" aria-label="إغلاق">${I("x")}</button></div><div class="muted small">هذه الكلمة ليست في قاموس الموقع. اضغط ${I("headphones")} لسماع نطقها.</div>`;
+        : (() => { const pe = el.closest(".para"); const par = pe ? s.paras[+pe.dataset.pi] : null; const sent = el.closest(".sent"); return `<div class="wp-top"><b class="en">${esc(raw)}</b><button type="button" class="spk sm" data-say="${esc(raw)}">${I("headphones")}</button><button type="button" class="wp-x" aria-label="إغلاق">${I("x")}</button></div><div class="muted small">ما لقيت هذي الكلمة وحدها في القاموس — هذا معنى الجملة كاملة:</div>${sent ? `<div class="small en" style="opacity:.85">${esc(sent.textContent)}</div>` : ""}${par ? `<div class="wp-ar" style="font-size:.98rem">${esc(par.ar)}</div>` : ""}`; })();
       document.body.appendChild(pop);
       if(innerWidth <= 640){ pop.classList.add("sheet-pop"); }
       else {
@@ -244,13 +257,50 @@
       if(sv) sv.addEventListener("click", () => { if(MYW()[key]) { dropWord(key); sv.innerHTML = I("bookmark") + " احفظها"; sv.classList.add("btn-primary"); } else { saveWord(key, hit.ar, s.id); sv.innerHTML = I("check") + " في كلماتي"; sv.classList.remove("btn-primary"); toast("حُفظت في كلماتي"); } hydrateIcons(sv); });
       after(() => document.addEventListener("click", function off(ev){ if(!pop.contains(ev.target)){ pop.remove(); el.classList.remove("sel"); document.removeEventListener("click", off); } }), 50);
     }
-    const setBtn = playing => { const b = $("#playBtn"); if(b){ b.innerHTML = playing ? `${I("x")} إيقاف` : `${I("headphones")} استمع`; hydrateIcons(b); } };
+    const setBtn = playing => { isPlaying = playing; const b = $("#playBtn"); if(b){ b.innerHTML = playing ? `${I("x")} إيقاف` : `${I("headphones")} استمع`; hydrateIcons(b); } document.querySelectorAll(".mb-play").forEach(x => { x.innerHTML = playing ? I("pause") : I("play"); hydrateIcons(x); }); };
+    const ctl = () => `<button type="button" class="mb-btn" data-act="prev" title="الجملة السابقة">${I("prev")}</button><button type="button" class="mb-btn mb-play" data-act="toggle" title="تشغيل / إيقاف">${I(isPlaying ? "pause" : "play")}</button><button type="button" class="mb-btn" data-act="next" title="الجملة التالية">${I("next")}</button><button type="button" class="mb-btn" data-act="again" title="أعد الجملة">${I("refresh")}</button>`;
+    const onCtl = e => { const b = e.target.closest("[data-act]"); if(!b) return; const p = ensurePlayer(); ({ prev: () => p.prev(), next: () => p.next(), toggle: () => p.toggle(), again: () => p.again() })[b.dataset.act](); };
+    /* شريط تحكم ثابت أسفل الشاشة يظهر حين يختفي المشغّل الرئيسي */
+    function mountMinibar(){
+      if(document.getElementById("minibar")) return;
+      const mb = document.createElement("div"); mb.id = "minibar"; mb.hidden = true;
+      mb.innerHTML = `<div class="mb-info"><span class="mb-title">${esc(s.ar)}</span><span class="mb-sent en" id="mbSent"></span></div><div class="mb-ctl">${ctl()}</div>`;
+      document.body.appendChild(mb); hydrateIcons(mb);
+      mb.addEventListener("click", onCtl);
+      const pl = $("#player");
+      if(pl && "IntersectionObserver" in window){
+        const io = new IntersectionObserver(en => { const vis = en[0].isIntersecting; mb.hidden = vis || focusOn; document.body.classList.toggle("has-minibar", !mb.hidden); }, { threshold: 0 });
+        io.observe(pl); timers.push({ clear(){ io.disconnect(); } });
+      }
+    }
+    /* وضع التركيز: جملة جملة بخط كبير */
+    function openFocus(){
+      if(document.getElementById("focus")) return;
+      focusOn = true; const mb = document.getElementById("minibar"); if(mb){ mb.hidden = true; document.body.classList.remove("has-minibar"); }
+      const f = document.createElement("div"); f.id = "focus";
+      f.innerHTML = `<div class="fo-top"><button type="button" class="btn btn-sm" id="foClose">${I("x")} خروج</button><span class="fo-title">${esc(s.ar)}</span><span class="badge" id="foCount"></span></div>
+        <div class="fo-body"><div class="fo-en en" id="foEn">اضغط تشغيل للبدء</div><div class="fo-ar" id="foAr"></div></div>
+        <div class="fo-ctl">${ctl()}</div><div class="pl-bar" id="foBar"><div id="foFill"></div></div>
+        <p class="small muted center" style="margin:8px 0 0">${I("headphones")} تقدر تطفي الشاشة وتكمّل الاستماع، والأزرار تشتغل من شاشة القفل</p>`;
+      document.body.appendChild(f); hydrateIcons(f); document.body.classList.add("focus-open");
+      f.querySelector(".fo-ctl").addEventListener("click", onCtl);
+      $("#foClose").addEventListener("click", closeFocus);
+      paintFocus(); setBtn(isPlaying);
+      if(!isPlaying) ensurePlayer().playFrom(Math.max(0, curK));
+    }
+    function closeFocus(){ focusOn = false; const f = document.getElementById("focus"); if(f) f.remove(); document.body.classList.remove("focus-open"); const pl = $("#player"); const mb = document.getElementById("minibar"); if(mb && pl){ const r = pl.getBoundingClientRect(); mb.hidden = r.bottom > 0 && r.top < innerHeight; document.body.classList.toggle("has-minibar", !mb.hidden); } }
+    function paintFocus(){
+      const k = curK, sn = sents[k];
+      const mbs = document.getElementById("mbSent"); if(mbs) mbs.textContent = sn ? sn.t : "";
+      const fe = document.getElementById("foEn"); if(!fe) return;
+      if(sn){ fe.textContent = sn.t; const fa = document.getElementById("foAr"); if(fa) fa.textContent = arMode === "off" ? "" : s.paras[sn.pi].ar; const fc = document.getElementById("foCount"); if(fc) fc.textContent = `${k + 1} / ${sents.length}`; const ff = document.getElementById("foFill"); if(ff) ff.style.width = ((k + 1) / sents.length * 100) + "%"; }
+    }
     const ensurePlayer = () => { if(!player) player = hasAudio ? audioPlayer() : ttsPlayer(); return player; };
     /* مشغّل الصوت المسجّل مع مزامنة الجمل */
     function audioPlayer(){
       const a = new Audio(`audio/stories/${id}.mp3`); a.preload = "auto"; a.playbackRate = LIB.speed || 1;
       let cur = -1, raf = null, fallen = false, dead = false;
-      const tick = () => { const t = a.currentTime; let k = times.findIndex(x => t >= x.start && t < x.end); if(k < 0 && t > 0) k = times.findIndex(x => x.start > t) - 1; if(k >= 0 && k !== cur){ cur = k; highlight(k); } const c = $("#cur"), f = $("#plFill"); if(c) c.textContent = fmt(t); if(f && a.duration) f.style.width = (t / a.duration * 100) + "%"; if(t > 5 && Math.floor(t) % 5 === 0){ LIB.at = LIB.at || {}; if(Math.abs((LIB.at[id] || 0) - t) > 4){ LIB.at[id] = Math.floor(t); save(); } } if(!a.paused) raf = requestAnimationFrame(tick); };
+      const tick = () => { const t = a.currentTime; let k = times.findIndex(x => t >= x.start && t < x.end); if(k < 0 && t > 0) k = times.findIndex(x => x.start > t) - 1; if(pending === null && k >= 0 && k !== cur){ cur = k; highlight(k); } const c = $("#cur"), f = $("#plFill"); if(c) c.textContent = fmt(t); if(f && a.duration) f.style.width = (t / a.duration * 100) + "%"; if(t > 5 && Math.floor(t) % 5 === 0){ LIB.at = LIB.at || {}; if(Math.abs((LIB.at[id] || 0) - t) > 4){ LIB.at[id] = Math.floor(t); save(); } } if(!a.paused) raf = requestAnimationFrame(tick); };
       /* الصوت قد لا يكون حمّل بياناته بعد: أجّل الانتقال حتى تجهز المدة */
       /* المتصفح يتجاهل الانتقال قبل تحميل بيانات الملف، فنعيد المحاولة حتى يستقر عند الجملة المطلوبة */
       let pending = null;
@@ -261,13 +311,17 @@
       };
       const seekTo = t => { pending = t; trySeek(); [120, 400, 900, 1800].forEach(ms => after(trySeek, ms)); };
       ["loadedmetadata", "loadeddata", "canplay", "canplaythrough", "playing", "durationchange", "seeked"].forEach(ev => a.addEventListener(ev, trySeek));
-      a.addEventListener("play", () => { setBtn(true); tick(); }); a.addEventListener("pause", () => { setBtn(false); LIB.at = LIB.at || {}; LIB.at[id] = Math.floor(a.currentTime); save(); });
+      a.addEventListener("play", () => { setBtn(true); tick(); try{ if("mediaSession" in navigator){ navigator.mediaSession.metadata = new MediaMetadata({ title: s.title, artist: s.ar, album: "مكتبة القصص" }); navigator.mediaSession.setActionHandler("play", () => a.play()); navigator.mediaSession.setActionHandler("pause", () => a.pause()); navigator.mediaSession.setActionHandler("previoustrack", () => P.prev()); navigator.mediaSession.setActionHandler("nexttrack", () => P.next()); } }catch(e){} }); a.addEventListener("pause", () => { setBtn(false); LIB.at = LIB.at || {}; LIB.at[id] = Math.floor(a.currentTime); save(); });
       a.addEventListener("ended", () => { setBtn(false); cur = -1; if(LIB.at) { delete LIB.at[id]; save(); } document.querySelectorAll(".sent.now").forEach(e => e.classList.remove("now")); LIB.listened[id] = true; save(); });
       a.addEventListener("error", () => { if(dead || fallen || !a.error) return; fallen = true; toast("تعذّر تحميل الصوت — سيقرأها صوت المتصفح"); player = ttsPlayer(); player.playFrom(Math.max(0, cur)); });
       const P = {
         toggle(){ if(a.paused){ a.play().catch(() => {}); } else a.pause(); },
-        playFrom(k){ cur = -1; seekTo((times[k] ? times[k].start : 0) + 0.02); a.play().catch(() => {}); },
+        playFrom(k){ cur = k; highlight(k); seekTo((times[k] ? times[k].start : 0) + 0.02); a.play().catch(() => {}); },
         seekSec(t){ cur = -1; seekTo(t); a.play().catch(() => {}); },
+        index(){ return cur; },
+        next(){ P.playFrom(Math.min(times.length - 1, Math.max(0, cur) + 1)); },
+        prev(){ P.playFrom(Math.max(0, cur - 1)); },
+        again(){ P.playFrom(Math.max(0, cur)); },
         seekFrac(f){ if(a.duration){ cur = -1; seekTo(Math.max(0, Math.min(a.duration - .1, f * a.duration))); if(a.paused) a.play().catch(() => {}); } },
         setRate(r){ a.playbackRate = r; },
         snapshot(){ return { t: a.currentTime, playing: !a.paused }; },
@@ -285,8 +339,9 @@
       const step = () => { if(!playing) return; if(k >= sents.length){ playing = false; setBtn(false); LIB.listened[id] = true; save(); document.querySelectorAll(".sent.now").forEach(e => e.classList.remove("now")); return; } highlight(k); const u = new SpeechSynthesisUtterance(sents[k].t); u.lang = "en-US"; u.rate = (LIB.speed || 1) * 0.95; const v = pick(); if(v) u.voice = v; u.onend = u.onerror = () => { if(!playing) return; k++; after(step, 250); }; speechSynthesis.speak(u); };
       const P = {
         toggle(){ if(playing){ playing = false; speechSynthesis.cancel(); setBtn(false); } else { playing = true; setBtn(true); speechSynthesis.cancel(); after(step, 100); } },
-        playFrom(i){ speechSynthesis.cancel(); k = i; playing = true; setBtn(true); after(step, 100); },
+        playFrom(i){ speechSynthesis.cancel(); k = i; highlight(k); playing = true; setBtn(true); after(step, 100); },
         seekFrac(){}, seekSec(){}, setRate(){}, snapshot(){ return { k, playing }; },
+        index(){ return k; }, next(){ P.playFrom(Math.min(sents.length - 1, k + 1)); }, prev(){ P.playFrom(Math.max(0, k - 1)); }, again(){ P.playFrom(k); },
         restore(st){ k = st.k; if(st.playing){ playing = true; setBtn(true); speechSynthesis.cancel(); after(step, 150); } },
         rebind(){ setBtn(playing); },
         destroy(){ playing = false; try{ speechSynthesis.cancel(); }catch(e){} }

@@ -912,3 +912,36 @@ button,a,summary,label,input,select,textarea,
 .gtable th,.gtable td{border:1px solid var(--line);padding:9px 11px;text-align:start;vertical-align:middle}
 .gtable td.en{direction:ltr;text-align:left;font-family:"Rubik",Arial,sans-serif;font-weight:600;unicode-bidi:isolate}
 .gtable tbody tr:nth-child(odd){background:color-mix(in srgb,var(--surface2) 45%,transparent)}
+
+/* زر رجوع واضح */
+.back-btn{display:inline-flex;align-items:center;gap:4px;border:2px solid var(--ink);border-radius:999px;padding:3px 10px;margin-inline-end:8px;font-weight:700;text-decoration:none;color:inherit;background:var(--surface)}
+.back-btn .i{width:16px;height:16px;transform:scaleX(-1)}
+/* شريط تحكم ثابت */
+#minibar{position:fixed;left:0;right:0;bottom:16px;z-index:50;margin:0 auto;max-width:720px;background:var(--surface);border:3px solid var(--ink);border-radius:14px;box-shadow:-4px 4px 0 var(--ink);display:flex;align-items:center;gap:10px;padding:8px 12px;animation:slideup .18s}
+@media (max-width:860px){#minibar{bottom:calc(66px + env(safe-area-inset-bottom,0px));left:8px;right:8px;border-radius:12px}}
+.mb-info{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}
+.mb-title{font-weight:800;font-size:.85rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mb-sent{font-size:.85rem;color:var(--muted);direction:ltr;text-align:left;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mb-ctl,.fo-ctl{display:flex;align-items:center;gap:6px;direction:ltr}
+.mb-btn{width:44px;height:44px;border-radius:12px;border:2px solid var(--ink);background:var(--surface2);color:var(--ink);display:inline-flex;align-items:center;justify-content:center;cursor:pointer;touch-action:manipulation}
+.mb-btn .i{width:22px;height:22px}
+.mb-play{background:var(--primary);color:#fff;width:52px;height:52px;border-radius:14px}
+body.has-minibar main{padding-bottom:90px}
+/* وضع التركيز */
+#focus{position:fixed;inset:0;z-index:80;background:var(--bg);display:flex;flex-direction:column;padding:12px 16px calc(16px + env(safe-area-inset-bottom,0px))}
+.fo-top{display:flex;align-items:center;gap:10px}
+.fo-title{flex:1;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.fo-body{flex:1;display:flex;flex-direction:column;justify-content:center;gap:18px;text-align:center;padding:10px 4px;overflow:auto}
+.fo-en{direction:ltr;font-family:"Rubik",Arial,sans-serif;font-size:clamp(1.4rem,5.2vw,2.1rem);font-weight:600;line-height:1.6}
+.fo-ar{font-size:1.05rem;color:var(--muted);line-height:1.9}
+.fo-ctl{justify-content:center;gap:14px;margin-bottom:10px}
+.fo-ctl .mb-btn{width:56px;height:56px}
+.fo-ctl .mb-play{width:72px;height:72px;border-radius:18px}
+.fo-ctl .mb-play .i,.fo-ctl .mb-btn .i{width:28px;height:28px}
+body.focus-open{overflow:hidden}
+body.focus-open .tabbar{display:none}
+/* صيغ الفعل في نافذة الكلمة */
+.wp-forms{display:flex;gap:6px;flex-wrap:wrap;margin-top:6px;direction:ltr}
+.wp-forms span{background:var(--surface2);border:1px solid var(--line);border-radius:6px;padding:1px 8px;font-size:.88rem}
+.vtable th .small{font-weight:400}
+.vtable td:first-child{white-space:nowrap}
