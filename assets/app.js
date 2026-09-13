@@ -276,6 +276,30 @@ function confetti(){
   })();
 }
 /* ---- نقاط المنافسة: عرض نتيجة الحفظ (قاعدة: النقطة مرة واحدة لكل سؤال) ---- */
+/* عرض النقاط بحركة: الرقم المكتسب "يطير" إلى المجموع والمجموع يعدّ لأعلى */
+function pointsReveal(j, host){
+  if(!host) return;
+  if(j.already){ host.innerHTML = `<div class="note warn" style="justify-content:center"><span class="ic">${I("info")}</span><p>سبق أن أنجزت هذا التحدي، فلم تُحسب هذه المحاولة.</p></div>`; hydrateIcons(host); return; }
+  const gain = j.points || 0, total = j.totalPoints || 0, before = Math.max(0, total - gain);
+  host.innerHTML = `<div class="pts-reveal ${gain ? "" : "zero"}">
+      <div class="pts-gain" id="ptsGain">${gain ? "+" + gain : "0"}<small>نقطة</small>${gain && j.mult > 1 ? `<span class="pts-mult">×${j.mult}</span>` : ""}</div>
+      <div class="pts-arrow">${I("arrow")}</div>
+      <div class="pts-total" id="ptsTotal"><div class="pts-num" id="ptsNum">${before}</div><div class="small muted">مجموعك</div></div>
+    </div>
+    <p class="small muted pts-meta">${gain ? "" : (j.repeated ? "هذه الأسئلة سبق أن أخذت نقاطها — النقطة تُحسب مرة واحدة لكل سؤال." : "ما فيه إجابات صحيحة جديدة هذه المرة.")}${gain && j.repeated ? `${j.repeated} سؤال سبق أخذ نقطته · ` : ""}${j.rank ? `ترتيبك العام <b>#${j.rank}</b>` : ""}${j.monthRank ? ` · البطولة <b>#${j.monthRank}</b>` : ""}</p>`;
+  hydrateIcons(host);
+  if(!gain) return;
+  if(typeof SFX !== "undefined") SFX.coin();
+  const g = host.querySelector("#ptsGain"), n = host.querySelector("#ptsNum"), t = host.querySelector("#ptsTotal");
+  setTimeout(() => g.classList.add("fly"), 650);
+  setTimeout(() => {
+    const t0 = performance.now(), dur = 900;
+    const step = now => { const p = Math.min(1, (now - t0) / dur), e = 1 - Math.pow(1 - p, 3); n.textContent = Math.round(before + (total - before) * e); if(p < 1) requestAnimationFrame(step); else { t.classList.add("bump"); g.classList.add("gone"); if(typeof SFX !== "undefined") SFX.correct(); } };
+    requestAnimationFrame(step);
+  }, 1050);
+  /* ضمان الحالة النهائية حتى لو توقفت الحركة (تبويب في الخلفية) */
+  setTimeout(() => { n.textContent = total; t.classList.add("bump"); g.classList.add("gone"); }, 2200);
+}
 function pointsHtml(j){
   if(j.already) return `<div class="note warn" style="justify-content:center"><span class="ic">${I("info")}</span><p>سبق أن أنجزت هذا التحدي، لذلك لم تُحسب هذه المحاولة.</p></div>`;
   const ev = j.mult > 1 && j.activeEvents && j.activeEvents.length ? ` <span class="badge accent">${I("zap")} ×${j.mult} ${esc(j.activeEvents[0].title)}</span>` : "";

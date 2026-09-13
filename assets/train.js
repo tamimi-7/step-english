@@ -98,7 +98,7 @@
     if(!Auth.user()){ sb.innerHTML = `<p class="small muted"><i data-i='lock'></i> <a href="account.html">سجّل الدخول</a> لتُحسب نقاط التدريب في المنافسة ويُحفظ تقدمك على حسابك.</p>`; return; }
     try{
       const j = await Auth.api("/api/result", { method: "POST", body: { mode: "train", score: S.correct, total, seconds: secs, ids: S.ids } });
-      sb.innerHTML = pointsHtml(j);
+      pointsReveal(j, sb);
       Progress.sync(true);
     }catch(e){ sb.innerHTML = `<p class="small" style="color:var(--bad)">${esc(e.message)}</p>`; }
   }

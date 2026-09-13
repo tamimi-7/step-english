@@ -112,7 +112,7 @@
   routes.words = () => {
     const ws = Object.entries(LIB.words || {}).sort((a, b) => b[1].at - a[1].at);
     if(!ws.length) return render(crumb([{ t: "كلماتي" }]) + `<div class="card center"><h2>ما حفظت كلمات بعد</h2><p class="muted">افتح أي قصة، فعّل «اضغط كلمة لمعناها»، ثم احفظ الكلمات الجديدة لتراجعها هنا.</p><a class="btn btn-primary" href="#/">المكتبة</a></div>`);
-    render(crumb([{ t: "كلماتي" }]) + `<div class="card sheet"><div class="section-title"><h1 style="margin:0">${I("bookmark")} كلماتي</h1><span class="badge">${ws.length} كلمة</span></div><p class="muted small" style="margin:0">الكلمات التي حفظتها أثناء القراءة. اضغط ${I("headphones")} لسماعها، أو احذف ما أتقنته.</p>${ws.length >= 4 ? `<div class="btn-row" style="margin-top:10px"><a class="btn btn-primary" href="#/wordsquiz">${I("pencil")} اختبر نفسك في كلماتي</a></div>` : ""}</div>
+    render(crumb([{ t: "كلماتي" }]) + `<div class="card sheet"><div class="section-title"><h1 style="margin:0">${I("bookmark")} كلماتي</h1><span class="badge">${ws.length} كلمة</span></div><p class="muted small" style="margin:0">الكلمات التي حفظتها أثناء القراءة. اضغط ${I("headphones")} لسماعها، أو احذف ما أتقنته.</p>${ws.length >= 4 ? `<div class="btn-row" style="margin-top:10px"><a class="btn btn-primary" href="#/wordsquiz">${I("pencil")} اختبر نفسك في كلماتي <span class="pts-tag">${I("trophy")} نقاط</span></a></div>` : ""}</div>
       <div class="word-list">${ws.map(([w, v]) => `<div class="word-row"><div class="w-en en"><b>${esc(w)}</b> <button type="button" class="spk sm" data-say="${esc(w)}">${I("headphones")}</button></div><div class="w-ar">${esc(v.ar)}</div><div class="w-ex small muted">${v.s ? "من قصة: " + esc((byId(v.s) || {}).ar || v.s) : ""}</div><button type="button" class="btn btn-sm wdel" data-w="${esc(w)}">${I("x")} حذف</button></div>`).join("")}</div>`);
     document.querySelectorAll(".wdel").forEach(b => b.addEventListener("click", () => { dropWord(b.dataset.w); routes.words(); }));
   };
@@ -157,7 +157,7 @@
       $("#again").addEventListener("click", () => routes.wordsquiz());
       const sb = $("#srv");
       if(!Auth.user() || !ids.length) return;
-      try{ const j = await Auth.api("/api/result", { method: "POST", body: { mode: "vocab", score, total: list.length, seconds: 0, ids } }); sb.innerHTML = pointsHtml(j); hydrateIcons(sb); if(typeof Progress !== "undefined") Progress.sync(true); }catch(e){}
+      try{ const j = await Auth.api("/api/result", { method: "POST", body: { mode: "vocab", score, total: list.length, seconds: 0, ids } }); pointsReveal(j, sb); if(typeof Progress !== "undefined") Progress.sync(true); }catch(e){}
     };
     show();
   };
@@ -201,7 +201,7 @@
       <article class="story-text ${listenMode ? "listen" : ""}" id="text">${s.paras.map((p, pi) => `<div class="para" data-pi="${pi}"><p class="en">${paraHtml(p, pi, spans)}</p>${arMode === "on" ? `<p class="ar-t">${esc(p.ar)}</p>` : arMode === "tap" ? `<details class="ar-tap"><summary>الترجمة</summary><p class="ar-t">${esc(p.ar)}</p></details>` : ""}</div>`).join("")}
         ${s.moral ? `<div class="note tip"><span class="ic">${I("bulb")}</span><p><b>الفكرة:</b> ${esc(s.moral)}</p></div>` : ""}
       </article>
-      <div class="card center sheet"><h3>فهمت القصة؟</h3><p class="muted small">${s.qs.length} أسئلة فهم — كل سؤال تجيبه صح لأول مرة يعطيك نقطة في المنافسة.</p><div class="btn-row" style="justify-content:center"><a class="btn btn-warm btn-lg" href="#/quiz/${id}">${I("pencil")} أسئلة الفهم</a>${nextStory(s) ? `<a class="btn" href="#/read/${nextStory(s).id}">القصة التالية: ${esc(nextStory(s).ar)} ←</a>` : ""}</div></div>`);
+      <div class="card center sheet"><h3>فهمت القصة؟</h3><p class="muted small">${s.qs.length} أسئلة فهم — كل سؤال تجيبه صح لأول مرة يعطيك نقطة في المنافسة.</p><div class="btn-row" style="justify-content:center"><a class="btn btn-warm btn-lg" href="#/quiz/${id}">${I("pencil")} أسئلة الفهم <span class="pts-tag">${I("trophy")} نقاط</span></a>${nextStory(s) ? `<a class="btn" href="#/read/${nextStory(s).id}">القصة التالية: ${esc(nextStory(s).ar)} ←</a>` : ""}</div></div>`);
       bindReader();
     };
     const fmt = t => `${Math.floor(t / 60)}:${String(Math.floor(t % 60)).padStart(2, "0")}`;
@@ -384,7 +384,7 @@
       const sb = $("#srv");
       if(!Auth.user()){ sb.innerHTML = `<p class="small muted">${I("lock")} <a href="account.html">سجّل الدخول</a> لتُحسب نقاطك في المنافسة.</p>`; hydrateIcons(sb); return; }
       if(!ids.length){ sb.innerHTML = `<p class="small muted">لا إجابات صحيحة هذه المرة — أعد قراءة القصة وحاول مجددًا.</p>`; return; }
-      try{ const j = await Auth.api("/api/result", { method: "POST", body: { mode: "reading", score, total: list.length, seconds: 0, ids } }); sb.innerHTML = pointsHtml(j); hydrateIcons(sb); if(typeof Progress !== "undefined") Progress.sync(true); }catch(e){ sb.innerHTML = `<p class="small" style="color:var(--bad)">${esc(e.message)}</p>`; }
+      try{ const j = await Auth.api("/api/result", { method: "POST", body: { mode: "reading", score, total: list.length, seconds: 0, ids } }); pointsReveal(j, sb); if(typeof Progress !== "undefined") Progress.sync(true); }catch(e){ sb.innerHTML = `<p class="small" style="color:var(--bad)">${esc(e.message)}</p>`; }
     };
     show();
   };

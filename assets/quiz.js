@@ -170,11 +170,11 @@
     sb.innerHTML = `<p class="small muted">جارٍ حفظ النتيجة…</p>`;
     try{
       const j = await Auth.api("/api/result", { method: "POST", body: { mode: S.mode, score, total: S.list.length, seconds: S.used, challenge: S.challenge ? S.challenge.id : null, ids: S.list.filter((x, i) => S.ans[i] === x.a).map(x => x.id) } });
-      let html = pointsHtml(j);
+      let html = `<div id="ptsBox"></div>`;
       if(j.challengeBoard){
         html += `<h3 style="margin-top:14px"><i data-i='swords'></i> ترتيب التحدي «${esc(j.challenge.title)}»</h3><div class="lb" style="text-align:right">${j.challengeBoard.map(r => `<div class="lb-row ${r.u === Auth.user().u ? "me" : ""} ${r.rank <= 3 ? "top" + r.rank : ""}"><div class="rk ${r.rank <= 3 ? "medal" : ""}">${r.rank <= 3 ? I("medal", "medal-" + r.rank) : r.rank}</div>${avatarHtml(r.name, r.u)}<div class="nm">${esc(r.name)}<div class="sub">${Math.floor(r.seconds / 60)}:${String(r.seconds % 60).padStart(2, "0")} دقيقة</div></div><div class="pt">${r.score} / ${r.total}</div></div>`).join("")}</div><div class="btn-row" style="justify-content:center;margin-top:10px"><a class="btn btn-sm" href="compete.html?c=${j.challenge.id}">صفحة التحدي</a></div>`;
       }
-      sb.innerHTML = html;
+      sb.innerHTML = html; pointsReveal(j, sb.querySelector("#ptsBox"));
       Progress.sync(true);
     }catch(e){ sb.innerHTML = `<p class="small" style="color:var(--bad)">${esc(e.message)}</p>`; }
   }

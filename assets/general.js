@@ -41,12 +41,14 @@
     if(!Auth.user() || !score || !ids || !ids.length) return;
     try{
       const j = await Auth.api("/api/result", { method: "POST", body: { mode: "general", score, total, seconds: seconds || 0, ids } });
-      if(j.points > 0){ toast(`+${j.points} نقطة في المنافسة${j.mult > 1 ? " (×" + j.mult + " فعالية)" : ""}`); if(typeof SFX !== "undefined") SFX.coin(); }
-      else if(j.repeated > 0) toast("لا نقاط جديدة: هذه الأسئلة سبق أن أخذت نقاطها", 3200);
+      const box = $("#ptsBox");
+      if(box) pointsReveal(j, box);
+      else if(j.points > 0){ toast(`+${j.points} نقطة في المنافسة${j.mult > 1 ? " (×" + j.mult + " فعالية)" : ""}`); if(typeof SFX !== "undefined") SFX.coin(); }
       Progress.sync(true);
     }catch(e){}
   }
   const sfx = n => { if(typeof SFX !== "undefined" && SFX[n]) SFX[n](); };
+  const ptsTag = () => `<span class="pts-tag" title="كل سؤال تجيبه صح لأول مرة = نقطة في المنافسة">${I("trophy")} نقاط</span>`;
 
   /* ---------- speech ---------- */
   let voices = [];
@@ -182,14 +184,16 @@
         <span class="badge">إنقلش عام — مستقل عن STEP</span>
         <h1>تعلّم الإنجليزية <mark>خطوة بخطوة</mark></h1>
         <p>مستواك الآن <b>${cur} · ${LVN[cur]}</b> · الوحدة <b>${nuIdx} — ${esc(nu.t)}</b><br><span class="small">خطوتك التالية: ${esc(ns.label)}</span></p>
-        <div class="actions"><a class="btn btn-light" href="${ns.href}">${I("zap")} أكمل التعلّم</a><a class="btn btn-outline-light" href="#/daily">${I("calendar")} تحدي اليوم${daily ? " ✓" : ""}</a></div>
+        <div class="actions"><a class="btn btn-light" href="${ns.href}">${I("zap")} أكمل التعلّم</a><a class="btn btn-outline-light" href="#/daily">${I("calendar")} تحدي اليوم${daily ? " ✓" : ""} ${ptsTag()}</a></div>
       </section>
       <div class="gen-stats">
         <div class="gs"><div class="gs-n">${GEN.xp}</div><div class="gs-l">XP · المستوى ${xp.l} (${levelTitle(xp.l)})</div>${bar(Math.round(xp.cur / xp.need * 100))}</div>
         <div class="gs"><div class="gs-n">${streak}</div><div class="gs-l">${I("fire")} ${streak === 1 ? "يوم متواصل" : "أيام متواصلة"}</div></div>
         <div class="gs"><div class="gs-n">${kn}</div><div class="gs-l">${I("check")} كلمة تعرفها من ${all.length}</div></div>
         <a class="gs ${due ? "hot" : ""}" href="#/review"><div class="gs-n">${due}</div><div class="gs-l">${I("repeat")} كلمة تحتاج مراجعة</div></a>
+        <a class="gs pts" href="compete.html" id="ptsCard"><div class="gs-n" id="ptsCardN">${Auth.user() ? "…" : "—"}</div><div class="gs-l">${I("trophy")} نقاط المنافسة</div><div class="small muted" id="ptsCardSub">${Auth.user() ? "" : "سجّل الدخول لتجمع نقاطًا"}</div></a>
       </div>
+      <p class="small muted pts-where">${I("trophy")} <b>وين تاخذ نقاط؟</b> اختبار الموضوع، اختبار الوحدة، تدريب القاعدة، تحدي اليوم، الألعاب، تمثيل الدور، تصريف الأفعال، وأسئلة القصص — كل سؤال تجيبه صح <b>لأول مرة</b> = نقطة. البطاقات والمراجعة بدون نقاط.</p>
       <section class="section"><div class="section-title"><h2>المستويات</h2><span class="muted small">التقدم يزيد مع كل كلمة تتعلمها ويكتمل باختبار الوحدة</span></div>
         <div class="lvl-list">${LV.map(lv => { const units = U.filter(u => u.lvl === lv), done = units.filter(u => GEN.units[u.id]).length, pct = levelPct(lv); const st = pct === 100 ? "done" : lv === cur ? "cur" : ""; return `<a class="lvl-row ${st}" href="#/level/${lv}" style="--c:${LVC[lv]}"><div class="lvl-badge" style="background:${LVC[lv]}">${lv}</div><div class="lvl-body"><div class="lvl-head"><b>${LVN[lv]}</b><span class="lvl-pct">${pct}%</span></div>${bar(pct)}<div class="small muted">${done}/${units.length} وحدة مكتملة${lv === cur ? " · <b>أنت هنا</b>" : ""}</div></div>${I("arrow")}</a>`; }).join("")}</div>
       </section>
@@ -203,6 +207,7 @@
           <a class="card link-card c-blue" href="#/verbs"><div class="icon p-blue">${I("list")}</div><h3>تصريف الأفعال</h3><p class="muted small">${(window.GEN_VERBS || []).length} فعلًا: الماضي، بعد have، وing — مع بحث واختبار</p></a>
         </div>
       </section>`);
+    if(Auth.user()) Auth.api("/api/me").then(m => { const n = $("#ptsCardN"), sub = $("#ptsCardSub"); if(n) n.textContent = m.points || 0; if(sub) sub.textContent = (m.rank ? `ترتيبك #${m.rank}` : "") + (m.monthRank ? ` · البطولة #${m.monthRank}` : ""); }).catch(() => {});
   };
 
   /* ---------- تصريف الأفعال ---------- */
@@ -217,7 +222,7 @@
     render(crumb([{ t: "تصريف الأفعال" }]) + `<div class="card sheet"><div class="section-title"><h1 style="margin:0">${I("list")} تصريف الأفعال</h1><span class="badge">${VB.length} فعلًا</span></div>
       <p class="muted small" style="margin:6px 0 10px">الأفعال الشاذة أولًا (اللي ما تأخذ ed)، ثم أفعال منتظمة شائعة. اضغط ${I("headphones")} لتسمع الفعل، وابحث بالإنجليزي أو العربي.</p>
       <input class="input" id="vq" placeholder="ابحث: go, went, ذهب…" autocomplete="off">
-      <div class="btn-row" style="margin-top:10px"><span class="seg seg-sm" id="vf"><button type="button" data-f="all" class="on">الكل</button><button type="button" data-f="irr">الشاذة</button><button type="button" data-f="reg">المنتظمة</button></span><a class="btn btn-sm btn-warm" href="#/verbquiz">${I("pencil")} اختبرني</a></div></div>
+      <div class="btn-row" style="margin-top:10px"><span class="seg seg-sm" id="vf"><button type="button" data-f="all" class="on">الكل</button><button type="button" data-f="irr">الشاذة</button><button type="button" data-f="reg">المنتظمة</button></span><a class="btn btn-sm btn-warm" href="#/verbquiz">${I("pencil")} اختبرني ${ptsTag()}</a></div></div>
       <div class="table-wrap"><table class="gtable vtable"><thead><tr><th>الفعل</th><th>الماضي<div class="small muted">yesterday</div></th><th>بعد have / was<div class="small muted">have gone</div></th><th>ing<div class="small muted">is going</div></th><th>مع he / she / it</th><th>المعنى ومثال</th></tr></thead><tbody id="vbody">${rows()}</tbody></table></div>`);
     const refresh = () => { $("#vbody").innerHTML = rows(); hydrateIcons($("#vbody")); };
     $("#vq").addEventListener("input", e => { q = e.target.value.trim().toLowerCase(); refresh(); });
@@ -233,9 +238,9 @@
   routes.games = () => {
     render(crumb([{ t: "الألعاب" }]) + `<h1>${I("timer")} الألعاب</h1><p class="muted">ألعاب سريعة على كلمات مستواك. كل إجابة صحيحة تعطيك XP.</p>
       <div class="grid grid-3">
-        <a class="card link-card c-rose" href="#/game/speed"><div class="icon p-rose">${I("timer")}</div><h3>سباق ٦٠ ثانية</h3><p class="muted small">أكبر عدد من المعاني قبل انتهاء الوقت. أفضل نتيجة: ${GEN.best.speed || 0}</p></a>
-        <a class="card link-card c-blue" href="#/game/match"><div class="icon p-blue">${I("cards")}</div><h3>طابق الكلمات</h3><p class="muted small">اربط كل كلمة بمعناها.</p></a>
-        <a class="card link-card c-amber" href="#/game/spell"><div class="icon p-amber">${I("type")}</div><h3>رتّب الحروف</h3><p class="muted small">كوّن الكلمة من حروفها المبعثرة.</p></a>
+        <a class="card link-card c-rose" href="#/game/speed"><div class="icon p-rose">${I("timer")}</div><h3>سباق ٦٠ ثانية ${ptsTag()}</h3><p class="muted small">أكبر عدد من المعاني قبل انتهاء الوقت. أفضل نتيجة: ${GEN.best.speed || 0}</p></a>
+        <a class="card link-card c-blue" href="#/game/match"><div class="icon p-blue">${I("cards")}</div><h3>طابق الكلمات ${ptsTag()}</h3><p class="muted small">اربط كل كلمة بمعناها.</p></a>
+        <a class="card link-card c-amber" href="#/game/spell"><div class="icon p-amber">${I("type")}</div><h3>رتّب الحروف ${ptsTag()}</h3><p class="muted small">كوّن الكلمة من حروفها المبعثرة.</p></a>
       </div>`);
   };
 
@@ -260,7 +265,7 @@
           if(s.kind === "theme"){ const st = themeStats(s.t); return `<div class="${cls(s)}">${num(s, k)}<div style="flex:1"><div class="step-head"><h3>${I("type")} المفردات: ${esc(s.t.t)}</h3>${tag(s)}</div><p class="muted small">${s.t.words.length} كلمة · تعرف ${st.k} · متقنة ${st.m}</p>${bar(st.pct)}<div class="btn-row"><a class="btn btn-sm ${s.done ? "" : "btn-primary"}" href="#/theme/${s.t.id}">${s.done ? "راجع الكلمات" : "تعلّم الكلمات"}</a><a class="btn btn-sm" href="#/game/flash/${s.t.id}">بطاقات</a><a class="btn btn-sm" href="#/game/quiz/${s.t.id}">اختبار</a></div></div></div>`; }
           if(s.kind === "lesson") return `<div class="${cls(s)}">${num(s, k)}<div style="flex:1"><div class="step-head"><h3>${I("book")} القاعدة: ${esc(s.l.t)}</h3>${tag(s)}</div><p class="muted small">${esc(s.l.why)}</p><div class="btn-row"><a class="btn btn-sm ${s.done ? "" : "btn-primary"}" href="#/lesson/${s.l.id}">${s.done ? "راجع القاعدة" : "افهم القاعدة"}</a><a class="btn btn-sm" href="#/practice/${s.l.id}">تدرّب</a></div></div></div>`;
           if(s.kind === "dialogue") return `<div class="${cls(s)}">${num(s, k)}<div style="flex:1"><div class="step-head"><h3>${I("mic")} المحادثة: ${esc(s.d.t)}</h3>${tag(s)}</div><p class="muted small">${s.d.lines.length} جملة · استمع، مثّل دورك، وانطق. (يكتمل بتمثيل الدور)</p><div class="btn-row"><a class="btn btn-sm ${s.done ? "" : "btn-primary"}" href="#/dialogue/${s.d.id}">افتح المحادثة</a><a class="btn btn-sm" href="#/roleplay/${s.d.id}">مثّل دورك</a></div></div></div>`;
-          return `<div class="${cls(s)}">${num(s, k)}<div style="flex:1"><div class="step-head"><h3>اختبار الوحدة</h3>${tag(s)}</div><p class="muted small">١٢ سؤالًا من محتوى الوحدة. النجاح ٧٠٪ فأكثر يكمل الوحدة ويمنحك ١٠٠ XP.</p><div class="btn-row"><a class="btn btn-sm btn-warm" href="#/unittest/${u.id}">${done ? "أعد الاختبار" : "ابدأ الاختبار"}</a></div></div></div>`;
+          return `<div class="${cls(s)}">${num(s, k)}<div style="flex:1"><div class="step-head"><h3>اختبار الوحدة</h3>${tag(s)}</div><p class="muted small">١٢ سؤالًا من محتوى الوحدة. النجاح ٧٠٪ فأكثر يكمل الوحدة ويمنحك ١٠٠ XP.</p><div class="btn-row"><a class="btn btn-sm btn-warm" href="#/unittest/${u.id}">${done ? "أعد الاختبار" : "ابدأ الاختبار"} ${ptsTag()}</a></div></div></div>`;
         }).join("")}
       </div>`);
   };
@@ -276,7 +281,7 @@
     const s = themeStats(t);
     render(crumb([{ t: "المفردات", href: "#/vocab" }, { t: t.t }]) + `<div class="card sheet"><div class="section-title"><span class="badge" style="background:${LVC[t.lvl]};color:#fff">${t.lvl}</span><h1 style="margin:0">${esc(t.t)}</h1></div><div class="chips t-chips"><span class="chip">${t.words.length} كلمة</span><span class="chip ok">${I("check")} تعرف ${s.k}</span><span class="chip">${I("star")} متقنة ${s.m}</span></div>${bar(s.pct)}<p class="small muted" style="margin:6px 0 0">اضغط ${I("headphones")} بجانب أي كلمة لتسمع نطقها.</p>
       ${(() => { const ns = themeDone(t) ? nextAfterTheme(t) : null; return ns ? `<div class="note ok" style="margin-top:10px"><span class="ic">${I("check")}</span><p>أنهيت كلمات هذا الموضوع. <a href="${ns.href}"><b>الخطوة التالية: ${esc(ns.label)} ←</b></a></p></div>` : ""; })()}
-      <div class="btn-row" style="margin-top:12px"><a class="btn ${themeDone(t) ? "" : "btn-primary"}" href="#/game/flash/${t.id}">${I("cards")} ١) احفظ بالبطاقات</a><a class="btn btn-warm" href="#/game/quiz/${t.id}">${I("pencil")} ٢) اختبر نفسك</a></div><div class="mini-games"><span class="small muted">ألعاب إضافية:</span>${spellable(t).length >= 8 ? `<a class="mg" href="#/game/spell/${t.id}">${I("type")} رتّب الحروف</a>` : ""}<a class="mg" href="#/game/match/${t.id}">${I("cards")} طابق</a>${t.words.filter(hasSentence).length >= 6 ? `<a class="mg" href="#/game/sentence/${t.id}">${I("bookopen")} أكمل الجملة</a>` : ""}</div></div>
+      <div class="btn-row" style="margin-top:12px"><a class="btn ${themeDone(t) ? "" : "btn-primary"}" href="#/game/flash/${t.id}">${I("cards")} ١) احفظ بالبطاقات</a><a class="btn btn-warm" href="#/game/quiz/${t.id}">${I("pencil")} ٢) اختبر نفسك ${ptsTag()}</a></div><div class="mini-games"><span class="small muted">ألعاب إضافية:</span>${spellable(t).length >= 8 ? `<a class="mg" href="#/game/spell/${t.id}">${I("type")} رتّب الحروف</a>` : ""}<a class="mg" href="#/game/match/${t.id}">${I("cards")} طابق</a>${t.words.filter(hasSentence).length >= 6 ? `<a class="mg" href="#/game/sentence/${t.id}">${I("bookopen")} أكمل الجملة</a>` : ""}</div></div>
       <div class="word-list">${t.words.map((w, i) => { const r = rec(wid(t, i)); const st = mastered(wid(t, i)) ? "ok" : known(wid(t, i)) ? "info" : ""; return `<div class="word-row"><div class="w-en en"><b>${esc(w[0])}</b> <span class="muted small">${esc(w[2])}</span> ${spk(w[0])}</div><div class="w-ar">${esc(w[1])}</div><div class="w-ex en small muted">${esc(w[3])} ${spk(w[3], "sm")}</div><div class="w-exar small muted">${esc(w[4])}</div><span class="badge ${st}" style="justify-self:start">${mastered(wid(t, i)) ? "متقنة" : known(wid(t, i)) ? "تعرفها" : "جديدة"}</span></div>`; }).join("")}</div>`);
   };
 
@@ -319,7 +324,7 @@
   function resultCard(title, score, total, extra, backHref, againHref, nextStep){
     hush(); stopTimers();
     const pct = total ? Math.round(score / total * 100) : 0; if(pct >= 80 && total) confetti();
-    render(`<div class="card center sheet fade-up"><div class="score-ring" style="--p:${pct}"><span>${pct}%</span></div><h2>${score} من ${total}</h2><h3 class="muted" style="font-weight:600">${title}</h3>${extra || ""}
+    render(`<div class="card center sheet fade-up"><div class="score-ring" style="--p:${pct}"><span>${pct}%</span></div><h2>${score} من ${total}</h2><h3 class="muted" style="font-weight:600">${title}</h3>${extra || ""}<div id="ptsBox" class="pts-slot">${Auth.user() ? "" : `<p class="small muted">${I("lock")} <a href="account.html">سجّل الدخول</a> لتُحسب نقاطك في المنافسة.</p>`}</div>
       ${nextStep ? `<a class="btn btn-warm btn-lg" href="${nextStep.href}" style="margin-top:6px">${I("zap")} الخطوة التالية: ${esc(nextStep.label)} ←</a>` : ""}
       ${LAST_WRONG.length ? `<div class="mistakes"><h3>${I("target")} أخطاؤك في هذه الجولة (${LAST_WRONG.length})</h3>${LAST_WRONG.map(x => `<div class="mk"><div class="mk-q en">${esc(x.q.q)}</div><div class="mk-a"><span class="bad-ans">${esc(x.q.opts[x.chosen])}</span> <span class="ok-ans">${esc(x.q.opts[x.q.a])}</span>${x.q.sayAfter || x.q.say ? `<button type="button" class="spk sm" data-say="${esc(x.q.sayAfter || x.q.say)}">${I("headphones")}</button>` : ""}</div>${x.q.ex ? `<div class="small muted">${esc(x.q.ex)}</div>` : ""}</div>`).join("")}<button type="button" class="btn btn-primary btn-sm" id="retryWrong">${I("refresh")} أعد الأخطاء فقط</button></div>` : ""}
       <div class="btn-row" style="justify-content:center;margin-top:12px">${againHref ? `<button type="button" class="btn ${nextStep ? "" : "btn-primary"}" id="againBtn">${I("refresh")} مرة أخرى</button>` : ""}<a class="btn" href="${backHref || "#/"}">رجوع</a></div></div>`);
@@ -516,7 +521,7 @@
       <div class="note tip"><span class="ic">${I("sparkles")}</span><p>${mixed(l.tip)}</p></div>
       ${/past|perfect|passive|third|used-to/.test(l.id) ? `<div class="note info"><span class="ic">${I("list")}</span><p>تبي تعرف ماضي أي فعل و«بعد have»؟ <a href="#/verbs"><b>جدول تصريف الأفعال</b></a> فيه ${VB.length} فعلًا مع البحث والنطق.</p></div>` : ""}
       ${l.jargon ? `<p class="small muted jargon">اسمها في كتب القواعد (للمرجع فقط، ما تحتاج تحفظه): ${mixed(l.jargon)}</p>` : ""}
-      <div class="btn-row"><a class="btn btn-primary" href="#/practice/${l.id}">${I("pencil")} جرّبها (${l.practice.length} أسئلة)</a><a class="btn" href="#/grammar">كل الدروس</a></div></article>`);
+      <div class="btn-row"><a class="btn btn-primary" href="#/practice/${l.id}">${I("pencil")} جرّبها (${l.practice.length} أسئلة) ${ptsTag()}</a><a class="btn" href="#/grammar">كل الدروس</a></div></article>`);
   };
   routes.practice = id => {
     const l = lesson(id); if(!l) return routes.grammar();
@@ -535,7 +540,7 @@
     let showAr = true;
     const draw = () => {
       render(crumb([{ t: "تكلّم", href: "#/talk" }, { t: d.t }]) + `<div class="card sheet"><div class="section-title"><span class="badge" style="background:${LVC[d.lvl]};color:#fff">${d.lvl}</span><h1 style="margin:0">${esc(d.t)}</h1></div>
-        <div class="btn-row"><button type="button" class="btn btn-primary" id="playAll">${I("headphones")} استمع للحوار كاملًا</button><button type="button" class="btn" id="toggleAr">${showAr ? "أخفِ الترجمة" : "أظهر الترجمة"}</button><a class="btn" href="#/roleplay/${d.id}">${I("users")} مثّل دور ${d.roles[1]}</a><a class="btn btn-warm" href="#/speak/${d.id}">${I("mic")} انطق الجمل</a></div></div>
+        <div class="btn-row"><button type="button" class="btn btn-primary" id="playAll">${I("headphones")} استمع للحوار كاملًا</button><button type="button" class="btn" id="toggleAr">${showAr ? "أخفِ الترجمة" : "أظهر الترجمة"}</button><a class="btn" href="#/roleplay/${d.id}">${I("users")} مثّل دور ${d.roles[1]} ${ptsTag()}</a><a class="btn btn-warm" href="#/speak/${d.id}">${I("mic")} انطق الجمل</a></div></div>
         <div class="dialog">${d.lines.map((ln, i) => `<div class="dl ${ln[0] === "A" ? "a" : "b"}"><div class="who">${ln[0] === "A" ? d.roles[0] : d.roles[1]}</div><div class="bubble"><div class="en">${esc(ln[1])} ${spk(ln[1], "sm")}</div>${showAr ? `<div class="ar small">${esc(ln[2])}</div>` : ""}</div></div>`).join("")}</div>
         <div class="card"><h3>${I("star")} عبارات تحفظها</h3>${d.phrases.map(p => `<div class="ex right"><span class="en">${esc(p[0])} ${spk(p[0], "sm")}</span><span class="ar">${esc(p[1])}</span></div>`).join("")}</div>`);
       $("#toggleAr").addEventListener("click", () => { showAr = !showAr; draw(); });
