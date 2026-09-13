@@ -1313,3 +1313,9 @@ body.sheet-open{overflow:hidden}
 
 /* تحدي ساعة الذهب */
 .golden-card{background:linear-gradient(135deg,rgba(251,191,36,.18),rgba(244,114,182,.12));border-color:#f59e0b;margin-bottom:12px}
+
+/* بطاقة تفعيل الإشعارات */
+.push-card{display:flex;align-items:center;gap:12px;margin:12px 0;padding:12px 14px;flex-wrap:wrap}
+.push-card img.emo{width:36px;height:36px;flex:none}
+.push-card .pc-b{flex:1;min-width:180px}
+.push-card .pc-a{display:flex;gap:6px}

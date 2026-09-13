@@ -184,7 +184,7 @@ async function pointsLog(u){
   let lastDay = "";
   const rows = j.rounds.map(r => {
     const d = dayOf(r.at), head = d !== lastDay ? `<tr class="log-day"><td colspan="4">${new Date(r.at).toLocaleDateString("ar-SA", { weekday: "long", day: "numeric", month: "long" })}</td></tr>` : ""; lastDay = d;
-    const note = [r.stage ? "إتمام وحدة +10" : "", r.mult > 1 && r.bonus ? `×${r.mult} فعالية` : "", r.partial ? "إجابات انحفظت بعد الخروج" : "", r.challenge ? "تحدي" : ""].filter(Boolean).join(" · ");
+    const note = [r.stage ? "إتمام وحدة +10" : "", r.story ? "إتمام قصة" : "", r.mult > 1 && r.bonus ? `×${r.mult} فعالية` : "", r.partial ? "إجابات انحفظت بعد الخروج" : "", r.challenge ? "تحدي" : ""].filter(Boolean).join(" · ");
     return head + `<tr><td class="log-t">${new Date(r.at).toLocaleTimeString("ar-SA", { hour: "2-digit", minute: "2-digit" })}</td><td>${MODE_AR[r.mode] || esc(r.mode)}<div class="small muted">${note}</div></td><td class="log-s">${r.score}/${r.total}</td><td class="log-p ${r.points ? "" : "muted"}">${r.points ? "+" + r.points : "0"}${r.base != null && r.points && r.base !== r.points ? `<div class="small muted">${r.base} جديد</div>` : ""}</td></tr>`;
   }).join("");
   box.innerHTML = `<div class="log-head">${avatarHtml(j.name, j.u)}<div><h3 style="margin:0">${esc(j.name)}</h3><div class="small muted">${j.total} نقطة · ${j.uniqueQuestions} سؤال مختلف · ${j.rounds.length} جولة${j.streak ? ` · 🔥${j.streak}` : ""}</div></div></div>
@@ -197,6 +197,23 @@ async function pointsLog(u){
 }
 document.addEventListener("click", e => { const row = e.target.closest(".lb-row[data-log]"); if(row && row.dataset.log){ if(!Auth.user()){ toast("سجّل الدخول لعرض سجل النقاط"); return; } pointsLog(row.dataset.log); } });
 document.addEventListener("keydown", e => { if(e.key === "Enter"){ const row = e.target.closest && e.target.closest(".lb-row[data-log]"); if(row && row.dataset.log && Auth.user()) pointsLog(row.dataset.log); } });
+/* ---- بطاقة تفعيل الإشعارات في الرئيسية: زر واحد، وتختفي بعد التفعيل ---- */
+function renderNotifNudge(){
+  const host = document.getElementById("eventsBar"); const me = Auth.user();
+  if(!host || !me || typeof Push === "undefined" || Store.get("step_push_on", false) || Store.get("step_push_nudge_off_" + me.u, false)) return;
+  const cp = curPage(), hh = location.hash.replace(/^#\/?/, "");
+  if(!(["index.html", "step.html"].includes(cp) || ((cp === "general.html" || cp === "library.html") && !hh))) return;
+  const ios = Push.isIOS() && !Push.standalone();
+  if(!Push.supported() && !ios) return;
+  if(Push.supported() && Notification.permission === "denied") return;
+  const el = document.createElement("div"); el.className = "card push-card";
+  el.innerHTML = ios
+    ? `${emo("bell")}<div class="pc-b"><b>تبي تنبيهات ساعة الذهب وشعلتك على جوالك؟</b><div class="small muted">على الآيفون: اضغط زر المشاركة في Safari ← «إضافة إلى الشاشة الرئيسية»، وافتح «إنقلش» من هناك وفعّلها.</div></div><div class="pc-a"><a class="btn btn-sm btn-primary" href="account.html#notif">كيف؟</a><button type="button" class="btn btn-sm" data-off>لاحقًا</button></div>`
+    : `${emo("bell")}<div class="pc-b"><b>فعّل الإشعارات</b><div class="small muted">تذكير واحد باليوم: ساعة الذهب، شعلتك، ومعركة الجمعة — ما نرسل غيرها.</div></div><div class="pc-a"><button type="button" class="btn btn-sm btn-primary" data-on>${I("bell")} فعّل</button><button type="button" class="btn btn-sm" data-off>لاحقًا</button></div>`;
+  host.insertAdjacentElement("afterend", el); hydrateIcons(el);
+  const off = el.querySelector("[data-off]"); if(off) off.addEventListener("click", () => { Store.set("step_push_nudge_off_" + me.u, true); el.remove(); });
+  const on = el.querySelector("[data-on]"); if(on) on.addEventListener("click", async () => { on.disabled = true; on.textContent = "… جاري التفعيل"; try{ await Push.enable(); toast("تم تفعيل الإشعارات 🔔 — بنرسل لك إشعار تجربة", 4000); el.remove(); try{ await Auth.api("/api/push", { method: "POST", body: { action: "test" } }); }catch(e){} }catch(e){ toast(e.message, 5000); on.disabled = false; on.innerHTML = I("bell") + " فعّل"; } });
+}
 /* ---- نقاط معلّقة: كل إجابة صحيحة تنحفظ فورًا، فلو علق الموقع أو خرجت قبل نهاية الاختبار ما تضيع ---- */
 const Pending = {
   key(){ const u = Auth.user(); return u ? "step_pending_" + u.u : null; },
@@ -423,6 +440,7 @@ function pointsExplain(j){
   if(j.base) rows.push(`<span class="px ok">${I("check")} ${j.base} ${j.base === 1 ? "إجابة جديدة" : "إجابات جديدة"} = +${j.base}</span>`);
   if(j.bonus) rows.push(`<span class="px bonus">${I(j.bonusSource === "gift" ? "gift" : "zap")} ${esc(j.bonusLabel || "مضاعف")} ×٢ = +${j.bonus}</span>`);
   if(j.stage) rows.push(`<span class="px stage">${I("trophy")} إتمام مرحلة = +${j.stage.points}</span>`);
+  if(j.storyBonus) rows.push(`<span class="px stage">${I("bookopen")} إتمام قصة = +${j.storyBonus.points}</span>`);
   if(j.repeated) rows.push(`<span class="px muted">${I("repeat")} ${j.repeated} ${j.repeated === 1 ? "سؤال سبق أخذ نقطته" : "أسئلة سبق أخذ نقاطها"}${j.repeatedAt ? ` (آخرها ${fmtDate(j.repeatedAt)})` : ""} = 0</span>`);
   if(!j.bonus && j.base && typeof EVENTS !== "undefined" && EVENTS.status().active.some(a => a.id === "golden") && !String(location.hash).includes("golden")) rows.push(`<a class="px" href="general.html#/golden">${I("zap")} ×٢ في تحدي ساعة الذهب فقط ←</a>`);
   if(!j.base && j.repeated) rows.push(`<span class="px muted">${I("info")} أحسنت! بس هذي الأسئلة أخذت نقاطها من قبل — النقاط الجديدة تلقاها في دروس ووحدات ما خلصتها</span>`);
@@ -797,6 +815,7 @@ document.addEventListener("DOMContentLoaded", () => {
     hero.insertAdjacentHTML("beforeend", `<div class="actions" style="margin-top:14px"><a class="btn btn-light btn-lg continue-btn" href="${gen ? "general.html#/next" : "step.html"}">${I("zap")} كمّل ${gen ? "الإنجليزي" : "STEP"} من حيث وقفت</a></div>`);
   })();
   renderEventsBar();
+  try{ renderNotifNudge(); }catch(e){}
   giftCheck();
   if(typeof Push !== "undefined") Push.refresh();
   setTimeout(() => Pending.flush(), 2500);

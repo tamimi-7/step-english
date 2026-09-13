@@ -95,6 +95,14 @@
   const lvBadge = lv => `<span class="badge" style="background:${LVC[lv]};color:#fff">${lv}</span>`;
 
   /* ---------- HOME ---------- */
+  const STORY_PTS = { A1: 6, A2: 8, B1: 10, B2: 12, C1: 14, C2: 16 };
+  /* اختبار كلمات القصة: كل كلمة من مفرداتها سؤال (نقطة لكل كلمة أول مرة) */
+  function glossQs(s, id){
+    const g = (s.glossary || []).map((x, i) => ({ x, i })).filter(({ x }) => x.w && x.ar); if(g.length < 4) return [];
+    const pool = [...new Set(STORIES.filter(y => y.lvl === s.lvl).flatMap(y => y.glossary || []).map(y => y.ar).filter(Boolean))];
+    return shuffle(g).map(({ x, i }) => { const dis = shuffle(pool.filter(a => a !== x.ar)).slice(0, 3); const o = shuffle([x.ar, ...dis]); return { id: `sg-${id}-${i}`, q: x.w, o, a: o.indexOf(x.ar), ex: `${x.w} = ${x.ar}`, say: x.w }; });
+  }
+  routes.gloss = id => routes.quiz(id, "gloss");
   routes.home = () => {
     const cur = currentLevel(); const last = LIB.last && byId(LIB.last.id);
     render(`<section class="hero gen-hero gen-simple lib-hero"><span class="badge">إنقلش عام — قراءة واستماع</span><h1>قصص وروايات <mark>تقرأها وتسمعها</mark></h1><p>روايات وحكايات مشهورة مبسّطة ومرتبة من A1 إلى C2، كل قصة بصوت قارئ، وترجمة لكل فقرة، وأسئلة فهم تعطيك نقاطًا.</p>
@@ -204,7 +212,7 @@
       <article class="story-text ${listenMode ? "listen" : ""}" id="text">${s.paras.map((p, pi) => `<div class="para" data-pi="${pi}"><p class="en">${paraHtml(p, pi, spans)}</p>${arMode === "on" ? `<p class="ar-t">${esc(p.ar)}</p>` : arMode === "tap" ? `<details class="ar-tap"><summary>الترجمة</summary><p class="ar-t">${esc(p.ar)}</p></details>` : ""}</div>`).join("")}
         ${s.moral ? `<div class="note tip"><span class="ic">${I("bulb")}</span><p><b>الفكرة:</b> ${esc(s.moral)}</p></div>` : ""}
       </article>
-      <div class="card center sheet"><h3>فهمت القصة؟</h3><p class="muted small">${s.qs.length} أسئلة فهم — كل سؤال تجيبه صح لأول مرة يعطيك نقطة في المنافسة.</p><div class="btn-row" style="justify-content:center"><a class="btn btn-warm btn-lg" href="#/quiz/${id}">${I("pencil")} أسئلة الفهم <span class="pts-tag">${I("trophy")} نقاط</span></a>${nextStory(s) ? `<a class="btn" href="#/read/${nextStory(s).id}">القصة التالية: ${esc(nextStory(s).ar)} ←</a>` : ""}</div></div>`);
+      <div class="card center sheet"><h3>فهمت القصة؟</h3><p class="muted small">${s.qs.length} أسئلة فهم (نقطة لكل سؤال) + <b>مكافأة إتمام القصة +${STORY_PTS[s.lvl] || 6}</b> إذا جبت ٦٠٪ فأكثر، وبعدها اختبار كلمات القصة (${(s.glossary || []).length} كلمة = ${(s.glossary || []).length} نقطة).</p><div class="btn-row" style="justify-content:center"><a class="btn btn-warm btn-lg" href="#/quiz/${id}">${I("pencil")} أسئلة الفهم <span class="pts-tag">${I("trophy")} +${s.qs.length + (STORY_PTS[s.lvl] || 6)}</span></a><a class="btn" href="#/gloss/${id}">${I("type")} كلمات القصة <span class="pts-tag">${I("trophy")} +${(s.glossary || []).length}</span></a>${nextStory(s) ? `<a class="btn" href="#/read/${nextStory(s).id}">القصة التالية: ${esc(nextStory(s).ar)} ←</a>` : ""}</div></div>`);
       bindReader();
     };
     const fmt = t => `${Math.floor(t / 60)}:${String(Math.floor(t % 60)).padStart(2, "0")}`;
@@ -355,15 +363,17 @@
   };
 
   /* ---------- QUIZ ---------- */
-  routes.quiz = id => {
+  routes.quiz = (id, kind) => {
     const s = byId(id); if(!s) return routes.home();
-    const list = s.qs.map((q, i) => ({ ...q, id: `st-${id}-${i}` })); let i = 0, score = 0, done = false; const ids = [];
+    const gloss = kind === "gloss";
+    const list = gloss ? glossQs(s, id) : s.qs.map((q, i) => ({ ...q, id: `st-${id}-${i}` })); let i = 0, score = 0, done = false; const ids = [];
+    if(!list.length) return routes.read(id);
     const show = () => {
       if(i >= list.length) return finish();
       const q = list[i];
-      render(crumb([{ t: `${s.lvl}`, href: `#/level/${s.lvl}` }, { t: s.ar, href: `#/read/${id}` }, { t: "أسئلة الفهم" }]) + `<div class="quiz-top"><h2 style="margin:0;font-size:1.15rem">${esc(s.title)}</h2><div class="btn-row"><span class="badge ok">${I("check")} ${score}</span><span class="badge info">${i + 1} / ${list.length}</span></div></div>${bar(i / list.length * 100)}
+      render(crumb([{ t: `${s.lvl}`, href: `#/level/${s.lvl}` }, { t: s.ar, href: `#/read/${id}` }, { t: gloss ? "كلمات القصة" : "أسئلة الفهم" }]) + `<div class="quiz-top"><h2 style="margin:0;font-size:1.15rem">${esc(s.title)}</h2><div class="btn-row"><span class="badge ok">${I("check")} ${score}</span><span class="badge info">${i + 1} / ${list.length}</span></div></div>${bar(i / list.length * 100)}
         <div class="card q-card"><div class="q-text en">${esc(q.q)}</div>
-        <div class="opts-list" id="gopts">${q.o.map((o, k) => `<button type="button" class="opt" data-k="${k}"><span class="letter">${["A", "B", "C", "D"][k]}</span><span>${esc(o)}</span></button>`).join("")}</div>
+        <div class="opts-list" id="gopts">${q.o.map((o, k) => `<button type="button" class="opt${gloss ? " ar" : ""}" data-k="${k}"><span class="letter">${["A", "B", "C", "D"][k]}</span><span>${esc(o)}</span></button>`).join("")}</div>
         <div class="feedback" id="gfb" hidden></div>
         <div class="quiz-nav" style="justify-content:space-between"><a class="btn btn-sm" href="#/read/${id}">${I("bookopen")} ارجع للقصة</a><button type="button" class="btn btn-primary" id="gnext" disabled>التالي ←</button></div></div>`);
       done = false;
@@ -372,22 +382,23 @@
         $("#gopts").querySelectorAll(".opt").forEach(x => { x.disabled = true; if(+x.dataset.k === q.a) x.classList.add("correct"); else if(x === b) x.classList.add("wrong"); });
         if(typeof Progress !== "undefined") Progress.record(q.id, ok); sfx(ok ? "correct" : "wrong"); if(ok){ Pending.add(q.id, "reading"); score++; ids.push(q.id); }
         const fb = $("#gfb"); fb.hidden = false; fb.className = "feedback " + (ok ? "ok" : "bad"); fb.innerHTML = `<b>${ok ? I("check") + " صحيح!" : I("x") + " الصحيح: " + esc(q.o[q.a])}</b>${esc(q.ex || "")}`; hydrateIcons(fb);
+        if(q.say){ try{ speechSynthesis.cancel(); const u = new SpeechSynthesisUtterance(q.say); u.lang = "en-US"; u.rate = .9; after(() => speechSynthesis.speak(u), 300); }catch(err){} }
         $("#gnext").disabled = false; $("#gnext").focus({ preventScroll: true });
       }));
       $("#gnext").addEventListener("click", () => { if(!done) return; i++; show(); });
     };
     const finish = async () => {
-      const pct = Math.round(score / list.length * 100); const first = !LIB.done[id];
-      if(!LIB.done[id] || LIB.done[id].score < score) LIB.done[id] = { score, total: list.length, at: Date.now() }; save();
-      if(first) addXP(20 + score * 5);
+      const pct = Math.round(score / list.length * 100); const first = !gloss && !LIB.done[id];
+      if(!gloss){ if(!LIB.done[id] || LIB.done[id].score < score) LIB.done[id] = { score, total: list.length, at: Date.now() }; save(); }
+      if(first) addXP(20 + score * 5); else if(gloss) addXP(score * 3);
       if(pct >= 80) confetti();
       const nx = nextStory(s);
-      render(`<div class="card center sheet fade-up"><div class="score-ring" style="--p:${pct}"><span>${pct}%</span></div><h2>${score} من ${list.length}</h2><h3 class="muted" style="font-weight:600">${esc(s.title)}</h3><div id="srv"></div>
-        <div class="btn-row" style="justify-content:center;margin-top:12px">${nx ? `<a class="btn btn-warm btn-lg" href="#/read/${nx.id}">${I("zap")} القصة التالية: ${esc(nx.ar)} ←</a>` : ""}<a class="btn" href="#/read/${id}">أعد القراءة</a><a class="btn" href="#/level/${s.lvl}">قصص ${s.lvl}</a></div></div>`);
+      render(`<div class="card center sheet fade-up"><div class="score-ring" style="--p:${pct}"><span>${pct}%</span></div><h2>${score} من ${list.length}</h2><h3 class="muted" style="font-weight:600">${esc(s.title)}${gloss ? " — كلمات القصة" : ""}</h3><div id="srv"></div>
+        <div class="btn-row" style="justify-content:center;margin-top:12px">${!gloss && (s.glossary || []).length >= 4 ? `<a class="btn btn-warm btn-lg" href="#/gloss/${id}">${I("type")} كلمات القصة (+${(s.glossary || []).length}) ←</a>` : ""}${nx ? `<a class="btn ${gloss ? "btn-warm btn-lg" : ""}" href="#/read/${nx.id}">${I("zap")} القصة التالية: ${esc(nx.ar)} ←</a>` : ""}<a class="btn" href="#/read/${id}">أعد القراءة</a><a class="btn" href="#/level/${s.lvl}">قصص ${s.lvl}</a></div></div>`);
       const sb = $("#srv");
       if(!Auth.user()){ sb.innerHTML = `<p class="small muted">${I("lock")} <a href="account.html">سجّل الدخول</a> لتُحسب نقاطك في المنافسة.</p>`; hydrateIcons(sb); return; }
       if(!ids.length){ sb.innerHTML = `<p class="small muted">لا إجابات صحيحة هذه المرة — أعد قراءة القصة وحاول مجددًا.</p>`; return; }
-      try{ const j = await Auth.api("/api/result", { method: "POST", body: { mode: "reading", score, total: list.length, seconds: 0, ids } }); pointsReveal(j, sb); Pending.remove(ids); if(typeof Progress !== "undefined") Progress.sync(true); }catch(e){ sb.innerHTML = `<p class="small" style="color:var(--bad)">${esc(e.message)}</p>`; }
+      try{ const j = await Auth.api("/api/result", { method: "POST", body: { mode: "reading", score, total: list.length, seconds: 0, ids, story: gloss ? null : id } }); pointsReveal(j, sb); Pending.remove(ids); if(typeof Progress !== "undefined") Progress.sync(true); }catch(e){ sb.innerHTML = `<p class="small" style="color:var(--bad)">${esc(e.message)}</p>`; }
     };
     show();
   };
