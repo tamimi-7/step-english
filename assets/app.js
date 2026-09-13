@@ -719,7 +719,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const hero = document.querySelector(".landing-hero"); if(!hero) return;
     const last = Store.get("step_section", null); if(!last) return;
     const gen = last === "gen";
-    hero.insertAdjacentHTML("beforeend", `<div class="actions" style="margin-top:14px"><a class="btn btn-light btn-lg" href="${gen ? "general.html#/next" : "step.html"}">${I("zap")} كمّل ${gen ? "تعلّم الإنجليزي" : "تجهيز STEP"} من حيث وقفت</a></div>`);
+    hero.insertAdjacentHTML("beforeend", `<div class="actions" style="margin-top:14px"><a class="btn btn-light btn-lg continue-btn" href="${gen ? "general.html#/next" : "step.html"}">${I("zap")} كمّل ${gen ? "الإنجليزي" : "STEP"} من حيث وقفت</a></div>`);
   })();
   renderEventsBar();
   giftCheck();

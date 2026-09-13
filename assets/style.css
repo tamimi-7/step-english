@@ -1275,3 +1275,8 @@ body.sheet-open{overflow:hidden}
 }
 .push-nudge{display:flex;align-items:center;justify-content:center;gap:6px;margin:8px 0;padding:8px 10px;border-radius:12px;background:var(--surface2);color:inherit;text-decoration:none;font-size:.88rem}
 .push-nudge img.emo{width:22px;height:22px}
+/* أزرار الهيرو: ما تنقص من الطرف على الجوال */
+.hero .actions .btn{max-width:100%}
+@media (max-width:640px){
+  .hero .actions .btn.continue-btn{white-space:normal;text-align:center;line-height:1.4;width:100%;justify-content:center}
+}
