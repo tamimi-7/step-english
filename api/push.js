@@ -17,7 +17,7 @@ async function dailyJob(){
     let msg;
     if(Number(cur) >= 2 && last === yest) msg = { title: `🔥 شعلتك ${cur} أيام بتنطفي الليلة!`, body: "ادخل الحين وحافظ على سلسلتك — دقيقة وحدة تكفي.", url: "/general.html#/next", tag: "streak" };
     else if(riyadhDow === 5) msg = { title: "⚔️ معركة الكلمات قائمة الحين", body: "٦٠ ثانية بنفس الكلمات للجميع، والأول يكسب +٣٠ نقطة. تنتهي الساعة ١٠.", url: "/general.html#/battle", tag: "battle" };
-    else if(last !== today) msg = { title: "⭐ ساعة الذهب الساعة ٩ مساءً", body: "كل إجابة جديدة بنقطتين لمدة ساعة. جهّز نفسك!", url: "/general.html#/daily", tag: "golden" };
+    else if(last !== today) msg = { title: "⭐ تحدي ساعة الذهب الساعة ٩ مساءً", body: "٢٠ سؤال جديد على مستواك، كل سؤال بنقطتين — مرة واحدة باليوم!", url: "/general.html#/golden", tag: "golden" };
     if(!msg) continue;
     const r = await P.sendToUser(u, msg); sent += r.sent || 0;
   }

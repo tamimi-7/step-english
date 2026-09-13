@@ -4,6 +4,7 @@ const H = require("../lib/http");
 const EV = require("../data/events.js");
 const AR = require("../lib/areas");
 const VAL = require("../lib/validids");
+const RC = require("../lib/recap");
 const MODES = ["grammar", "vocab", "reading", "mix", "wrong", "challenge", "train", "general"];
 const ID_RE = /^[\x21-\x7e؀-ۿ]{1,80}$/;
 const UNIT_RE = /^u\d{1,3}$/;
@@ -39,17 +40,20 @@ module.exports = H.handler(["GET", "POST"], async (req, res) => {
   const challengeId = b.challenge ? String(b.challenge).replace(/[^a-z0-9]/gi, "").slice(0, 12) : null;
   const rawIds = [...new Set((Array.isArray(b.ids) ? b.ids : []).map(x => String(x)).filter(x => ID_RE.test(x)))];
   /* أسئلة غير موجودة في محتوى الموقع ما تعطي نقاط */
-  const ids = rawIds.filter(VAL.isValid).slice(0, Math.min(score, 200));
-  const rejected = rawIds.length - rawIds.filter(VAL.isValid).length;
+  let ids = rawIds.filter(VAL.isValid).slice(0, Math.min(score, 200));
+  let rejected = rawIds.length - rawIds.filter(VAL.isValid).length;
   const unit = b.unit && UNIT_RE.test(String(b.unit)) ? String(b.unit) : null;
   const ev = EV.status();
   const gift = await giftState(me);
   const giftMult = gift ? gift.mult : 1;
-  const mult = Math.max(ev.mult, giftMult);
-  const bonusSource = mult > 1 ? (giftMult >= ev.mult && gift ? "gift" : "events") : null;
-  const bonusLabel = bonusSource === "gift" ? gift.title : bonusSource === "events" ? (ev.active[0] || {}).title : null;
+  let mult = 1, bonusSource = null, bonusLabel = null;
   const wk = db.weekKey(), mk = EV.monthKey();
   const at = Date.now();
+  /* أسئلة تحدي ساعة الذهب (gh-تاريخ-رقم): تُقبل بتاريخ اليوم وأثناء الساعة فقط (+٥ دقائق سماح للي خلص آخر لحظة) */
+  const gActive = ev.active.some(a => a.id === "golden"), lg = RC.lastGolden(at), gGrace = !!lg && at - lg.end < 5 * 60e3;
+  const gOk = id => { const m = id.match(/^gh-(\d{4}-\d{2}-\d{2})-\d+$/); return !m || (m[1] === EV.dateKey(at) && (gActive || gGrace)); };
+  rejected += ids.filter(id => !gOk(id)).length; ids = ids.filter(gOk);
+  const evMult = gActive ? ev.mult : gGrace ? (lg.mult || 2) : 1; /* المضاعفة تشمل دقائق السماح */
 
   let challengeBoard = null, already = false, challenge = null;
   if(challengeId){
@@ -70,7 +74,11 @@ module.exports = H.handler(["GET", "POST"], async (req, res) => {
       const rep = ids.filter(id => !newIds.includes(id));
       if(rep.length){ const ts = await db.call("HMGET", "earnedat:" + me.u, ...rep.slice(0, 50)); repeatedAt = Math.max(0, ...(ts || []).map(x => Number(x) || 0)) || null; }
     }
-    bonus = newIds.length * (mult - 1);
+    /* المضاعفة: الهدية الشخصية تغطي كل الأسئلة، وساعة الذهب أسئلة تحديها فقط — وما تتراكم */
+    const goldenNew = newIds.filter(id => id.startsWith("gh-")).length;
+    const giftBonus = giftMult > 1 ? newIds.length * (giftMult - 1) : 0, evBonus = evMult > 1 ? goldenNew * (evMult - 1) : 0;
+    bonus = Math.max(giftBonus, evBonus);
+    if(bonus){ bonusSource = giftBonus >= evBonus ? "gift" : "events"; mult = bonusSource === "gift" ? giftMult : evMult; bonusLabel = bonusSource === "gift" ? gift.title : (ev.active.find(a => a.id === "golden") || {}).title || "ساعة الذهب"; }
     if(unit && total >= 8 && score / total >= 0.7){
       const added = await db.call("SADD", "stages:" + me.u, unit);
       if(added === 1 || added === "1") stage = { unit, points: AR.STAGE_POINTS };

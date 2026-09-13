@@ -209,7 +209,7 @@
         <div class="gs">${emo("check", "gs-emo")}<div class="gs-b"><div class="gs-n">${kn}</div><div class="gs-l">كلمة تعرفها من ${all.length}</div></div></div>
         <a class="gs pts" href="account.html#points" id="ptsCard">${emo("trophy", "gs-emo")}<div class="gs-b"><div class="gs-n" id="ptsCardN">${Auth.user() ? "…" : "—"}</div><div class="gs-l" id="ptsCardSub">${Auth.user() ? "نقاط المنافسة" : "سجّل الدخول لتجمع نقاطًا"}</div></div></a>
       </div>
-      <details class="pts-where small muted"><summary>${I("trophy")} وين تاخذ نقاط؟</summary><p>اختبار الموضوع، اختبار الوحدة، تدريب القاعدة، تحدي اليوم، الألعاب، تمثيل الدور، تصريف الأفعال، وأسئلة القصص — كل سؤال تجيبه صح <b>لأول مرة</b> = نقطة. البطاقات والمراجعة بدون نقاط، و XP لمستواك الشخصي فقط.</p></details>
+      <details class="pts-where small muted"><summary>${I("trophy")} وين تاخذ نقاط؟</summary><p>اختبار الموضوع، اختبار الوحدة، تدريب القاعدة، تحدي اليوم، الألعاب، تمثيل الدور، تصريف الأفعال، وأسئلة القصص — كل سؤال تجيبه صح <b>لأول مرة</b> = نقطة. <a href="#/golden">تحدي ساعة الذهب</a> (٩–١٠ مساءً) هو الوحيد اللي فيه ×٢. البطاقات والمراجعة بدون نقاط، و XP لمستواك الشخصي فقط.</p></details>
       <div class="home-cols">
       <section class="section"><div class="section-title"><h2>المستويات</h2><span class="muted small">التقدم يزيد مع كل كلمة تتعلمها ويكتمل باختبار الوحدة</span></div>
         <div class="lvl-list">${LV.map(lv => { const units = U.filter(u => u.lvl === lv), done = units.filter(u => GEN.units[u.id]).length, pct = levelPct(lv); const st = pct === 100 ? "done" : lv === cur ? "cur" : ""; return `<a class="lvl-row ${st}" href="#/level/${lv}" style="--c:${LVC[lv]}"><div class="lvl-badge" style="background:${LVC[lv]}">${lv}</div><div class="lvl-body"><div class="lvl-head"><b>${LVN[lv]}</b><span class="lvl-pct">${pct}%</span></div>${bar(pct)}<div class="small muted">${done}/${units.length} وحدة مكتملة${lv === cur ? " · <b>أنت هنا</b>" : ""}</div></div>${I("arrow")}</a>`; }).join("")}</div>
@@ -255,6 +255,7 @@
   routes.games = () => {
     render(crumb([{ t: "الألعاب" }]) + `<h1>${I("timer")} الألعاب</h1><p class="muted">ألعاب سريعة على كلمات مستواك. كل إجابة صحيحة تعطيك XP.</p>
       <a class="card link-card battle-card" href="#/battle"><div class="menu-emo">${emo("swords")}</div><h3>معركة الكلمات ${ptsTag()}</h3><p class="muted small">كل جمعة ٨–١٠ مساءً: نفس الكلمات للجميع، والأول يفوز بـ +٣٠ نقطة</p></a>
+      <a class="card link-card golden-card" href="#/golden"><div class="menu-emo">${emo("star")}</div><h3>تحدي ساعة الذهب ${ptsTag()}</h3><p class="muted small">كل يوم ٩–١٠ مساءً: ٢٠ سؤال جديد على مستواك، كل سؤال بنقطتين — المكان الوحيد للمضاعفة</p></a>
       <div class="grid grid-3">
         <a class="card link-card c-rose" href="#/game/speed"><div class="menu-emo">${emo("stopwatch")}</div><h3>سباق ٦٠ ثانية ${ptsTag()}</h3><p class="muted small">أكبر عدد من المعاني قبل انتهاء الوقت. أفضل نتيجة: ${GEN.best.speed || 0}</p></a>
         <a class="card link-card c-blue" href="#/game/match"><div class="menu-emo">${emo("link")}</div><h3>طابق الكلمات ${ptsTag()}</h3><p class="muted small">اربط كل كلمة بمعناها.</p></a>
@@ -327,9 +328,9 @@
     const show = () => {
       const q = S.list[S.i]; if(!q) return finish();
       render(`${opts.header || ""}<div class="quiz-top"><h2 style="margin:0;font-size:1.15rem">${opts.title}</h2><div class="btn-row"><span class="badge ok">${I("check")} ${S.score}</span><span class="badge info">${S.i + 1} / ${S.list.length}</span>${opts.timed ? `<span class="timer" id="gt">--</span>` : ""}</div></div>${bar(S.i / S.list.length * 100)}
-        <div class="card q-card"><div class="btn-row" style="justify-content:space-between"><span class="badge">${q.kind === "meaning" ? "ما معنى الكلمة؟" : q.kind === "reverse" ? "ما الكلمة الإنجليزية؟" : q.kind === "sentence" ? "أكمل الجملة" : q.kind === "grammar" ? "قاعدة: " + esc(q.sub || "") : q.kind === "dialog" ? "محادثة" : "سؤال"}</span>${q.say ? spk(q.say) : ""}</div>
-        <div class="q-text ${q.kind === "reverse" ? "" : "en"}" style="${q.kind === "reverse" ? "direction:rtl;text-align:right;font-family:inherit" : ""}">${esc(q.q)}</div>${q.sub && q.kind !== "grammar" ? `<div class="muted small" style="margin-top:-8px;margin-bottom:10px">${esc(q.sub)}</div>` : ""}${q.hint ? `<div class="muted small" style="margin-bottom:10px">${I("bulb")} ${esc(q.hint)}</div>` : ""}
-        <div class="opts-list ${q.opts.every(o => String(o).length <= 26) ? "two" : ""}" id="gopts">${q.opts.map((o, k) => `<button type="button" class="opt ${q.kind === "meaning" ? "ar" : ""}" data-k="${k}"><span class="letter">${L[k]}</span><span>${esc(o)}</span></button>`).join("")}</div>
+        <div class="card q-card"><div class="btn-row" style="justify-content:space-between"><span class="badge">${q.label ? esc(q.label) : q.kind === "meaning" ? "ما معنى الكلمة؟" : q.kind === "reverse" ? "ما الكلمة الإنجليزية؟" : q.kind === "sentence" ? "أكمل الجملة" : q.kind === "grammar" ? "قاعدة: " + esc(q.sub || "") : q.kind === "dialog" ? "محادثة" : "سؤال"}</span>${q.say ? spk(q.say) : ""}</div>
+        <div class="q-text ${q.kind === "reverse" || q.rtl ? "" : "en"}" style="${q.kind === "reverse" || q.rtl ? "direction:rtl;text-align:right;font-family:inherit" : ""}">${esc(q.q)}</div>${q.sub && q.kind !== "grammar" ? `<div class="muted small" style="margin-top:-8px;margin-bottom:10px">${esc(q.sub)}</div>` : ""}${q.hint ? `<div class="muted small" style="margin-bottom:10px">${I("bulb")} ${esc(q.hint)}</div>` : ""}
+        <div class="opts-list ${q.opts.every(o => String(o).length <= 26) ? "two" : ""}" id="gopts">${q.opts.map((o, k) => `<button type="button" class="opt ${q.kind === "meaning" || q.arOpts ? "ar" : ""}" data-k="${k}"><span class="letter">${L[k]}</span><span>${esc(o)}</span></button>`).join("")}</div>
         <div class="feedback" id="gfb" hidden></div>
         <div class="quiz-nav" style="justify-content:space-between"><a class="btn btn-sm" href="${opts.backHref || "#/"}">خروج</a><button type="button" class="btn btn-primary" id="gnext" disabled>التالي ←</button></div></div>`);
       if(q.say && opts.autoSay) after(() => speak(q.say), 150);
@@ -655,6 +656,65 @@
     const l = lesson(id); if(!l) return routes.grammar();
     const list = shuffle(l.practice.map((_, i) => grammarQ(l, i)));
     runQuiz({ title: "تدريب: " + l.t, list, backHref: `#/lesson/${l.id}`, xpPer: 6, onDone: (s, n, secs, ids) => { postPoints(s, n, secs, ids); resultCard(l.t, s, n, `<p class="muted">+${s * 6} XP</p>`, `#/lesson/${l.id}`, `#/practice/${l.id}`); } });
+  };
+
+  /* ---------- تحدي ساعة الذهب: ٢٠ سؤال جديد على مستواك، مرة باليوم، كل سؤال بنقطتين ---------- */
+  const GOLD_N = 20;
+  const goldDay = () => EVENTS.dateKey(Date.now());
+  function seededRand(str){ let h = 1779033703 ^ str.length; for(let i = 0; i < str.length; i++){ h = Math.imul(h ^ str.charCodeAt(i), 3432918353); h = h << 13 | h >>> 19; } return () => { h = Math.imul(h ^ h >>> 16, 2246822507); h = Math.imul(h ^ h >>> 13, 3266489909); return ((h ^= h >>> 16) >>> 0) / 4294967296; }; }
+  /* نفس الأسئلة لنفس الشخص في نفس اليوم (فالإعادة ما تعطي نقاط)، ومن الوحدات اللي وصلها */
+  function goldenQs(day){
+    const me = Auth.user(); const rnd = seededRand(day + "|" + (me ? me.u : "anon"));
+    const sh = arr => { const a = arr.slice(); for(let i = a.length - 1; i > 0; i--){ const j = Math.floor(rnd() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
+    const pick = (arr, n) => sh(arr).slice(0, n);
+    const cur = nextUnit(), units = U.slice(0, Math.max(U.indexOf(cur) + 1, 3));
+    const themes = units.flatMap(u => u.themes.map(theme).filter(Boolean));
+    const lessons = units.map(u => u.grammar && lesson(u.grammar)).filter(Boolean);
+    const words = themes.flatMap(t => t.words.filter(w => w[3] && w[4]).map(w => ({ w, t })));
+    const out = [], used = new Set();
+    const addSent = (x, toEn) => {
+      if(used.has(x.w[0])) return; used.add(x.w[0]);
+      const dis = pick(words.filter(y => y.w[3] !== x.w[3] && y.w[4] !== x.w[4] && y.w[0] !== x.w[0]), 3); if(dis.length < 3) return;
+      if(toEn){ const opts = sh([x.w[3], ...dis.map(y => y.w[3])]); out.push({ kind: "gsent", label: "اختر الجملة الإنجليزية", rtl: true, q: x.w[4], opts, a: opts.indexOf(x.w[3]), ex: `${x.w[3]} — ${x.w[4]}`, sayAfter: x.w[3] }); }
+      else { const opts = sh([x.w[4], ...dis.map(y => y.w[4])]); out.push({ kind: "gmean", label: "وش معنى الجملة؟", arOpts: true, q: x.w[3], opts, a: opts.indexOf(x.w[4]), ex: `${x.w[3]} — ${x.w[4]}`, say: x.w[3] }); }
+    };
+    pick(words, 6).forEach(x => addSent(x, true));
+    pick(words, 5 + 6).forEach(x => { if(out.length < 11) addSent(x, false); });
+    if(themes.length >= 2) for(let k = 0; k < 4; k++){
+      const [t1, t2] = pick(themes, 2); const three = pick(t1.words, 3), odd = pick(t2.words.filter(w => !t1.words.some(z => z[0] === w[0])), 1)[0]; if(!odd || three.length < 3) continue;
+      const opts = sh([...three.map(w => w[0]), odd[0]]);
+      out.push({ kind: "godd", label: "الكلمة الغريبة", rtl: true, q: `أي كلمة ما تنتمي لمجموعة «${t1.t}»؟`, opts, a: opts.indexOf(odd[0]), ex: `${odd[0]} = ${odd[1]} — هذي من «${t2.t}»، والباقي من «${t1.t}»` });
+    }
+    const mistakes = lessons.flatMap(l => l.mistakes.map(m => ({ m, l })));
+    if(mistakes.length >= 4) pick(mistakes, 3).forEach(x => { const opts = sh([x.m[1], ...pick(mistakes.filter(y => y !== x), 3).map(y => y.m[0])]); out.push({ kind: "gfix", label: "أي جملة صحيحة؟", rtl: true, q: "وحدة بس صحيحة — أيها؟", opts, a: opts.indexOf(x.m[1]), ex: `${x.m[1]} — ${x.m[2]}`, lesson: x.l.id, sayAfter: x.m[1] }); });
+    if(cur.lvl !== "A1" && VB.length > 8) pick(VB.filter(v => v[4]), 2).forEach(v => { const kind = rnd() < .5 ? 1 : 2; const correct = v[kind].split("/")[0].trim(); const dis = pick(VB.filter(x => x !== v).map(x => x[kind].split("/")[0].trim()).filter(x => x !== correct), 3); const opts = sh([correct, ...dis]); out.push({ kind: "verb", label: "تصريف الفعل", q: kind === 1 ? `${v[0]}  →  yesterday I ___` : `${v[0]}  →  I have ___`, sub: v[3], opts, a: opts.indexOf(correct), ex: `${v[0]} · ${v[1]} · ${v[2]} — ${v[3]}` }); });
+    pick(words, GOLD_N).forEach((x, i) => { if(out.length < GOLD_N) addSent(x, i % 2 === 0); });
+    return sh(out).slice(0, GOLD_N).map((q, i) => ({ ...q, id: `gh-${day}-${i}` }));
+  }
+  let goldenRetry = false;
+  routes.golden = () => {
+    const s = EVENTS.status(), act = s.active.find(a => a.id === "golden"), day = goldDay();
+    GEN.golden = GEN.golden || {}; const done = GEN.golden[day];
+    const nextG = (s.upcoming || []).find(a => a.id === "golden") || s.next;
+    const head = crumb([{ t: "تحدي ساعة الذهب" }]);
+    const rules = `<ul class="tour-rules" style="text-align:start"><li><b>٢٠ سؤال جديد</b> على مستواك: جُمل كاملة، الكلمة الغريبة، أي جملة صحيحة، وتصريف — مو أسئلة الدروس.</li><li><b>كل سؤال بنقطتين</b> — وهذا المكان الوحيد للمضاعفة. باقي الموقع نقطة لكل سؤال حتى أثناء الساعة.</li><li><b>مرة باليوم</b>: نفس الأسئلة لو أعدت، فما فيه نقاط جديدة.</li><li>الأسئلة من الوحدات اللي وصلتها — كل ما تقدمت صارت أصعب.</li></ul>`;
+    if(!act){
+      render(head + `<div class="card center sheet"><div class="gift-box live">${emo("star")}</div><h1 style="margin:.2em 0">تحدي ساعة الذهب</h1><p class="muted" style="margin:0">كل يوم من ٩ إلى ١٠ مساءً</p>${nextG ? `<div class="gift-mult">يبدأ بعد ${fmtLeft(nextG.startsAt - s.now)}</div>` : ""}${done ? `<div class="note ok"><span class="ic">${I("check")}</span><p>خلصت تحدي اليوم: <b>${done.score}/${done.total}</b></p></div>` : ""}${rules}<div class="btn-row" style="justify-content:center"><a class="btn btn-primary" href="#/next">${I("zap")} كمّل تعلّمك الحين (نقطة لكل سؤال)</a></div></div>`);
+      return;
+    }
+    if(done && !goldenRetry){
+      render(head + `<div class="card center sheet"><div class="gift-box live">${emo("party")}</div><h2>خلصت تحدي اليوم!</h2><p><b>${done.score}/${done.total}</b> · باقي على نهاية الساعة ${fmtLeft(act.endsAt - s.now)}</p><p class="muted small">تقدر تعيده للمراجعة بس ما فيه نقاط جديدة (نفس الأسئلة).</p><div class="btn-row" style="justify-content:center"><button type="button" class="btn" id="gAgain">${I("refresh")} أعده للمراجعة</button><a class="btn btn-primary" href="compete.html">${I("trophy")} شوف الترتيب</a></div></div>`);
+      $("#gAgain").addEventListener("click", () => { goldenRetry = true; routes.golden(); });
+      return;
+    }
+    goldenRetry = false;
+    const list = goldenQs(day);
+    if(list.length < 8){ render(head + `<div class="card center sheet"><p class="muted">تعلّم كم موضوع أول عشان يتجهّز تحديك.</p><a class="btn btn-primary" href="#/next">ابدأ</a></div>`); return; }
+    runQuiz({ title: "⭐ تحدي ساعة الذهب", list, backHref: "#/golden", xpPer: 6, onDone: (sc, n, secs, ids) => {
+      if(!GEN.golden[day]) GEN.golden[day] = { score: sc, total: n, at: Date.now() }; saveGen();
+      postPoints(sc, n, secs, ids);
+      resultCard("تحدي ساعة الذهب", sc, n, `<p class="muted">+${sc * 6} XP · باقي على نهاية الساعة ${fmtLeft(Math.max(0, act.endsAt - Date.now()))}</p>`, "#/golden", null, { href: "compete.html", label: "شوف الترتيب بعد التحدي" });
+    } });
   };
 
   /* ---------- TALK ---------- */

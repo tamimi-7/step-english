@@ -1310,3 +1310,6 @@ body.sheet-open{overflow:hidden}
 .recap-top{margin:8px 0;text-align:start;background:var(--surface2);border-radius:12px;padding:6px 8px}
 .recap-top .rt{display:flex;justify-content:space-between;padding:4px 6px;border-radius:8px}
 .recap-top .rt.me{background:var(--ok-soft);font-weight:700}
+
+/* تحدي ساعة الذهب */
+.golden-card{background:linear-gradient(135deg,rgba(251,191,36,.18),rgba(244,114,182,.12));border-color:#f59e0b;margin-bottom:12px}

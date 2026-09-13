@@ -424,6 +424,7 @@ function pointsExplain(j){
   if(j.bonus) rows.push(`<span class="px bonus">${I(j.bonusSource === "gift" ? "gift" : "zap")} ${esc(j.bonusLabel || "مضاعف")} ×٢ = +${j.bonus}</span>`);
   if(j.stage) rows.push(`<span class="px stage">${I("trophy")} إتمام مرحلة = +${j.stage.points}</span>`);
   if(j.repeated) rows.push(`<span class="px muted">${I("repeat")} ${j.repeated} ${j.repeated === 1 ? "سؤال سبق أخذ نقطته" : "أسئلة سبق أخذ نقاطها"}${j.repeatedAt ? ` (آخرها ${fmtDate(j.repeatedAt)})` : ""} = 0</span>`);
+  if(!j.bonus && j.base && typeof EVENTS !== "undefined" && EVENTS.status().active.some(a => a.id === "golden") && !String(location.hash).includes("golden")) rows.push(`<a class="px" href="general.html#/golden">${I("zap")} ×٢ في تحدي ساعة الذهب فقط ←</a>`);
   if(!j.base && j.repeated) rows.push(`<span class="px muted">${I("info")} أحسنت! بس هذي الأسئلة أخذت نقاطها من قبل — النقاط الجديدة تلقاها في دروس ووحدات ما خلصتها</span>`);
   if(!rows.length) rows.push(`<span class="px muted">ما فيه إجابات صحيحة جديدة هذه المرة</span>`);
   return rows.join("");
@@ -637,7 +638,7 @@ function announce(kind, id, start, title, body, href, btn){
 function eventAnnouncements(s){
   if(!Store.get("step_ann_ready", false)){ Store.set("step_ann_ready", true); } // لا نزعج بإعلانات قديمة عند أول زيارة
   const now = s.now;
-  s.active.forEach(ev => announce("start", ev.id, ev.startsAt, `بدأت ${ev.title}!`, `${ev.desc}. تنتهي بعد ${fmtLeft(ev.endsAt - now)}.`, "general.html#/", "ابدأ أجمع نقاط"));
+  s.active.forEach(ev => announce("start", ev.id, ev.startsAt, `بدأت ${ev.title}!`, `${ev.desc}. تنتهي بعد ${fmtLeft(ev.endsAt - now)}.`, ev.id === "golden" ? "general.html#/golden" : "general.html#/", ev.id === "golden" ? "ابدأ التحدي" : "ابدأ أجمع نقاط"));
   (s.upcoming || []).forEach(ev => { if(ev.startsAt - now <= 30 * 60000) announce("soon", ev.id, ev.startsAt, `${ev.title} بعد ${fmtLeft(ev.startsAt - now)}`, ev.desc); });
   const B = s.battle;
   if(B && B.active) announce("start", B.id, B.active.start, `بدأت ${B.title}!`, `${B.desc} تنتهي بعد ${fmtLeft(B.active.end - now)}.`, "general.html#/battle", "ادخل المعركة");
@@ -661,7 +662,7 @@ function renderEventsBar(){
       else if(B && B.next) bits.push(`<span class="ev-bit">${I("swords")} ${esc(B.title)} بعد ${fmtLeft(B.next.start - s.now)}</span>`);
       if(gf) bits.push(`<span class="ev-bit gift">${I("gift")} هديتك ×${gf.mult} · ${fmtLeft(gf.endsAt - s.now)}</span>`);
       if(!T.ended) bits.push(`<span class="ev-bit tour">${I("trophy")} ${esc(T.prize)}</span>`);
-      const href = B && B.active ? "general.html#/battle" : "compete.html#tournament";
+      const href = B && B.active ? "general.html#/battle" : act && act.id === "golden" ? "general.html#/golden" : "compete.html#tournament";
       const meU = Auth.user(), dl = meU ? Store.get("step_daily_last_" + meU.u, null) : null;
       const flameBtn = dl && dl.day === riyadhDay() && dl.streak ? `<button type="button" class="ev-flame" title="سلسلة الأيام">${emo(flameOf(dl.streak).k)} ${dl.streak}</button>` : "";
       host.innerHTML = (flameBtn || bits.length) ? `<div class="ev-wrap">${flameBtn}${bits.length ? `<a class="ev-strip" href="${href}">${bits.join("")}<span class="ev-go">${I("arrow")}</span></a>` : ""}</div>` : "";
@@ -669,7 +670,7 @@ function renderEventsBar(){
       hydrateIcons(host); return;
     }
     const tHtml = T.ended ? "" : `<a class="ev-card tour" href="compete.html#tournament"><span class="ev-ic">${I("trophy")}</span><div><b>${esc(T.title)} — ${esc(T.prize)}</b><div class="small">${T.upcoming ? "تبدأ بعد " + fmtLeft(T.startsAt - s.now) : "المركز الأول في ترتيب الشهر يفوز · تنتهي بعد " + fmtLeft(T.endsAt - s.now)}</div></div><span class="ev-go">${I("arrow")}</span></a>`;
-    const eHtml = act ? `<div class="ev-card live"><span class="ev-ic">${emo("clock")}</span><div><b>×${s.mult} نقاط الآن — ${esc(act.title)}</b><div class="small">${esc(act.desc)} · تنتهي بعد ${fmtLeft(act.endsAt - s.now)}</div></div></div>`
+    const eHtml = act ? `<a class="ev-card live" href="general.html#/golden"><span class="ev-ic">${emo("clock")}</span><div><b>×${s.mult} نقاط الآن — ${esc(act.title)}</b><div class="small">${esc(act.desc)} · تنتهي بعد ${fmtLeft(act.endsAt - s.now)}</div></div></a>`
       : s.next ? `<div class="ev-card next"><span class="ev-ic">${emo("clock")}</span><div><b>القادم: ${esc(s.next.title)} ×${s.next.mult}</b><div class="small">${esc(s.next.desc)} · بعد ${fmtLeft(s.next.startsAt - s.now)}</div></div></div>` : "";
     const gHtml = gf ? `<div class="ev-card gift"><span class="ev-ic">${emo("gift")}</span><div><b>${esc(gf.title)} — نقاط ×${gf.mult}</b><div class="small">باقي ${fmtLeft(gf.endsAt - s.now)}</div></div></div>` : "";
     const bHtml = B ? `<a class="ev-card ${B.active ? "live" : "next"}" href="general.html#/battle"><span class="ev-ic">${emo("swords")}</span><div><b>${esc(B.title)}${B.active ? " — قائمة الآن!" : ""}</b><div class="small">${B.active ? "تنتهي بعد " + fmtLeft(B.active.end - s.now) : B.next ? "تبدأ بعد " + fmtLeft(B.next.start - s.now) : ""} · الجوائز +${B.prizes.join(" / +")}</div></div><span class="ev-go">${I("arrow")}</span></a>` : "";
