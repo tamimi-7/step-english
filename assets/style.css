@@ -969,3 +969,12 @@ body.focus-open .tabbar{display:none}
 .pts-reveal.zero .pts-gain{color:var(--muted);background:var(--surface2);box-shadow:none}
 .pts-meta{text-align:center;margin-top:8px}
 @media (max-width:640px){.pts-gain{font-size:1.6rem;padding:8px 14px}.pts-total .pts-num{font-size:1.8rem}.pts-gain.fly{transform:translateX(-60px) scale(.55)}}
+
+/* هدية شخصية */
+.gift-card{max-width:360px}
+.gift-box{width:84px;height:84px;margin:0 auto 10px;border-radius:20px;background:linear-gradient(135deg,#f9a8d4,#fbbf24);border:3px solid var(--ink);display:flex;align-items:center;justify-content:center;color:#7c2d12;animation:pop .6s}
+.gift-box .i{width:44px;height:44px}
+.gift-mult{display:inline-block;font-family:"Baloo Bhaijaan 2",sans-serif;font-weight:800;font-size:1.6rem;color:#7c2d12;background:#fde68a;border:3px solid var(--ink);border-radius:12px;padding:4px 18px;margin:8px 0;box-shadow:-3px 3px 0 var(--ink)}
+.ev-bit.gift{color:#be185d}
+.ev-card.gift{border-color:#be185d;box-shadow:-4px 4px 0 #be185d}
+.ev-card.gift .ev-ic{background:#fce7f3;color:#be185d}

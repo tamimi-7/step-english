@@ -13,6 +13,11 @@
       { id: "friday", title: "جمعة مضاعفة", desc: "كل جمعة، طوال اليوم، نقاط ×٢", dow: 5, mult: 2 },
       { id: "golden", title: "ساعة الذهب", desc: "كل يوم من ٩ إلى ١٠ مساءً نقاط ×٢", fromH: 21, toH: 22, mult: 2 }
     ],
+    /* هدايا شخصية: تُطابَق بالاسم أو اسم المستخدم، وتعطي مضاعف نقاط لصاحبها فقط */
+    gifts: [
+      { id: "salma-2026-09", names: ["سلمى", "سلمي", "salma", "salmaa"], mult: 2, from: "2026-09-13T00:00:00+03:00", to: "2026-09-30T23:59:59+03:00",
+        title: "هدية خاصة لسلمى", msg: "عشان شغلناك عن الموقع وزعلتِ… خذي هذي: كل نقطة تجمعينها تُحسب لك مضاعفة ×٢ حتى نهاية الشهر. رحّبنا فيك من جديد!", icon: "gift" }
+    ],
     special: [
       { id: "kickoff", title: "انطلاقة البطولة", desc: "أول ٤٨ ساعة من البطولة نقاط ×٢", from: "2026-09-09T00:00:00+03:00", to: "2026-09-10T23:59:59+03:00", mult: 2 }
     ]
@@ -42,6 +47,17 @@
     return { now: t, mult, active, next, tournament };
   }
   const monthKey = t => { const l = local(t || Date.now()); return `${l.getUTCFullYear()}-${String(l.getUTCMonth() + 1).padStart(2, "0")}`; };
-  const api = { CONFIG, status, monthKey, TZ };
+  /* تطبيع الاسم العربي لمطابقة الهدية */
+  const normName = s => String(s || "").toLowerCase().replace(/[\u064B-\u0652\u0640]/g, "").replace(/[أإآ]/g, "ا").replace(/ى/g, "ي").replace(/ة/g, "ه").replace(/\s+/g, " ").trim();
+  function giftFor(user, t){
+    if(!user) return null; t = t || Date.now();
+    const nm = normName(user.name), un = normName(user.u);
+    for(const g of CONFIG.gifts || []){
+      const active = t >= Date.parse(g.from) && t < Date.parse(g.to) + 1000; if(!active) continue;
+      if(g.names.some(n => { const k = normName(n); return k && (nm === k || nm.startsWith(k + " ") || nm.includes(k) || un === k || un.includes(k)); })) return { ...g, endsAt: Date.parse(g.to) + 1000 };
+    }
+    return null;
+  }
+  const api = { CONFIG, status, monthKey, TZ, giftFor, normName };
   if(typeof module !== "undefined" && module.exports) module.exports = api; else root.EVENTS = api;
 })(typeof window !== "undefined" ? window : globalThis);

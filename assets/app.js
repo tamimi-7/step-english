@@ -103,6 +103,7 @@ const ICONS = {
   list: 'M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01',
   arrow: 'M19 12H5M12 19l-7-7 7-7',
   volume: 'M11 5L6 9H2v6h4l5 4V5zM15.5 8.5a5 5 0 0 1 0 7M19 5a9 9 0 0 1 0 14',
+  gift: 'M20 12v10H4V12M2 7h20v5H2zM12 22V7M12 7H7.5a2.5 2.5 0 0 1 0-5C11 2 12 7 12 7zM12 7h4.5a2.5 2.5 0 0 0 0-5C13 2 12 7 12 7z',
   play: 'M6 4l14 8-14 8z',
   pause: 'M7 4h4v16H7zM13 4h4v16h-4z',
   next: 'M5 4l10 8-10 8zM17 4h2v16h-2z',
@@ -282,7 +283,7 @@ function pointsReveal(j, host){
   if(j.already){ host.innerHTML = `<div class="note warn" style="justify-content:center"><span class="ic">${I("info")}</span><p>سبق أن أنجزت هذا التحدي، فلم تُحسب هذه المحاولة.</p></div>`; hydrateIcons(host); return; }
   const gain = j.points || 0, total = j.totalPoints || 0, before = Math.max(0, total - gain);
   host.innerHTML = `<div class="pts-reveal ${gain ? "" : "zero"}">
-      <div class="pts-gain" id="ptsGain">${gain ? "+" + gain : "0"}<small>نقطة</small>${gain && j.mult > 1 ? `<span class="pts-mult">×${j.mult}</span>` : ""}</div>
+      <div class="pts-gain" id="ptsGain">${gain ? "+" + gain : "0"}<small>نقطة</small>${gain && j.mult > 1 ? `<span class="pts-mult">×${j.mult}${j.gift ? " هدية" : ""}</span>` : ""}</div>
       <div class="pts-arrow">${I("arrow")}</div>
       <div class="pts-total" id="ptsTotal"><div class="pts-num" id="ptsNum">${before}</div><div class="small muted">مجموعك</div></div>
     </div>
@@ -311,6 +312,20 @@ function pointsHtml(j){
 }
 /* ---- شريط الفعاليات والبطولة (data/events.js) ---- */
 function fmtLeft(ms){ const m = Math.max(0, Math.floor(ms / 60000)); const d = Math.floor(m / 1440), h = Math.floor(m % 1440 / 60), mm = m % 60; const ar = (n, one, two, few, many) => n === 1 ? one : n === 2 ? two : (n % 100 >= 3 && n % 100 <= 10) ? `${n} ${few}` : `${n} ${many}`; const DD = n => ar(n, "يوم", "يومين", "أيام", "يومًا"), HH = n => ar(n, "ساعة", "ساعتين", "ساعات", "ساعة"), MM = n => ar(n, "دقيقة", "دقيقتين", "دقائق", "دقيقة"); if(d > 0) return h > 0 ? `${DD(d)} و${HH(h)}` : DD(d); if(h > 0) return mm > 0 ? `${HH(h)} و${MM(mm)}` : HH(h); return MM(mm); }
+/* هدية شخصية: تظهر مرة واحدة أول ما يدخل صاحبها */
+function giftCheck(){
+  if(typeof EVENTS === "undefined" || !EVENTS.giftFor) return;
+  const me = Auth.user(); if(!me) return;
+  const g = EVENTS.giftFor(me); if(!g) return;
+  const key = "step_gift_seen_" + g.id + "_" + me.u;
+  if(Store.get(key, false)) return;
+  const el = document.createElement("div"); el.className = "levelup gift-ov";
+  el.innerHTML = `<div class="lu-card gift-card"><div class="gift-box">${I("gift")}</div><h3>${esc(g.title)}</h3><p>${esc(g.msg)}</p><div class="gift-mult">نقاط ×${g.mult}</div><p class="small muted">تنتهي ${new Date(g.endsAt).toLocaleDateString("ar-SA", { day: "numeric", month: "long" })}</p><button type="button" class="btn btn-primary btn-lg">${I("sparkles")} تسلّمت الهدية</button></div>`;
+  document.body.appendChild(el); hydrateIcons(el);
+  try{ if(typeof SFX !== "undefined") SFX.win(); confetti(); }catch(e){}
+  const close = () => { el.remove(); Store.set(key, true); };
+  el.querySelector("button").addEventListener("click", close);
+}
 function renderEventsBar(){
   const host = document.getElementById("eventsBar"); if(!host || typeof EVENTS === "undefined") return;
   const full = host.dataset.full === "1";
@@ -320,13 +335,16 @@ function renderEventsBar(){
       const bits = [];
       if(!T.ended) bits.push(`<span class="ev-bit">${I("trophy")} ${esc(T.prize)}${T.active ? " · " + fmtLeft(T.endsAt - s.now) : ""}</span>`);
       if(act) bits.push(`<span class="ev-bit hot">${I("zap")} نقاط ×${s.mult}</span>`);
+      const gf = EVENTS.giftFor ? EVENTS.giftFor(Auth.user()) : null; if(gf) bits.push(`<span class="ev-bit gift">${I("gift")} هديتك: نقاط ×${gf.mult}</span>`);
       host.innerHTML = bits.length ? `<a class="ev-strip" href="compete.html#tournament">${bits.join("")}<span class="ev-go">${I("arrow")}</span></a>` : "";
       hydrateIcons(host); return;
     }
     const tHtml = T.ended ? "" : `<a class="ev-card tour" href="compete.html#tournament"><span class="ev-ic">${I("trophy")}</span><div><b>${esc(T.title)} — ${esc(T.prize)}</b><div class="small">${T.upcoming ? "تبدأ بعد " + fmtLeft(T.startsAt - s.now) : "المركز الأول في ترتيب الشهر يفوز · تنتهي بعد " + fmtLeft(T.endsAt - s.now)}</div></div><span class="ev-go">${I("arrow")}</span></a>`;
     const eHtml = act ? `<div class="ev-card live"><span class="ev-ic">${I("zap")}</span><div><b>×${s.mult} نقاط الآن — ${esc(act.title)}</b><div class="small">${esc(act.desc)} · تنتهي بعد ${fmtLeft(act.endsAt - s.now)}</div></div></div>`
       : s.next ? `<div class="ev-card next"><span class="ev-ic">${I("clock")}</span><div><b>القادم: ${esc(s.next.title)} ×${s.next.mult}</b><div class="small">${esc(s.next.desc)} · بعد ${fmtLeft(s.next.startsAt - s.now)}</div></div></div>` : "";
-    host.innerHTML = tHtml + eHtml; hydrateIcons(host);
+    const gf = EVENTS.giftFor ? EVENTS.giftFor(Auth.user()) : null;
+    const gHtml = gf ? `<div class="ev-card gift"><span class="ev-ic">${I("gift")}</span><div><b>${esc(gf.title)} — نقاط ×${gf.mult}</b><div class="small">${esc(gf.msg)}</div></div></div>` : "";
+    host.innerHTML = gHtml + tHtml + eHtml; hydrateIcons(host);
   };
   draw(); setInterval(draw, 30000);
 }
@@ -439,5 +457,6 @@ document.addEventListener("DOMContentLoaded", () => {
   renderHomeStats();
   renderHomeBoard();
   renderEventsBar();
+  giftCheck();
   if(typeof Progress !== "undefined" && Auth.user()) Progress.sync(false).then(ok => { if(ok) renderHomeStats(); });
 });

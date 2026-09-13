@@ -15,6 +15,7 @@
     try{
       const j = await Auth.api("/api/" + kind, { method: "POST", body });
       Auth.set({ token: j.token, user: j.user });
+      if(typeof giftCheck === "function") setTimeout(giftCheck, 400);
       const owner = Store.get("step_prog_owner", null);
       if(owner && owner !== j.user.u){ Progress.reset(); Store.del("step_history"); Store.del("step_vocab_known"); }
       Store.set("step_prog_owner", j.user.u);

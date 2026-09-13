@@ -18,7 +18,7 @@ module.exports = H.handler(["GET"], async (req, res) => {
     points: Number(total || 0), weekPoints: Number(week || 0),
     rank: rank === null || rank === undefined ? null : Number(rank) + 1,
     weekRank: wrank === null || wrank === undefined ? null : Number(wrank) + 1,
-    week: wk, month: mk, monthPoints: Number(month || 0), monthRank: mrank === null || mrank === undefined ? null : Number(mrank) + 1, earned: Number(earned || 0), events: ev,
+    gift: EV.giftFor(me), week: wk, month: mk, monthPoints: Number(month || 0), monthRank: mrank === null || mrank === undefined ? null : Number(mrank) + 1, earned: Number(earned || 0), events: ev,
     results: (results || []).map(r => { try{ return JSON.parse(r); }catch(e){ return null; } }).filter(Boolean)
   });
 });

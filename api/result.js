@@ -25,6 +25,8 @@ module.exports = H.handler(["POST"], async (req, res) => {
   // معرفات الأسئلة التي أُجيبت صحيحًا في هذه الجولة (بدونها لا نقاط)
   const ids = [...new Set((Array.isArray(b.ids) ? b.ids : []).map(x => String(x)).filter(x => ID_RE.test(x)))].slice(0, Math.min(score, 200));
   const ev = EV.status();
+  const gift = EV.giftFor(me);
+  const mult = Math.max(ev.mult, gift ? gift.mult : 1);
   const wk = db.weekKey(), mk = EV.monthKey();
   const at = Date.now();
 
@@ -40,10 +42,10 @@ module.exports = H.handler(["POST"], async (req, res) => {
   let stats = (await db.getJSON("stats:" + me.u)) || { quizzes: 0, correct: 0, answered: 0, best: 0, last: null };
   if(!already){
     if(mode !== "wrong" && ids.length){ newCount = Number(await db.call("SADD", "earned:" + me.u, ...ids)) || 0; }
-    points = newCount * ev.mult;
+    points = newCount * mult;
     stats.quizzes += 1; stats.correct += score; stats.answered += total;
     stats.best = Math.max(stats.best || 0, Math.round(score / total * 100)); stats.last = at;
-    const rec = { mode, score, total, seconds, at, challenge: challengeId, points, mult: ev.mult };
+    const rec = { mode, score, total, seconds, at, challenge: challengeId, points, mult };
     const cmds = [
       ["LPUSH", "results:" + me.u, JSON.stringify(rec)], ["LTRIM", "results:" + me.u, 0, 49],
       ["SET", "stats:" + me.u, JSON.stringify(stats)], ["HSET", "names", me.u, me.name]
@@ -59,7 +61,7 @@ module.exports = H.handler(["POST"], async (req, res) => {
   ]);
   const rk = v => v === null || v === undefined ? null : Number(v) + 1;
   H.ok(res, {
-    saved: !already, already, points, newCount, repeated: Math.max(0, ids.length - newCount), mult: ev.mult, activeEvents: ev.active,
+    saved: !already, already, points, newCount, repeated: Math.max(0, ids.length - newCount), mult, gift: gift ? { id: gift.id, title: gift.title, mult: gift.mult } : null, activeEvents: ev.active,
     totalPoints: Number(tp || 0), weekPoints: Number(wp || 0), monthPoints: Number(mp || 0),
     rank: rk(rank), weekRank: rk(wrank), monthRank: rk(mrank),
     stats, challenge: challenge ? { id: challenge.id, title: challenge.title } : null, challengeBoard
