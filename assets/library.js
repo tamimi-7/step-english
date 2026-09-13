@@ -141,7 +141,7 @@
       $("#gopts").querySelectorAll(".opt").forEach(b => b.addEventListener("click", () => {
         if(done) return; done = true; const ok = +b.dataset.k === q.a;
         $("#gopts").querySelectorAll(".opt").forEach(x => { x.disabled = true; if(+x.dataset.k === q.a) x.classList.add("correct"); else if(x === b) x.classList.add("wrong"); });
-        if(typeof Progress !== "undefined") Progress.record(q.id, ok); sfx(ok ? "correct" : "wrong"); if(ok){ score++; ids.push(q.id); }
+        if(typeof Progress !== "undefined") Progress.record(q.id, ok); sfx(ok ? "correct" : "wrong"); if(ok){ Pending.add(q.id, "vocab"); score++; ids.push(q.id); }
         const fb = $("#gfb"); fb.hidden = false; fb.className = "feedback " + (ok ? "ok" : "bad");
         fb.innerHTML = `<b>${ok ? I("check") + " صحيح!" : I("x") + " الصحيح: " + esc(q.opts[q.a])}</b>`; hydrateIcons(fb);
         $("#gnext").disabled = false; $("#gnext").focus({ preventScroll: true });
@@ -157,7 +157,7 @@
       $("#again").addEventListener("click", () => routes.wordsquiz());
       const sb = $("#srv");
       if(!Auth.user() || !ids.length) return;
-      try{ const j = await Auth.api("/api/result", { method: "POST", body: { mode: "vocab", score, total: list.length, seconds: 0, ids } }); pointsReveal(j, sb); if(typeof Progress !== "undefined") Progress.sync(true); }catch(e){}
+      try{ const j = await Auth.api("/api/result", { method: "POST", body: { mode: "vocab", score, total: list.length, seconds: 0, ids } }); pointsReveal(j, sb); Pending.remove(ids); if(typeof Progress !== "undefined") Progress.sync(true); }catch(e){}
     };
     show();
   };
@@ -370,7 +370,7 @@
       $("#gopts").querySelectorAll(".opt").forEach(b => b.addEventListener("click", () => {
         if(done) return; done = true; const ok = +b.dataset.k === q.a;
         $("#gopts").querySelectorAll(".opt").forEach(x => { x.disabled = true; if(+x.dataset.k === q.a) x.classList.add("correct"); else if(x === b) x.classList.add("wrong"); });
-        if(typeof Progress !== "undefined") Progress.record(q.id, ok); sfx(ok ? "correct" : "wrong"); if(ok){ score++; ids.push(q.id); }
+        if(typeof Progress !== "undefined") Progress.record(q.id, ok); sfx(ok ? "correct" : "wrong"); if(ok){ Pending.add(q.id, "reading"); score++; ids.push(q.id); }
         const fb = $("#gfb"); fb.hidden = false; fb.className = "feedback " + (ok ? "ok" : "bad"); fb.innerHTML = `<b>${ok ? I("check") + " صحيح!" : I("x") + " الصحيح: " + esc(q.o[q.a])}</b>${esc(q.ex || "")}`; hydrateIcons(fb);
         $("#gnext").disabled = false; $("#gnext").focus({ preventScroll: true });
       }));
@@ -387,7 +387,7 @@
       const sb = $("#srv");
       if(!Auth.user()){ sb.innerHTML = `<p class="small muted">${I("lock")} <a href="account.html">سجّل الدخول</a> لتُحسب نقاطك في المنافسة.</p>`; hydrateIcons(sb); return; }
       if(!ids.length){ sb.innerHTML = `<p class="small muted">لا إجابات صحيحة هذه المرة — أعد قراءة القصة وحاول مجددًا.</p>`; return; }
-      try{ const j = await Auth.api("/api/result", { method: "POST", body: { mode: "reading", score, total: list.length, seconds: 0, ids } }); pointsReveal(j, sb); if(typeof Progress !== "undefined") Progress.sync(true); }catch(e){ sb.innerHTML = `<p class="small" style="color:var(--bad)">${esc(e.message)}</p>`; }
+      try{ const j = await Auth.api("/api/result", { method: "POST", body: { mode: "reading", score, total: list.length, seconds: 0, ids } }); pointsReveal(j, sb); Pending.remove(ids); if(typeof Progress !== "undefined") Progress.sync(true); }catch(e){ sb.innerHTML = `<p class="small" style="color:var(--bad)">${esc(e.message)}</p>`; }
     };
     show();
   };

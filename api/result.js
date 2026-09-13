@@ -62,7 +62,7 @@ module.exports = H.handler(["GET", "POST"], async (req, res) => {
   let newIds = [], bonus = 0, stage = null, points = 0;
   let stats = (await db.getJSON("stats:" + me.u)) || { quizzes: 0, correct: 0, answered: 0, best: 0, last: null };
   if(!already){
-    if(mode !== "wrong" && ids.length){
+    if(ids.length){
       const seen = await db.pipeline(ids.map(id => ["SISMEMBER", "earned:" + me.u, id]));
       newIds = ids.filter((id, i) => !(seen[i] === 1 || seen[i] === "1"));
       if(newIds.length) await db.call("SADD", "earned:" + me.u, ...newIds);
@@ -73,9 +73,10 @@ module.exports = H.handler(["GET", "POST"], async (req, res) => {
       if(added === 1 || added === "1") stage = { unit, points: AR.STAGE_POINTS };
     }
     points = newIds.length + bonus + (stage ? stage.points : 0);
-    stats.quizzes += 1; stats.correct += score; stats.answered += total;
-    stats.best = Math.max(stats.best || 0, Math.round(score / total * 100)); stats.last = at;
-    const rec = { mode, score, total, seconds, at, challenge: challengeId, points, base: newIds.length, bonus, mult, stage: stage ? stage.unit : null };
+    const partial = !!b.partial;
+    if(!partial){ stats.quizzes += 1; stats.correct += score; stats.answered += total; }
+    if(!partial) stats.best = Math.max(stats.best || 0, Math.round(score / total * 100)); stats.last = at;
+    const rec = { mode, partial: partial || undefined, score, total, seconds, at, challenge: challengeId, points, base: newIds.length, bonus, mult, stage: stage ? stage.unit : null };
     const cmds = [
       ["LPUSH", "results:" + me.u, JSON.stringify(rec)], ["LTRIM", "results:" + me.u, 0, 49],
       ["SET", "stats:" + me.u, JSON.stringify(stats)], ["HSET", "names", me.u, me.name]

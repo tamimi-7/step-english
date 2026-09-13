@@ -41,6 +41,7 @@
     if(!Auth.user() || ((!ids || !ids.length) && !unit)) return;
     try{
       const j = await Auth.api("/api/result", { method: "POST", body: { mode: "general", score, total, seconds: seconds || 0, ids: ids || [], unit: unit || null } });
+      Pending.remove(ids || []);
       if(j.stage){ GEN.units[j.stage.unit] = true; saveGen(); }
       const box = $("#ptsBox");
       if(box) pointsReveal(j, box);
@@ -111,6 +112,13 @@
   function grammarQ(l, i){ const p = l.practice[i]; return { id: `gg-${l.id}-${i}`, kind: "grammar", q: p.q, sub: l.t, opts: p.o, a: p.a, ex: p.ex, lesson: l.id }; }
   function dialogQ(d, i){ const lines = d.lines; const line = lines[i]; if(!line || line[0] !== "B" || i === 0) return null; const prev = lines[i - 1]; const others = D.filter(x => x !== d).flatMap(x => x.lines.filter(y => y[0] === "B" && y[1] !== line[1])).map(y => y[1]); const dis = pickDistract(others, line[1], 2, x => x); const opts = shuffle([line[1], ...dis]); return { id: `gd-${d.id}-${i}`, kind: "dialog", q: `${prev[1]}`, sub: `${d.t} · ${d.roles[0]} يقول — ما الرد المناسب؟`, opts, a: opts.indexOf(line[1]), ex: line[2], say: prev[1] }; }
   const randomWordQ = (t, i) => [meaningQ, reverseQ, sentenceQ][Math.floor(Math.random() * 3)](t, i);
+  /* يختار الكلمات اللي ما جاوبتها صح بعد أولًا، فتكمل الموضوع كله بجولتين بدل ما تتكرر نفس الكلمات */
+  function themeQsFresh(t, n, builder){
+    const all = shuffle(t.words.map((_, i) => i));
+    const rank = i => { const r = Progress.data.q[wid(t, i)]; return !r || !r.c ? 0 : r.lvl <= 1 ? 1 : 2; };
+    const idx = all.sort((a, b) => rank(a) - rank(b)).slice(0, n || t.words.length);
+    return shuffle(idx).map(i => (builder || randomWordQ)(t, i));
+  }
   function themeQs(t, n, builder){ const idx = shuffle(t.words.map((_, i) => i)).slice(0, n || t.words.length); return idx.map(i => (builder || randomWordQ)(t, i)); }
   function dueWordIds(){ const now = Date.now(); return Object.entries(Progress.data.q).filter(([id, r]) => id.startsWith("gw-") && r.n && r.due <= now).map(([id]) => id); }
   function qFromWordId(id){ const m = id.match(/^gw-(.+)-(\d+)$/); if(!m) return null; const t = theme(m[1]); return t && t.words[+m[2]] ? randomWordQ(t, +m[2]) : null; }
@@ -129,6 +137,7 @@
     const h = location.hash || "#/";
     if(name !== "next"){ if(NAV_STACK.length > 1 && NAV_STACK[NAV_STACK.length - 2] === h) NAV_STACK.pop(); else if(NAV_STACK[NAV_STACK.length - 1] !== h) NAV_STACK.push(h); if(NAV_STACK.length > 30) NAV_STACK.shift(); }
     stopTimers(); window.scrollTo(0, 0);
+    setTimeout(() => Pending.flush(1500), 400);
     fn(...parts.slice(1));
   }
   let timers = []; const after = (fn, ms) => { const t = setTimeout(fn, ms); timers.push(t); return t; }; const every = (fn, ms) => { const t = setInterval(fn, ms); timers.push(t); return t; };
@@ -331,7 +340,7 @@
     const answer = k => {
       if(S.done) return; S.done = true; const q = S.list[S.i]; const ok = k === q.a;
       $("#gopts").querySelectorAll(".opt").forEach(b => { b.disabled = true; if(+b.dataset.k === q.a) b.classList.add("correct"); else if(+b.dataset.k === k) b.classList.add("wrong"); });
-      const wasM = mastered(q.id); Progress.record(q.id, ok); sfx(ok ? "correct" : "wrong"); if(!ok) S.wrong.push({ q, chosen: k }); if(ok){ S.score++; S.ids.push(q.id); if(opts.xpPer && !wasM) gainXP(opts.xpPer, true); else saveGen(); }
+      const wasM = mastered(q.id); Progress.record(q.id, ok); sfx(ok ? "correct" : "wrong"); if(!ok) S.wrong.push({ q, chosen: k }); if(ok){ Pending.add(q.id, "general"); S.score++; S.ids.push(q.id); if(opts.xpPer && !wasM) gainXP(opts.xpPer, true); else saveGen(); }
       const fb = $("#gfb"); fb.hidden = false; fb.className = "feedback " + (ok ? "ok" : "bad");
       const sayNow = q.sayAfter || (!opts.autoSay && q.kind !== "dialog" ? q.say : null);
       const why = ok ? "" : whyWrong(q, k);
@@ -361,7 +370,7 @@
     if(rw) rw.addEventListener("click", () => {
       const list = LAST_WRONG.map(x => x.q); const base = LAST_OPTS || {};
       runQuiz({ title: "مراجعة أخطائك", list, backHref: base.backHref || backHref, xpPer: 0, autoSay: base.autoSay,
-        onDone: (sc, n) => resultCard("مراجعة أخطائك", sc, n, `<p class="muted">هذه الجولة للمراجعة فقط — بلا نقاط جديدة.</p>`, backHref || "#/", againHref) });
+        onDone: (sc, n, secs, ids) => { postPoints(sc, n, secs, ids); resultCard("مراجعة أخطائك", sc, n, `<p class="muted">الأسئلة اللي تجاوبها صح لأول مرة تنحسب لك نقاطها.</p>`, backHref || "#/", againHref); } });
     });
   }
 
@@ -369,7 +378,7 @@
     const t = tid && tid !== "all" ? theme(tid) : null;
     if(kind === "quiz" || kind === "sentence"){
       const src = t || levelThemes(currentLevel())[0]; const n = Math.min(12, src.words.length);
-      const list = themeQs(src, n, kind === "sentence" ? sentenceQ : null);
+      const list = themeQsFresh(src, n, kind === "sentence" ? sentenceQ : null);
       return runQuiz({ title: (kind === "sentence" ? "أكمل الجملة — " : "اختبار المعنى — ") + src.t, list, backHref: `#/theme/${src.id}`, xpPer: 5, onDone: (s, n2, secs, ids) => { postPoints(s, n2, secs, ids); resultCard(src.t, s, n2, `<p class="muted">+${s * 5} XP</p>`, `#/theme/${src.id}`, `#/game/${kind}/${src.id}`, nextAfterTheme(src)); } });
     }
     if(kind === "flash") return flashGame(t || levelThemes(currentLevel())[0]);

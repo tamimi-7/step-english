@@ -173,6 +173,30 @@ function explainHtml(q, chosen){
   h += `<div class="btn-row" style="margin-top:8px">${typeof markBtn === "function" ? markBtn(q.id) : ""}${lessonLink(t, "افتح شرح القاعدة")}</div>`;
   return h;
 }
+/* ---- نقاط معلّقة: كل إجابة صحيحة تنحفظ فورًا، فلو علق الموقع أو خرجت قبل نهاية الاختبار ما تضيع ---- */
+const Pending = {
+  key(){ const u = Auth.user(); return u ? "step_pending_" + u.u : null; },
+  get(){ const k = this.key(); return k ? Store.get(k, []) : []; },
+  add(id, mode){ const k = this.key(); if(!k || !id) return; const a = this.get(); if(!a.some(x => x.id === id)){ a.push({ id: String(id), mode: mode || "general", at: Date.now() }); Store.set(k, a.slice(-400)); } },
+  remove(ids){ const k = this.key(); if(!k || !ids || !ids.length) return; const s = new Set(ids.map(String)); Store.set(k, this.get().filter(x => !s.has(x.id))); },
+  busy: false,
+  async flush(minAge){
+    const k = this.key(); if(!k || this.busy) return;
+    const a = this.get().filter(x => Date.now() - x.at > (minAge == null ? 4000 : minAge)); if(!a.length) return;
+    this.busy = true;
+    try{
+      const byMode = {}; a.forEach(x => (byMode[x.mode] = byMode[x.mode] || []).push(x.id));
+      for(const [mode, ids] of Object.entries(byMode)){
+        for(let i = 0; i < ids.length; i += 100){
+          const chunk = ids.slice(i, i + 100);
+          const j = await Auth.api("/api/result", { method: "POST", body: { mode, score: chunk.length, total: chunk.length, seconds: 0, ids: chunk, partial: true } });
+          this.remove(chunk);
+          if(j && j.points > 0) toast(`+${j.points} نقطة من إجابات ما انحسبت قبل`, 3500);
+        }
+      }
+    }catch(e){} finally{ this.busy = false; }
+  }
+};
 /* ---- إشعارات الجوال: تسجيل آمن (لازم حساب + موافقة صريحة من الشخص) ---- */
 const Push = {
   supported(){ return "serviceWorker" in navigator && "PushManager" in window && "Notification" in window; },
@@ -724,5 +748,6 @@ document.addEventListener("DOMContentLoaded", () => {
   renderEventsBar();
   giftCheck();
   if(typeof Push !== "undefined") Push.refresh();
+  setTimeout(() => Pending.flush(), 2500);
   if(typeof Progress !== "undefined" && Auth.user()) Progress.sync(false).then(ok => { if(ok) renderHomeStats(); });
 });

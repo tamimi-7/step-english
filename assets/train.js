@@ -66,7 +66,7 @@
     if(S.done) return; S.done = true;
     const q = S.list[S.idx], ok = k === q.a;
     $("#tOpts").querySelectorAll(".opt").forEach(b => { b.disabled = true; if(+b.dataset.k === q.a) b.classList.add("correct"); else if(+b.dataset.k === k) b.classList.add("wrong"); });
-    Progress.record(q.id, ok); if(ok){ S.correct++; S.ids.push(q.id); }
+    Progress.record(q.id, ok); if(ok){ S.correct++; S.ids.push(q.id); Pending.add(q.id, "train"); }
     if(typeof SFX !== "undefined") SFX[ok ? "correct" : "wrong"]();
     $("#tScore").innerHTML = `<i data-i='check'></i> ${S.correct}`;
     const fb = $("#tFeedback"); fb.hidden = false; fb.className = "feedback " + (ok ? "ok" : "bad");
@@ -98,6 +98,7 @@
     if(!Auth.user()){ sb.innerHTML = `<p class="small muted"><i data-i='lock'></i> <a href="account.html">سجّل الدخول</a> لتُحسب نقاط التدريب في المنافسة ويُحفظ تقدمك على حسابك.</p>`; return; }
     try{
       const j = await Auth.api("/api/result", { method: "POST", body: { mode: "train", score: S.correct, total, seconds: secs, ids: S.ids } });
+      Pending.remove(S.ids);
       pointsReveal(j, sb);
       Progress.sync(true);
     }catch(e){ sb.innerHTML = `<p class="small" style="color:var(--bad)">${esc(e.message)}</p>`; }
