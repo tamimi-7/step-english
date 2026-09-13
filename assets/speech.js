@@ -159,6 +159,8 @@
       r.onend = fin;
       r.start();
       maxT = setTimeout(() => { try{ r.stop(); }catch(err){ fin(); } }, opts.max || 15000);
+      /* ما تكلّم أبدًا خلال ٧ ثواني → نوقف بدل الانتظار الطويل */
+      silence = setTimeout(() => { if(!heardAny){ try{ r.stop(); }catch(err){ fin(); } } }, opts.first || 7000);
     }catch(e){ fin(); }
     return { stop(){ try{ r && r.stop(); }catch(e){ fin(); } } };
   }

@@ -375,10 +375,32 @@
       const w = t.words[deck[pos]];
       render(crumb([{ t: t.t, href: `#/theme/${t.id}` }, { t: "بطاقات" }]) + `<div class="flash-wrap"><div class="muted small">${Math.min(pos + 1, deck.length)} / ${deck.length}${deck.length > total0 ? " (منها " + (deck.length - total0) + " معادة)" : ""}</div>${bar(pos / deck.length * 100)}
         <div class="flashcard ${flipped ? "flipped" : ""}" id="fc"><div class="inner"><div class="face front">${esc(w[0])}<small>${esc(w[2])} · اضغط لعرض المعنى</small></div><div class="face back"><div class="syn">${esc(w[1])}</div><div class="ar en small" style="opacity:.95">${esc(w[3])}</div><div class="small" style="opacity:.9">${esc(w[4])}</div></div></div></div>
-        <div class="btn-row" style="justify-content:center">${spk(w[0], "big")}<button type="button" class="btn" id="fno">${I("x")} ما أعرفها</button><button type="button" class="btn btn-primary" id="fyes">${I("check")} أعرفها</button></div>
+        <div class="btn-row" style="justify-content:center">${spk(w[0], "big")}${SR ? `<button type="button" class="btn" id="fmic" title="انطق الكلمة">${I("mic")}</button>` : ""}<button type="button" class="btn" id="fno">${I("x")} ما أعرفها</button><button type="button" class="btn btn-primary" id="fyes">${I("check")} أعرفها</button></div>
+        <div id="fsay" class="fsay" hidden></div>
+        <p class="small muted touch-hint">اسحب البطاقة: يسار = أعرفها · يمين = ما أعرفها · ${I("mic")} جرّب تنطقها</p>
         <p class="small muted kbd-hint">مسافة = اقلب · سهم يسار = أعرفها · سهم يمين = ما أعرفها</p></div>`);
       after(() => speak(w[0]), 120);
-      $("#fc").addEventListener("click", () => { flipped = !flipped; $("#fc").classList.toggle("flipped", flipped); });
+      $("#fc").addEventListener("click", () => { if(swiped){ swiped = false; return; } flipped = !flipped; $("#fc").classList.toggle("flipped", flipped); });
+      /* سحب البطاقة بالإصبع */
+      let sx = null, sy = 0, swiped = false; const fcEl = $("#fc");
+      fcEl.addEventListener("touchstart", e => { sx = e.touches[0].clientX; sy = e.touches[0].clientY; }, { passive: true });
+      fcEl.addEventListener("touchmove", e => { if(sx === null) return; const dx = e.touches[0].clientX - sx; if(Math.abs(dx) > Math.abs(e.touches[0].clientY - sy)){ fcEl.style.transform = `translateX(${dx}px) rotate(${dx / 25}deg)`; fcEl.classList.toggle("sw-yes", dx < -50); fcEl.classList.toggle("sw-no", dx > 50); } }, { passive: true });
+      fcEl.addEventListener("touchend", e => { if(sx === null) return; const dx = e.changedTouches[0].clientX - sx; sx = null; fcEl.style.transform = ""; fcEl.classList.remove("sw-yes", "sw-no"); if(Math.abs(dx) > 70){ swiped = true; setTimeout(() => { swiped = false; }, 400); mark(dx < 0); } });
+      const fm = $("#fmic");
+      if(fm) fm.addEventListener("click", () => {
+        if(fm.classList.contains("on")) return; hush(); fm.classList.add("on");
+        const box = $("#fsay"); box.hidden = false; box.className = "fsay"; box.textContent = "… قلها الحين";
+        Speech.listen(res => {
+          fm.classList.remove("on"); const b2 = $("#fsay"); if(!b2) return;
+          if(!res){ b2.className = "fsay bad"; b2.textContent = "ما سمعت شي — قرّب الجوال وجرّب"; return; }
+          const r = Speech.evaluate(w[0], res);
+          const good = r.score >= 70;
+          b2.className = "fsay " + (good ? "ok" : "bad");
+          b2.innerHTML = good ? `${I("check")} ${r.score >= 100 ? "نطق ممتاز!" : "زين!"}` : `${I("x")} سمعت: <b class="en">${esc(res[0])}</b> — اسمعها وجرّب مرة ثانية`;
+          hydrateIcons(b2); sfx(good ? "correct" : "wrong");
+          if(!good) after(() => speak(w[0], .8), 500);
+        }, null, { silence: 900, max: 5000, first: 5000 });
+      });
       mark = yes => {
         hush(); const idx = deck[pos]; const wasM = mastered(wid(t, idx));
         Progress.record(wid(t, idx), yes);

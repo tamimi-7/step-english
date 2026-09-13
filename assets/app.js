@@ -646,6 +646,13 @@ document.addEventListener("DOMContentLoaded", () => {
   window.addEventListener("hashchange", () => { document.querySelectorAll(".lesson.focus").forEach(e => e.classList.remove("focus")); document.querySelectorAll(".lesson-back").forEach(e => e.remove()); focusLessonFromHash(); });
   renderHomeStats();
   renderHomeBoard();
+  /* الصفحة الأولى: زر «كمّل من حيث وقفت» للي رجع */
+  (() => {
+    const hero = document.querySelector(".landing-hero"); if(!hero) return;
+    const last = Store.get("step_section", null); if(!last) return;
+    const gen = last === "gen";
+    hero.insertAdjacentHTML("beforeend", `<div class="actions" style="margin-top:14px"><a class="btn btn-light btn-lg" href="${gen ? "general.html#/next" : "step.html"}">${I("zap")} كمّل ${gen ? "تعلّم الإنجليزي" : "تجهيز STEP"} من حيث وقفت</a></div>`);
+  })();
   renderEventsBar();
   giftCheck();
   if(typeof Progress !== "undefined" && Auth.user()) Progress.sync(false).then(ok => { if(ok) renderHomeStats(); });
