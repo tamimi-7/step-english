@@ -113,10 +113,10 @@ const ICONS = {
   award: 'M12 15a7 7 0 1 0 0-14 7 7 0 0 0 0 14zM8.2 13.9L7 23l5-3 5 3-1.2-9.1'
 };
 /* أيقونات ثلاثية الأبعاد (Microsoft Fluent Emoji — رخصة MIT) مع رجوع للإيموجي العادي لو ما تحمّلت */
-const EMO = { fire: ["1f525", "🔥"], books: ["1f4da", "📚"], memo: ["1f4dd", "📝"], talk: ["1f5e3-fe0f", "🗣️"], game: ["1f3ae", "🎮"], book: ["1f4d6", "📖"], repeat: ["1f501", "🔁"], trophy: ["1f3c6", "🏆"], check: ["2705", "✅"], review: ["1f504", "🔄"], star: ["2b50", "⭐"], gift: ["1f381", "🎁"], shield: ["1f6e1-fe0f", "🛡️"], sparkles: ["2728", "✨"], comet: ["2604-fe0f", "☄️"], volcano: ["1f30b", "🌋"], crown: ["1f451", "👑"], swords: ["2694-fe0f", "⚔️"], clock: ["23f0", "⏰"], target: ["1f3af", "🎯"], puzzle: ["1f9e9", "🧩"], headphones: ["1f3a7", "🎧"], chat: ["1f4ac", "💬"], party: ["1f389", "🎉"], muscle: ["1f4aa", "💪"], wave: ["1f44b", "👋"], rocket: ["1f680", "🚀"], brain: ["1f9e0", "🧠"], calendar: ["1f4c5", "📅"], user: ["1f464", "👤"], home: ["1f3e0", "🏠"] };
+const EMO = { fire: ["1f525", "🔥"], books: ["1f4da", "📚"], memo: ["1f4dd", "📝"], talk: ["1f5e3-fe0f", "🗣️"], game: ["1f3ae", "🎮"], book: ["1f4d6", "📖"], repeat: ["1f501", "🔁"], trophy: ["1f3c6", "🏆"], check: ["2705", "✅"], review: ["1f504", "🔄"], star: ["2b50", "⭐"], gift: ["1f381", "🎁"], shield: ["1f6e1-fe0f", "🛡️"], sparkles: ["2728", "✨"], comet: ["2604-fe0f", "☄️"], volcano: ["1f30b", "🌋"], crown: ["1f451", "👑"], swords: ["2694-fe0f", "⚔️"], clock: ["23f0", "⏰"], target: ["1f3af", "🎯"], puzzle: ["1f9e9", "🧩"], headphones: ["1f3a7", "🎧"], chat: ["1f4ac", "💬"], party: ["1f389", "🎉"], muscle: ["1f4aa", "💪"], wave: ["1f44b", "👋"], rocket: ["1f680", "🚀"], brain: ["1f9e0", "🧠"], calendar: ["1f4c5", "📅"], user: ["1f464", "👤"], home: ["1f3e0", "🏠"], stopwatch: ["23f1-fe0f", "⏱️"], abc: ["1f524", "🔤"], link: ["1f517", "🔗"], cards: ["1f3b4", "🎴"], bulb: ["1f4a1", "💡"], mic: ["1f3a4", "🎤"], globe: ["1f30d", "🌍"], bluebook: ["1f4d8", "📘"] };
 function emo(name, cls){
   const e = EMO[name]; if(!e) return "";
-  return `<img class="emo ${cls || ""}" src="https://cdn.jsdelivr.net/npm/@lobehub/fluent-emoji-3d@1.1.0/assets/${e[0]}.webp" alt="${e[1]}" loading="lazy" decoding="async" draggable="false" onerror="this.replaceWith(document.createTextNode(this.alt))">`;
+  return `<img class="emo ${cls || ""}" src="https://cdn.jsdelivr.net/npm/@lobehub/fluent-emoji-3d@1.1.0/assets/${e[0]}.webp" alt="${e[1]}" decoding="async" draggable="false" onerror="this.replaceWith(document.createTextNode(this.alt))">`;
 }
 function I(name, cls){ const d = ICONS[name] || ICONS.star; return `<svg class="i ${cls || ""}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="${d}"/></svg>`; }
 function hydrateIcons(root){ (root || document).querySelectorAll("i[data-i]").forEach(el => { el.outerHTML = I(el.dataset.i, el.className); }); }
@@ -454,7 +454,7 @@ function showDaily(j, day){
     <div class="surprise" tabindex="0" role="button"><div class="sp-front">${emo("gift", "emo-lg")}<b>اضغط وافتح مفاجأة اليوم</b></div><div class="sp-back" hidden>${surpriseHtml(surpriseOf(day))}</div></div>
     ${F.today && F.today.length ? `<div class="fam-box"><div class="small"><b>دخلوا اليوم:</b></div>${F.today.map(chip).join("")}</div>` : ""}
     ${others.length ? `<div class="fam-box warn"><div class="small"><b>شعلتهم بتنطفي اليوم:</b></div>${others.map(chip).join("")}<a class="btn btn-sm" target="_blank" rel="noopener" href="${wa}">ذكّرهم 📲</a></div>` : ""}
-    <div class="btn-row" style="justify-content:center"><a class="btn btn-warm btn-lg" href="general.html#/daily" data-close>${I("zap")} يلا نتعلم</a><button type="button" class="btn" data-close>لاحقًا</button></div>`);
+    <div class="btn-row" style="justify-content:center"><a class="btn btn-warm btn-lg" href="general.html#/next" data-close>${I("zap")} يلا نكمل</a><button type="button" class="btn" data-close>لاحقًا</button></div>`);
   const sp = el.querySelector(".surprise");
   const open = () => { if(sp.classList.contains("open")) return; sp.classList.add("open"); sp.querySelector(".sp-front").hidden = true; sp.querySelector(".sp-back").hidden = false; try{ if(typeof SFX !== "undefined") SFX.win(); }catch(e){} };
   sp.addEventListener("click", e => {
@@ -497,7 +497,7 @@ function renderEventsBar(){
       else if(s.next && s.next.startsAt - s.now < 6 * 3600e3) bits.push(`<span class="ev-bit">${I("clock")} ${esc(s.next.title)} بعد ${fmtLeft(s.next.startsAt - s.now)}</span>`);
       else if(B && B.next) bits.push(`<span class="ev-bit">${I("swords")} ${esc(B.title)} بعد ${fmtLeft(B.next.start - s.now)}</span>`);
       if(gf) bits.push(`<span class="ev-bit gift">${I("gift")} هديتك ×${gf.mult} · ${fmtLeft(gf.endsAt - s.now)}</span>`);
-      if(!T.ended) bits.push(`<span class="ev-bit">${I("trophy")} ${esc(T.prize)}</span>`);
+      if(!T.ended) bits.push(`<span class="ev-bit tour">${I("trophy")} ${esc(T.prize)}</span>`);
       const href = B && B.active ? "general.html#/battle" : "compete.html#tournament";
       const meU = Auth.user(), dl = meU ? Store.get("step_daily_last_" + meU.u, null) : null;
       const flameBtn = dl && dl.day === riyadhDay() && dl.streak ? `<button type="button" class="ev-flame" title="سلسلة الأيام">${emo(flameOf(dl.streak).k)} ${dl.streak}</button>` : "";
@@ -506,11 +506,11 @@ function renderEventsBar(){
       hydrateIcons(host); return;
     }
     const tHtml = T.ended ? "" : `<a class="ev-card tour" href="compete.html#tournament"><span class="ev-ic">${I("trophy")}</span><div><b>${esc(T.title)} — ${esc(T.prize)}</b><div class="small">${T.upcoming ? "تبدأ بعد " + fmtLeft(T.startsAt - s.now) : "المركز الأول في ترتيب الشهر يفوز · تنتهي بعد " + fmtLeft(T.endsAt - s.now)}</div></div><span class="ev-go">${I("arrow")}</span></a>`;
-    const eHtml = act ? `<div class="ev-card live"><span class="ev-ic">${I("zap")}</span><div><b>×${s.mult} نقاط الآن — ${esc(act.title)}</b><div class="small">${esc(act.desc)} · تنتهي بعد ${fmtLeft(act.endsAt - s.now)}</div></div></div>`
-      : s.next ? `<div class="ev-card next"><span class="ev-ic">${I("clock")}</span><div><b>القادم: ${esc(s.next.title)} ×${s.next.mult}</b><div class="small">${esc(s.next.desc)} · بعد ${fmtLeft(s.next.startsAt - s.now)}</div></div></div>` : "";
-    const gHtml = gf ? `<div class="ev-card gift"><span class="ev-ic">${I("gift")}</span><div><b>${esc(gf.title)} — نقاط ×${gf.mult}</b><div class="small">باقي ${fmtLeft(gf.endsAt - s.now)}</div></div></div>` : "";
-    const bHtml = B ? `<a class="ev-card ${B.active ? "live" : "next"}" href="general.html#/battle"><span class="ev-ic">${I("swords")}</span><div><b>${esc(B.title)}${B.active ? " — قائمة الآن!" : ""}</b><div class="small">${B.active ? "تنتهي بعد " + fmtLeft(B.active.end - s.now) : B.next ? "تبدأ بعد " + fmtLeft(B.next.start - s.now) : ""} · الجوائز +${B.prizes.join(" / +")}</div></div><span class="ev-go">${I("arrow")}</span></a>` : "";
-    host.innerHTML = gHtml + bHtml + tHtml + eHtml; hydrateIcons(host);
+    const eHtml = act ? `<div class="ev-card live"><span class="ev-ic">${emo("clock")}</span><div><b>×${s.mult} نقاط الآن — ${esc(act.title)}</b><div class="small">${esc(act.desc)} · تنتهي بعد ${fmtLeft(act.endsAt - s.now)}</div></div></div>`
+      : s.next ? `<div class="ev-card next"><span class="ev-ic">${emo("clock")}</span><div><b>القادم: ${esc(s.next.title)} ×${s.next.mult}</b><div class="small">${esc(s.next.desc)} · بعد ${fmtLeft(s.next.startsAt - s.now)}</div></div></div>` : "";
+    const gHtml = gf ? `<div class="ev-card gift"><span class="ev-ic">${emo("gift")}</span><div><b>${esc(gf.title)} — نقاط ×${gf.mult}</b><div class="small">باقي ${fmtLeft(gf.endsAt - s.now)}</div></div></div>` : "";
+    const bHtml = B ? `<a class="ev-card ${B.active ? "live" : "next"}" href="general.html#/battle"><span class="ev-ic">${emo("swords")}</span><div><b>${esc(B.title)}${B.active ? " — قائمة الآن!" : ""}</b><div class="small">${B.active ? "تنتهي بعد " + fmtLeft(B.active.end - s.now) : B.next ? "تبدأ بعد " + fmtLeft(B.next.start - s.now) : ""} · الجوائز +${B.prizes.join(" / +")}</div></div><span class="ev-go">${I("arrow")}</span></a>` : "";
+    host.innerHTML = `<div class="ev-cards">${gHtml + bHtml + eHtml}</div>`; hydrateIcons(host);
   };
   draw(); setInterval(draw, 20000);
   document.addEventListener("points:loaded", draw);

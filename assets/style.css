@@ -1084,3 +1084,64 @@ details.pts-where p{margin:6px 0 0;line-height:1.9}
 .sp-meter.perfect .sp-msg b{color:#b45309}
 .sp-msg{max-width:260px}
 .sp-msg img.emo{width:24px;height:24px}
+
+/* المنافسات — ترتيب */
+.compete-hero{padding:22px 26px}
+.tour-head{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.tour-head > div{flex:1;min-width:160px}
+.tour-head img.tour-emo{width:52px;height:52px}
+.tour-prize{font-weight:800;color:#b45309}
+.tour-card .tour-lead{margin-top:12px}
+.tour-rules-box{margin-top:12px}
+.tour-rules-box summary{cursor:pointer;font-weight:700;display:inline-flex;gap:6px;align-items:center;color:var(--muted)}
+.tour-rules-box[open] summary{color:inherit}
+.ev-cards{display:grid;gap:10px;grid-template-columns:repeat(auto-fit,minmax(260px,1fr))}
+.ev-card .ev-ic img.emo{width:30px;height:30px}
+#boardTabs{flex-wrap:wrap}
+
+/* حسابي — ترتيب */
+.acc-stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+.acc-stats a.gs{text-decoration:none;color:inherit}
+.acc-activity{margin:10px 2px 0}
+.acc-help{margin-top:12px}
+.acc-help p{margin:8px 0 0}
+@media (max-width:640px){.acc-stats{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}}
+
+/* شريط الفعاليات: سطر واحد نظيف */
+.ev-strip{flex-wrap:nowrap;overflow:hidden;min-height:40px}
+.ev-bit{min-width:0;overflow:hidden;text-overflow:ellipsis}
+.ev-wrap .ev-flame{min-height:40px}
+@media (max-width:640px){
+  .ev-strip{padding:6px 12px;gap:8px}
+  .ev-strip .ev-bit.tour:not(:first-child){display:none}
+  .ev-bit{font-size:.85rem}
+}
+
+.menu-emo img.menu-emo-img{width:56px;height:56px}
+.btn.next-btn{flex-direction:column;gap:2px;margin-top:6px;max-width:100%;white-space:normal;line-height:1.35}
+.btn.next-btn small{font-size:.8rem;font-weight:600;opacity:.92}
+#gnext.auto{position:relative;overflow:hidden}
+#gnext.auto::after{content:"";position:absolute;inset:auto 0 0 0;height:4px;background:rgba(255,255,255,.75);transform-origin:right;animation:autoNext var(--wait,1100ms) linear forwards}
+@keyframes autoNext{from{transform:scaleX(1)}to{transform:scaleX(0)}}
+.res-cheer{font-weight:700;margin:10px 0 0}
+.res-cheer img.emo{width:26px;height:26px}
+.res-actions{justify-content:center;margin-top:12px}
+details.mistakes{text-align:start}
+details.mistakes > summary{cursor:pointer;font-weight:700;padding:8px 0;display:flex;gap:6px;align-items:center;justify-content:center}
+@media (max-width:640px){
+  .sheet > .score-ring:not(.on-hero){width:118px;height:118px}
+  .sheet > .score-ring:not(.on-hero)::before{inset:10px}
+  .sheet > .score-ring:not(.on-hero) span{font-size:1.7rem}
+}
+/* الدرس: تنقّل سريع */
+.lesson-toc{display:flex;flex-wrap:wrap;gap:6px;padding:4px 2px 8px;margin:6px 0 4px}
+.lesson-toc::-webkit-scrollbar{display:none}
+.lesson-toc button{flex:none;border:2px solid var(--line);background:var(--surface2);color:inherit;border-radius:999px;padding:4px 12px;font:inherit;font-size:.85rem;font-weight:700;cursor:pointer}
+.lesson-toc .go-practice{background:var(--accent);color:#fff;border-color:var(--ink);display:inline-flex;gap:4px;align-items:center}
+.lesson-toc .go-practice .i{width:15px;height:15px}
+.lesson h3[id]{scroll-margin-top:70px}
+.float-cta{position:fixed;inset-inline-start:50%;transform:translate(-50%,120px);bottom:calc(84px + env(safe-area-inset-bottom));z-index:40;background:linear-gradient(135deg,#fb923c,#f43f5e);color:#fff;border:3px solid var(--ink);border-radius:999px;padding:10px 22px;font-weight:800;text-decoration:none;box-shadow:-3px 3px 0 var(--ink);display:inline-flex;gap:6px;align-items:center;transition:transform .3s,opacity .3s;opacity:0;pointer-events:none;white-space:nowrap}
+[dir=rtl] .float-cta{transform:translate(50%,120px)}
+.float-cta.show{opacity:1;pointer-events:auto;transform:translate(-50%,0)}
+[dir=rtl] .float-cta.show{transform:translate(50%,0)}
+@media (min-width:900px){.float-cta{bottom:24px}}

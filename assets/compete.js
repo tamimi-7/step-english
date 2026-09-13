@@ -9,11 +9,11 @@
     const host = $("#board");
     try{
       const j = await Auth.api("/api/leaderboard");
-      $("#boardMeta").textContent = `${j.users} متنافس · الأسبوع ${j.week}`;
+      $("#boardMeta").textContent = `${j.users} ${j.users > 10 || j.users < 3 ? "متنافس" : "متنافسين"}`;
       renderTournament(j);
       const render = which => { const rows = which === "week" ? j.weekly : which === "month" ? j.monthly : j.total; host.innerHTML = rows.length ? `<div class="lb">${rows.map(r => lbRow(r, which === "total")).join("")}</div>` : `<p class="muted">لا نقاط بعد. أول اختبار تحله يضعك في الترتيب!</p>`; };
-      render(location.hash === "#tournament" ? "month" : "total");
-      if(location.hash === "#tournament") $("#boardTabs").querySelectorAll("button").forEach(x => x.classList.toggle("on", x.dataset.v === "month"));
+      const first = location.hash === "#total" ? "total" : j.events && j.events.tournament && !j.events.tournament.ended ? "month" : "total";
+      render(first); $("#boardTabs").querySelectorAll("button").forEach(x => x.classList.toggle("on", x.dataset.v === first));
       $("#boardTabs").addEventListener("click", e => { const b = e.target.closest("button"); if(!b) return; $("#boardTabs").querySelectorAll("button").forEach(x => x.classList.toggle("on", x === b)); render(b.dataset.v); });
     }catch(e){ host.innerHTML = `<div class="note bad"><span class="ic"><i data-i='alert'></i></span><p>${esc(e.message)}</p></div>`; }
   }
@@ -22,11 +22,22 @@
     const host = $("#tournament"); if(!host || !j.events) return;
     const ev = j.events, T = ev.tournament, top = j.monthly[0];
     const left = T.ended ? "انتهت" : T.upcoming ? "تبدأ بعد " + fmtLeft(T.startsAt - ev.now) : "تنتهي بعد " + fmtLeft(T.endsAt - ev.now);
-    host.innerHTML = `<div class="card tour-card"><div class="section-title"><span class="badge pink">${I("trophy")} بطولة معلنة</span><h2 style="margin:0">${esc(T.title)} — ${esc(T.prize)}</h2><span class="badge ${T.active ? "ok" : ""}">${left}</span></div>
-      <p>${esc(T.desc)} تُحسم البطولة بترتيب <b>هذا الشهر</b> عند نهاية ${T.to.slice(0, 10)} (توقيت الرياض).</p>
-      <div class="tour-grid"><div class="tour-lead">${top ? `<div class="small muted">المتصدر الآن</div><div class="tour-top">${avatarHtml(top.name, top.u)}<b>${esc(top.name)}</b><span class="badge accent">${top.points} نقطة</span></div>` : `<div class="small muted">لا متصدر بعد — أول نقطة تضعك في الصدارة!</div>`}</div>
-      <ul class="tour-rules"><li><b>كل سؤال = نقطة واحدة في عمرك.</b> أول مرة تجيبه صح تأخذ نقطته. إعادة الاختبار تعطيك فقط نقاط الأسئلة التي لم تصبها من قبل.</li><li><b>فعاليات ×٢:</b> ${ev.active.length ? "جارية الآن: " + esc(ev.active[0].title) + " — " : ""}${EVENTS.CONFIG.recurring.map(r => esc(r.desc)).join("، ")}${EVENTS.CONFIG.special.map(r => "، " + esc(r.desc)).join("")}.</li><li>مراجعة الأخطاء وبطاقات الحفظ لا تعطي نقاطًا. التحدي يُحسب من أول محاولة فقط.</li></ul></div>
-      <div class="btn-row" style="margin-top:12px"><a class="btn btn-warm btn-sm" href="quiz.html">${I("pencil")} اجمع نقاطًا الآن</a><a class="btn btn-sm" href="train.html">${I("target")} تدريب</a></div></div>`;
+    const gen = typeof section === "function" && section() === "gen";
+    const B = EVENTS.CONFIG.battle, G = EVENTS.CONFIG.recurring[0];
+    host.innerHTML = `<div class="card tour-card">
+      <div class="tour-head">${emo("trophy", "tour-emo")}<div><h2 style="margin:0">${esc(T.title)}</h2><div class="tour-prize">${esc(T.prize)}</div></div><span class="badge ${T.active ? "ok" : ""}">${left}</span></div>
+      <div class="tour-lead">${top ? `<div class="small muted">المتصدر الآن</div><div class="tour-top">${avatarHtml(top.name, top.u)}<b>${esc(top.name)}</b><span class="badge accent">${top.points} نقطة</span></div>` : `<div class="small muted">لا متصدر بعد — أول نقطة تضعك في الصدارة!</div>`}</div>
+      <div class="btn-row" style="margin-top:12px"><a class="btn btn-warm" href="${gen ? "general.html#/daily" : "quiz.html"}">${I("pencil")} اجمع نقاطًا الآن</a></div>
+      <details class="tour-rules-box"><summary>${I("info")} القوانين وكيف تنحسب النقاط</summary>
+        <ul class="tour-rules">
+          <li>${esc(T.desc)} تُحسم بترتيب <b>هذا الشهر</b> عند نهاية ${T.to.slice(0, 10)} (توقيت الرياض).</li>
+          <li><b>كل سؤال = نقطة واحدة في عمرك:</b> أول مرة تجيبه صح تأخذ نقطته، والإعادة تعطيك بس نقاط الأسئلة اللي ما أصبتها قبل.</li>
+          <li><b>${esc(G.title || "ساعة الذهب")}:</b> ${esc(G.desc)}</li>
+          <li><b>معركة الكلمات:</b> ${esc(B.desc)}</li>
+          <li><b>إتمام مرحلة:</b> +10 نقاط لما تنجح في اختبار الوحدة.</li>
+          <li>المراجعة وبطاقات الحفظ والحضور اليومي بدون نقاط. التحدي يُحسب من أول محاولة فقط.</li>
+        </ul>
+      </details></div>`;
     hydrateIcons(host);
   }
 
@@ -64,7 +75,8 @@
 
   function initCreate(){
     const me = Auth.user();
-    $("#createCard").hidden = !me; $("#createLogin").hidden = !!me;
+    $("#createCard").hidden = true; $("#createLogin").hidden = true;
+    const nb = $("#newChalBtn"); if(nb && !nb.dataset.b){ nb.dataset.b = "1"; nb.addEventListener("click", () => { const card = Auth.user() ? $("#createCard") : $("#createLogin"); card.hidden = !card.hidden; if(!card.hidden) card.scrollIntoView({ block: "nearest", behavior: "smooth" }); }); }
     if(!me) return;
     $("#cModeSeg").addEventListener("click", e => { const b = e.target.closest("button"); if(!b) return; C.mode = b.dataset.v; $("#cModeSeg").querySelectorAll("button").forEach(x => x.classList.toggle("on", x === b)); $("#cTopicWrap").hidden = C.mode !== "grammar"; });
     $("#cTopic").innerHTML = `<option value="all">كل المواضيع</option>` + Object.entries(TOPICS).map(([k, v]) => `<option value="${k}">${v}</option>`).join("");

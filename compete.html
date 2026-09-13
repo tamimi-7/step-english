@@ -11,45 +11,43 @@
 <header id="nav"></header>
 
 <main class="container">
-  <section class="hero" style="background:linear-gradient(135deg,#d96c85,#e8946a 60%,#e9b96a);box-shadow:0 12px 30px rgba(20,22,40,.14);padding:30px 34px">
-    <h1 style="margin-bottom:.2em"><i data-i="trophy"></i> المنافسات</h1>
-    <p style="margin:0">كل سؤال تجيبه صح لأول مرة = نقطة (مرة واحدة لكل سؤال، بلا تكرار). الفعاليات تضاعف النقاط، والبطولة الشهرية لها جائزة معلنة. أنشئ تحديًا وأرسل رابطه — نفس الأسئلة للجميع، والأسرع والأدق يفوز.</p>
+  <section class="hero compete-hero" style="background:linear-gradient(135deg,#d96c85,#e8946a 60%,#e9b96a);box-shadow:0 12px 30px rgba(20,22,40,.14)">
+    <h1 style="margin-bottom:.15em"><i data-i="trophy"></i> المنافسات</h1>
+    <p style="margin:0">كل سؤال جديد تجاوبه صح = نقطة. اجمع نقاطك وتصدّر الترتيب.</p>
   </section>
 
-  <div class="events-bar" id="eventsBar" data-full="1"></div>
   <section class="section" id="tournament"></section>
 
   <div id="chalDetail" hidden style="margin-bottom:22px"></div>
 
   <section class="section">
-    <div class="grid grid-2" style="align-items:start">
-      <div class="card">
-        <div class="section-title"><h2>الترتيب</h2><span class="badge" id="boardMeta"></span></div>
-        <div class="tabs" id="boardTabs"><button type="button" data-v="total" class="on">العام</button><button type="button" data-v="week">هذا الأسبوع</button><button type="button" data-v="month"><i data-i="trophy"></i> البطولة</button></div>
-        <div id="board"><p class="muted small">جارٍ التحميل…</p></div>
-      </div>
-      <div>
-        <div class="card" id="createCard" hidden>
-          <h2><i data-i="swords"></i> أنشئ تحديًا</h2>
-          <div class="field"><label class="lbl" for="cTitle">اسم التحدي</label><input class="input" id="cTitle" maxlength="40" placeholder="مثال: تحدي الأزمنة — الجمعة"></div>
-          <div class="field"><label class="lbl">النوع</label><div class="seg" id="cModeSeg"><button type="button" data-v="mix" class="on">شامل</button><button type="button" data-v="grammar">قواعد</button><button type="button" data-v="vocab">مفردات</button><button type="button" data-v="reading">قراءة</button></div></div>
-          <div class="field" id="cTopicWrap" hidden><label class="lbl" for="cTopic">موضوع القواعد</label><select id="cTopic"></select></div>
-          <div class="field"><label class="lbl">عدد الأسئلة</label><div class="seg" id="cCountSeg"><button type="button" data-v="10" class="on">10</button><button type="button" data-v="20">20</button><button type="button" data-v="30">30</button></div></div>
-          <div class="field"><label class="check"><input type="checkbox" id="cTimed" checked> بمؤقت (دقيقة لكل سؤال)</label></div>
-          <button type="button" class="btn btn-warm btn-lg" id="createBtn">إنشاء التحدي ونسخ رابطه</button>
-        </div>
-        <div class="card" id="createLogin" hidden>
-          <h2><i data-i="swords"></i> التحديات</h2>
-          <p class="muted">سجّل الدخول لإنشاء تحدٍ أو المشاركة في تحديات إخوانك.</p>
-          <a class="btn btn-primary" href="account.html?next=compete.html">تسجيل الدخول ←</a>
-        </div>
-      </div>
+    <div class="card">
+      <div class="section-title"><h2><i data-i="medal"></i> الترتيب</h2><span class="badge" id="boardMeta"></span></div>
+      <div class="tabs" id="boardTabs"><button type="button" data-v="month"><i data-i="trophy"></i> البطولة</button><button type="button" data-v="week">هذا الأسبوع</button><button type="button" data-v="total">العام</button></div>
+      <div id="board"><p class="muted small">جارٍ التحميل…</p></div>
     </div>
   </section>
 
   <section class="section">
-    <div class="section-title"><h2><i data-i="swords"></i> التحديات</h2></div>
-    <div id="chalList"><p class="muted small">جارٍ التحميل…</p></div>
+    <div class="section-title"><h2><i data-i="zap"></i> الفعاليات</h2></div>
+    <div class="events-bar" id="eventsBar" data-full="1"></div>
+  </section>
+
+  <section class="section">
+    <div class="section-title"><h2><i data-i="swords"></i> تحديات الإخوان</h2><button type="button" class="btn btn-warm btn-sm" id="newChalBtn"><i data-i="swords"></i> أنشئ تحديًا</button></div>
+    <div class="card" id="createCard" hidden>
+      <div class="field"><label class="lbl" for="cTitle">اسم التحدي</label><input class="input" id="cTitle" maxlength="40" placeholder="مثال: تحدي الأزمنة — الجمعة"></div>
+      <div class="field"><label class="lbl">النوع</label><div class="seg" id="cModeSeg"><button type="button" data-v="mix" class="on">شامل</button><button type="button" data-v="grammar">قواعد</button><button type="button" data-v="vocab">مفردات</button><button type="button" data-v="reading">قراءة</button></div></div>
+      <div class="field" id="cTopicWrap" hidden><label class="lbl" for="cTopic">موضوع القواعد</label><select id="cTopic"></select></div>
+      <div class="field"><label class="lbl">عدد الأسئلة</label><div class="seg" id="cCountSeg"><button type="button" data-v="10" class="on">10</button><button type="button" data-v="20">20</button><button type="button" data-v="30">30</button></div></div>
+      <div class="field"><label class="check"><input type="checkbox" id="cTimed" checked> بمؤقت (دقيقة لكل سؤال)</label></div>
+      <button type="button" class="btn btn-warm btn-lg" id="createBtn">إنشاء التحدي ونسخ رابطه</button>
+    </div>
+    <div class="card" id="createLogin" hidden>
+      <p class="muted" style="margin-top:0">سجّل الدخول لإنشاء تحدٍ أو المشاركة في تحديات إخوانك.</p>
+      <a class="btn btn-primary" href="account.html?next=compete.html">تسجيل الدخول ←</a>
+    </div>
+    <div id="chalList" style="margin-top:12px"><p class="muted small">جارٍ التحميل…</p></div>
   </section>
 </main>
 

@@ -121,16 +121,20 @@
   /* ---------- router ---------- */
   const routes = {};
   function go(h){ location.hash = "#/" + h; }
+  const NAV_STACK = [];
   function route(){
     const parts = (location.hash.replace(/^#\/?/, "") || "").split("/");
     const name = parts[0] || "home"; const fn = routes[name] || routes.home;
+    /* سجل تنقّل داخلي: زر «رجوع» يرجعك للصفحة اللي جيت منها فعلًا */
+    const h = location.hash || "#/";
+    if(name !== "next"){ if(NAV_STACK.length > 1 && NAV_STACK[NAV_STACK.length - 2] === h) NAV_STACK.pop(); else if(NAV_STACK[NAV_STACK.length - 1] !== h) NAV_STACK.push(h); if(NAV_STACK.length > 30) NAV_STACK.shift(); }
     stopTimers(); window.scrollTo(0, 0);
     fn(...parts.slice(1));
   }
   let timers = []; const after = (fn, ms) => { const t = setTimeout(fn, ms); timers.push(t); return t; }; const every = (fn, ms) => { const t = setInterval(fn, ms); timers.push(t); return t; };
   function stopTimers(){ timers.forEach(t => { if(t && typeof t.clear === "function") t.clear(); else { clearTimeout(t); clearInterval(t); } }); timers = []; clearTimeout(speakTimer); hush(); }
   const render = html => { $("#app").innerHTML = html; hydrateIcons($("#app")); };
-  const crumb = (items) => { const back = [...items].reverse().find(x => x.href); return `<div class="crumbs"><a class="back-btn" href="${back ? back.href : "#/"}">${I("arrow")} رجوع</a><a href="#/">${I("home")} إنقلش عام</a>${items.map(x => ` <span>›</span> ${x.href ? `<a href="${x.href}">${x.t}</a>` : `<b>${x.t}</b>`}`).join("")}</div>`; };
+  const crumb = (items) => { const back = [...items].reverse().find(x => x.href); const prev = NAV_STACK.length > 1 ? NAV_STACK[NAV_STACK.length - 2] : null; return `<div class="crumbs"><a class="back-btn" href="${prev || (back ? back.href : "#/")}">${I("arrow")} رجوع</a><a href="#/">${I("home")} إنقلش عام</a>${items.map(x => ` <span>›</span> ${x.href ? `<a href="${x.href}"><bdi>${x.t}</bdi></a>` : `<b><bdi>${x.t}</bdi></b>`}`).join("")}</div>`; };
   const bar = (pct, cls) => `<div class="progress"><div class="${cls || ""}" style="width:${pct}%"></div></div>`;
 
   /* ---------- progress helpers ---------- */
@@ -162,7 +166,11 @@
     if(s.kind === "theme" && s.t === t) return null; return s;
   }
 
+  /* مسار الوحدة في الشريط العلوي: A1 › الوحدة 3 › ... */
+  const unitPath = u => u ? [{ t: u.lvl, href: `#/level/${u.lvl}` }, { t: `الوحدة ${U.filter(x => x.lvl === u.lvl).indexOf(u) + 1}`, href: `#/unit/${u.id}` }] : [];
   /* ---------- HOME ---------- */
+  /* يوديك مباشرة لخطوتك التالية (من نافذة الحضور اليومي وغيرها) */
+  routes.next = () => { const ns = nextStepOf(nextUnit()); location.replace(ns ? ns.href : "#/"); };
   routes.home = () => {
     const xp = xpNext(GEN.xp), meU = Auth.user(), dl = meU ? Store.get("step_daily_last_" + meU.u, null) : null;
     const flame = dl && dl.streak ? dl.streak : Progress.streak();
@@ -225,11 +233,11 @@
   /* ---------- GAMES ---------- */
   routes.games = () => {
     render(crumb([{ t: "الألعاب" }]) + `<h1>${I("timer")} الألعاب</h1><p class="muted">ألعاب سريعة على كلمات مستواك. كل إجابة صحيحة تعطيك XP.</p>
-      <a class="card link-card battle-card" href="#/battle"><div class="icon p-rose">${I("swords")}</div><h3>معركة الكلمات ${ptsTag()}</h3><p class="muted small">كل جمعة ٨–١٠ مساءً: نفس الكلمات للجميع، والأول يفوز بـ +٣٠ نقطة</p></a>
+      <a class="card link-card battle-card" href="#/battle"><div class="menu-emo">${emo("swords")}</div><h3>معركة الكلمات ${ptsTag()}</h3><p class="muted small">كل جمعة ٨–١٠ مساءً: نفس الكلمات للجميع، والأول يفوز بـ +٣٠ نقطة</p></a>
       <div class="grid grid-3">
-        <a class="card link-card c-rose" href="#/game/speed"><div class="icon p-rose">${I("timer")}</div><h3>سباق ٦٠ ثانية ${ptsTag()}</h3><p class="muted small">أكبر عدد من المعاني قبل انتهاء الوقت. أفضل نتيجة: ${GEN.best.speed || 0}</p></a>
-        <a class="card link-card c-blue" href="#/game/match"><div class="icon p-blue">${I("cards")}</div><h3>طابق الكلمات ${ptsTag()}</h3><p class="muted small">اربط كل كلمة بمعناها.</p></a>
-        <a class="card link-card c-amber" href="#/game/spell"><div class="icon p-amber">${I("type")}</div><h3>رتّب الحروف ${ptsTag()}</h3><p class="muted small">كوّن الكلمة من حروفها المبعثرة.</p></a>
+        <a class="card link-card c-rose" href="#/game/speed"><div class="menu-emo">${emo("stopwatch")}</div><h3>سباق ٦٠ ثانية ${ptsTag()}</h3><p class="muted small">أكبر عدد من المعاني قبل انتهاء الوقت. أفضل نتيجة: ${GEN.best.speed || 0}</p></a>
+        <a class="card link-card c-blue" href="#/game/match"><div class="menu-emo">${emo("link")}</div><h3>طابق الكلمات ${ptsTag()}</h3><p class="muted small">اربط كل كلمة بمعناها.</p></a>
+        <a class="card link-card c-amber" href="#/game/spell"><div class="menu-emo">${emo("abc")}</div><h3>رتّب الحروف ${ptsTag()}</h3><p class="muted small">كوّن الكلمة من حروفها المبعثرة.</p></a>
       </div>`);
   };
 
@@ -268,7 +276,7 @@
   routes.theme = id => {
     const t = theme(id); if(!t) return routes.vocab();
     const s = themeStats(t);
-    render(crumb([{ t: "المفردات", href: "#/vocab" }, { t: t.t }]) + `<div class="card sheet"><div class="section-title"><span class="badge" style="background:${LVC[t.lvl]};color:#fff">${t.lvl}</span><h1 style="margin:0">${esc(t.t)}</h1></div><div class="chips t-chips"><span class="chip">${t.words.length} كلمة</span><span class="chip ok">${I("check")} تعرف ${s.k}</span><span class="chip">${I("star")} متقنة ${s.m}</span></div>${bar(s.pct)}<p class="small muted" style="margin:6px 0 0">اضغط ${I("headphones")} بجانب أي كلمة لتسمع نطقها.</p>
+    render(crumb(unitOfTheme(t.id) ? [...unitPath(unitOfTheme(t.id)), { t: t.t }] : [{ t: "المفردات", href: "#/vocab" }, { t: t.t }]) + `<div class="card sheet"><div class="section-title"><span class="badge" style="background:${LVC[t.lvl]};color:#fff">${t.lvl}</span><h1 style="margin:0">${esc(t.t)}</h1></div><div class="chips t-chips"><span class="chip">${t.words.length} كلمة</span><span class="chip ok">${I("check")} تعرف ${s.k}</span><span class="chip">${I("star")} متقنة ${s.m}</span></div>${bar(s.pct)}<p class="small muted" style="margin:6px 0 0">اضغط ${I("headphones")} بجانب أي كلمة لتسمع نطقها.</p>
       ${(() => { const ns = themeDone(t) ? nextAfterTheme(t) : null; return ns ? `<div class="note ok" style="margin-top:10px"><span class="ic">${I("check")}</span><p>أنهيت كلمات هذا الموضوع. <a href="${ns.href}"><b>الخطوة التالية: ${esc(ns.label)} ←</b></a></p></div>` : ""; })()}
       <div class="btn-row" style="margin-top:12px"><a class="btn ${themeDone(t) ? "" : "btn-primary"}" href="#/game/flash/${t.id}">${I("cards")} ١) احفظ بالبطاقات</a><a class="btn btn-warm" href="#/game/quiz/${t.id}">${I("pencil")} ٢) اختبر نفسك ${ptsTag()}</a></div><div class="mini-games"><span class="small muted">ألعاب إضافية:</span>${spellable(t).length >= 8 ? `<a class="mg" href="#/game/spell/${t.id}">${I("type")} رتّب الحروف</a>` : ""}<a class="mg" href="#/game/match/${t.id}">${I("cards")} طابق</a>${t.words.filter(hasSentence).length >= 6 ? `<a class="mg" href="#/game/sentence/${t.id}">${I("bookopen")} أكمل الجملة</a>` : ""}</div></div>
       <div class="word-list">${t.words.map((w, i) => { const r = rec(wid(t, i)); const st = mastered(wid(t, i)) ? "ok" : known(wid(t, i)) ? "info" : ""; return `<div class="word-row"><div class="w-en en"><b>${esc(w[0])}</b> <span class="muted small">${esc(w[2])}</span> ${spk(w[0])}</div><div class="w-ar">${esc(w[1])}</div><div class="w-ex en small muted">${esc(w[3])} ${spk(w[3], "sm")}</div><div class="w-exar small muted">${esc(w[4])}</div><span class="badge ${st}" style="justify-self:start">${mastered(wid(t, i)) ? "متقنة" : known(wid(t, i)) ? "تعرفها" : "جديدة"}</span></div>`; }).join("")}</div>`);
@@ -302,6 +310,8 @@
       fb.innerHTML = `<b>${ok ? I("check") + " صحيح!" : I("x") + " الصحيح: " + esc(q.opts[q.a])}</b>${esc(q.ex || "")} ${sayNow ? spk(sayNow, "sm") : ""}${q.lesson ? ` <a class="mini-link" href="#/lesson/${q.lesson}">${I("book")} افهم القاعدة</a>` : ""}`;
       hydrateIcons(fb); $("#gnext").disabled = false; $("#gnext").focus({ preventScroll: true });
       if(sayNow) after(() => speak(sayNow), 350);
+      /* الإجابة الصحيحة تنتقل تلقائيًا (الخطأ ينتظرك تقرأ التصحيح) */
+      if(ok && !opts.noAuto){ const my = S.i, wait = sayNow ? 1800 : 1100; const nb = $("#gnext"); nb.classList.add("auto"); nb.style.setProperty("--wait", wait + "ms"); after(() => { if(S.i === my && S.done) next(); }, wait); }
     };
     const next = () => { if(!S.done) return; hush(); S.i++; S.done = false; show(); };
     const tick = () => { if(!opts.timed) return; const el = $("#gt"); if(!el) return; const left = Math.max(0, opts.timed - Math.round((Date.now() - S.start) / 1000)); el.textContent = left + "s"; el.classList.toggle("low", left <= 10); if(left !== S.lastLeft){ S.lastLeft = left; if(left <= 0) sfx("timeout"); else if(left <= 10) sfx("tick"); } if(left <= 0) return finish(); after(tick, 500); };
@@ -314,9 +324,10 @@
     hush(); stopTimers();
     const pct = total ? Math.round(score / total * 100) : 0; if(pct >= 80 && total) confetti();
     render(`<div class="card center sheet fade-up"><div class="score-ring" style="--p:${pct}"><span>${pct}%</span></div><h2>${score} من ${total}</h2><h3 class="muted" style="font-weight:600">${title}</h3>${extra || ""}<div id="ptsBox" class="pts-slot">${Auth.user() ? "" : `<p class="small muted">${I("lock")} <a href="account.html">سجّل الدخول</a> لتُحسب نقاطك في المنافسة.</p>`}</div>
-      ${nextStep ? `<a class="btn btn-warm btn-lg" href="${nextStep.href}" style="margin-top:6px">${I("zap")} الخطوة التالية: ${esc(nextStep.label)} ←</a>` : ""}
-      ${LAST_WRONG.length ? `<div class="mistakes"><h3>${I("target")} أخطاؤك في هذه الجولة (${LAST_WRONG.length})</h3>${LAST_WRONG.map(x => `<div class="mk"><div class="mk-q en">${esc(x.q.q)}</div><div class="mk-a"><span class="bad-ans">${esc(x.q.opts[x.chosen])}</span> <span class="ok-ans">${esc(x.q.opts[x.q.a])}</span>${x.q.sayAfter || x.q.say ? `<button type="button" class="spk sm" data-say="${esc(x.q.sayAfter || x.q.say)}">${I("headphones")}</button>` : ""}</div>${x.q.ex ? `<div class="small muted">${esc(x.q.ex)}</div>` : ""}</div>`).join("")}<button type="button" class="btn btn-primary btn-sm" id="retryWrong">${I("refresh")} أعد الأخطاء فقط</button></div>` : ""}
-      <div class="btn-row" style="justify-content:center;margin-top:12px">${againHref ? `<button type="button" class="btn ${nextStep ? "" : "btn-primary"}" id="againBtn">${I("refresh")} مرة أخرى</button>` : ""}<a class="btn" href="${backHref || "#/"}">رجوع</a></div></div>`);
+      ${nextStep ? `<a class="btn btn-warm btn-lg next-btn" href="${nextStep.href}"><span>${I("zap")} الخطوة التالية ←</span><small>${mixed(nextStep.label)}</small></a>` : ""}
+      ${total ? `<p class="res-cheer">${pct >= 100 ? `${emo("party")} كاملة! ما شاء الله` : pct >= 80 ? `${emo("muscle")} ممتاز، قربت تتقنها` : pct >= 50 ? "زين! أعد الأخطاء وتصير أقوى" : "لا بأس — الكلمات الجديدة تحتاج تكرار. أعد الأخطاء بس"}</p>` : ""}
+      <div class="btn-row res-actions">${LAST_WRONG.length ? `<button type="button" class="btn ${nextStep ? "" : "btn-primary"}" id="retryWrong">${I("target")} أعد الأخطاء (${LAST_WRONG.length})</button>` : ""}${againHref ? `<button type="button" class="btn ${nextStep || LAST_WRONG.length ? "" : "btn-primary"}" id="againBtn">${I("refresh")} مرة أخرى</button>` : ""}<a class="btn" href="${backHref || "#/"}">رجوع</a></div>
+      ${LAST_WRONG.length ? `<details class="mistakes" ${LAST_WRONG.length <= 3 ? "open" : ""}><summary>${I("list")} شوف أخطاءك وتصحيحها (${LAST_WRONG.length})</summary>${LAST_WRONG.map(x => `<div class="mk"><div class="mk-q en">${esc(x.q.q)}</div><div class="mk-a"><span class="bad-ans">${esc(x.q.opts[x.chosen])}</span> <span class="ok-ans">${esc(x.q.opts[x.q.a])}</span>${x.q.sayAfter || x.q.say ? `<button type="button" class="spk sm" data-say="${esc(x.q.sayAfter || x.q.say)}">${I("headphones")}</button>` : ""}</div>${x.q.ex ? `<div class="small muted">${esc(x.q.ex)}</div>` : ""}</div>`).join("")}</details>` : ""}</div>`);
     if(againHref) $("#againBtn").addEventListener("click", () => { if(location.hash === againHref) route(); else location.hash = againHref; });
     const rw = $("#retryWrong");
     if(rw) rw.addEventListener("click", () => {
@@ -347,7 +358,7 @@
     const keyH = e => { if(!$("#fc")) return; if(e.key === " "){ e.preventDefault(); $("#fc").click(); } else if(e.key === "ArrowLeft" && mark) mark(true); else if(e.key === "ArrowRight" && mark) mark(false); };
     document.addEventListener("keydown", keyH); timers.push({ clear(){ document.removeEventListener("keydown", keyH); } });
     const show = () => {
-      if(pos >= deck.length){ mark = null; return resultCard("بطاقات " + t.t, ok, total0, `<p class="muted">${fresh.length ? "بدأنا بالكلمات الجديدة أولًا. " : ""}الكلمات التي قلت «ما أعرفها» سترجع لك في المراجعة.</p>`, `#/theme/${t.id}`, `#/game/flash/${t.id}`, nextAfterTheme(t)); }
+      if(pos >= deck.length){ mark = null; return resultCard("بطاقات " + t.t, ok, total0, `<p class="muted">${fresh.length ? "بدأنا بالكلمات الجديدة أولًا. " : ""}الكلمات التي قلت «ما أعرفها» سترجع لك في المراجعة.</p>`, `#/theme/${t.id}`, `#/game/flash/${t.id}`, { href: `#/game/quiz/${t.id}`, label: "اختبر نفسك في كلمات " + t.t + " (فيه نقاط)" }); }
       const w = t.words[deck[pos]];
       render(crumb([{ t: t.t, href: `#/theme/${t.id}` }, { t: "بطاقات" }]) + `<div class="flash-wrap"><div class="muted small">${Math.min(pos + 1, deck.length)} / ${deck.length}${deck.length > total0 ? " (منها " + (deck.length - total0) + " معادة)" : ""}</div>${bar(pos / deck.length * 100)}
         <div class="flashcard ${flipped ? "flipped" : ""}" id="fc"><div class="inner"><div class="face front">${esc(w[0])}<small>${esc(w[2])} · اضغط لعرض المعنى</small></div><div class="face back"><div class="syn">${esc(w[1])}</div><div class="ar en small" style="opacity:.95">${esc(w[3])}</div><div class="small" style="opacity:.9">${esc(w[4])}</div></div></div></div>
@@ -543,7 +554,7 @@
   routes.lesson = id => {
     const l = lesson(id); if(!l) return routes.grammar();
     const frames = l.frames || [], speakP = l.speak || [];
-    render(crumb([{ t: "القواعد", href: "#/grammar" }, { t: l.t }]) + `<article class="lesson focus-none"><h2><span class="n" style="background:${LVC[l.lvl]}">${l.lvl}</span> ${esc(l.t)}</h2><div class="en-title lesson-en">${esc(l.en)}</div>
+    render(crumb(U.find(x => x.grammar === l.id) ? [...unitPath(U.find(x => x.grammar === l.id)), { t: l.t }] : [{ t: "القواعد", href: "#/grammar" }, { t: l.t }]) + `<article class="lesson focus-none"><h2><span class="n" style="background:${LVC[l.lvl]}">${l.lvl}</span> ${esc(l.t)}</h2><div class="en-title lesson-en">${esc(l.en)}</div>
       <div class="why-box"><h3>${I("bulb")} وش بتقدر تقول بعد الدرس؟</h3><p>${mixed(l.why)}</p></div>
       <div class="when-box"><h3>${I("clock")} متى تقولها؟</h3><ul class="when-list">${arPoints(l.when).map(x => `<li>${pointHtml(x)}</li>`).join("")}</ul></div>
       ${frames.length ? `<h3>${I("type")} قوالب جاهزة — عبّي الفراغ وقلها بصوت عالٍ</h3><div class="frames">${frames.map(f => `<div class="frame"><div class="fr-en en">${esc(f[0]).replace(/___/g, '<span class="slot">___</span>')} ${spk(f[0].replace(/___/g, "something"), "sm")}</div><div class="fr-ar">${esc(f[1])}</div></div>`).join("")}</div>` : ""}
@@ -556,6 +567,18 @@
       ${/past|perfect|passive|third|used-to/.test(l.id) ? `<div class="note info"><span class="ic">${I("list")}</span><p>تبي تعرف ماضي أي فعل و«بعد have»؟ <a href="#/verbs"><b>جدول تصريف الأفعال</b></a> فيه ${VB.length} فعلًا مع البحث والنطق.</p></div>` : ""}
       ${l.jargon ? `<p class="small muted jargon">اسمها في كتب القواعد (للمرجع فقط، ما تحتاج تحفظه): ${mixed(l.jargon)}</p>` : ""}
       <div class="btn-row"><a class="btn btn-primary" href="#/practice/${l.id}">${I("pencil")} جرّبها (${l.practice.length} ${l.practice.length > 10 ? "سؤالًا" : "أسئلة"}) ${ptsTag()}</a><a class="btn" href="#/grammar">كل الدروس</a></div></article>`);
+    /* تنقّل سريع داخل الدرس + زر «جرّبها» عائم */
+    const art = $("#app .lesson"); const hs = [...art.querySelectorAll("h3")];
+    const short = t => /متى/.test(t) ? "متى" : /قوالب/.test(t) ? "قوالب" : /جدول/.test(t) ? "الجدول" : /أمثلة/.test(t) ? "أمثلة" : /قلها/.test(t) ? "قلها" : /أخطاء/.test(t) ? "الأخطاء" : null;
+    const toc = hs.map((h, k) => { const n = short(h.textContent); if(!n) return ""; h.id = "ls" + k; return `<button type="button" data-go="ls${k}">${n}</button>`; }).join("");
+    art.querySelector(".lesson-en").insertAdjacentHTML("afterend", `<div class="lesson-toc">${toc}<button type="button" class="go-practice" data-href="#/practice/${l.id}">${I("pencil")} جرّبها</button></div>`);
+    art.querySelector(".lesson-toc").addEventListener("click", e => { const b = e.target.closest("button"); if(!b) return; if(b.dataset.href){ location.hash = b.dataset.href; return; } const el = document.getElementById(b.dataset.go); if(el) el.scrollIntoView({ behavior: "smooth", block: "start" }); });
+    hydrateIcons(art.querySelector(".lesson-toc"));
+    document.body.insertAdjacentHTML("beforeend", `<a class="float-cta" id="floatCta" href="#/practice/${l.id}">${I("pencil")} جرّبها (${l.practice.length})</a>`);
+    const fc = $("#floatCta"); hydrateIcons(fc);
+    const onScroll = () => { const btm = art.querySelector(".btn-row:last-child"); const r = btm ? btm.getBoundingClientRect() : null; fc.classList.toggle("show", scrollY > 500 && !(r && r.top < innerHeight)); };
+    addEventListener("scroll", onScroll, { passive: true }); onScroll();
+    timers.push({ clear(){ removeEventListener("scroll", onScroll); fc.remove(); } });
   };
   routes.practice = id => {
     const l = lesson(id); if(!l) return routes.grammar();
@@ -573,7 +596,7 @@
     const d = dialog(id); if(!d) return routes.talk();
     let showAr = true;
     const draw = () => {
-      render(crumb([{ t: "تكلّم", href: "#/talk" }, { t: d.t }]) + `<div class="card sheet"><div class="section-title"><span class="badge" style="background:${LVC[d.lvl]};color:#fff">${d.lvl}</span><h1 style="margin:0">${esc(d.t)}</h1></div>
+      render(crumb(U.find(x => dialogsOf(x).includes(d)) ? [...unitPath(U.find(x => dialogsOf(x).includes(d))), { t: d.t }] : [{ t: "تكلّم", href: "#/talk" }, { t: d.t }]) + `<div class="card sheet"><div class="section-title"><span class="badge" style="background:${LVC[d.lvl]};color:#fff">${d.lvl}</span><h1 style="margin:0">${esc(d.t)}</h1></div>
         <div class="btn-row"><button type="button" class="btn btn-primary" id="playAll">${I("headphones")} استمع للحوار كاملًا</button><button type="button" class="btn" id="toggleAr">${showAr ? "أخفِ الترجمة" : "أظهر الترجمة"}</button><a class="btn" href="#/roleplay/${d.id}">${I("users")} مثّل دور ${d.roles[1]} ${ptsTag()}</a><a class="btn btn-warm" href="#/speak/${d.id}">${I("mic")} انطق الجمل</a></div></div>
         <div class="dialog">${d.lines.map((ln, i) => `<div class="dl ${ln[0] === "A" ? "a" : "b"}"><div class="who">${ln[0] === "A" ? d.roles[0] : d.roles[1]}</div><div class="bubble"><div class="en">${esc(ln[1])} ${spk(ln[1], "sm")}</div>${showAr ? `<div class="ar small">${esc(ln[2])}</div>` : ""}</div></div>`).join("")}</div>
         <div class="card"><h3>${I("star")} عبارات تحفظها</h3>${d.phrases.map(p => `<div class="ex right"><span class="en">${esc(p[0])} ${spk(p[0], "sm")}</span><span class="ar">${esc(p[1])}</span></div>`).join("")}</div>`);

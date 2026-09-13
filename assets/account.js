@@ -35,16 +35,18 @@
     try{
       const j = await Auth.api("/api/me");
       const s = j.stats;
-      $("#pStats").innerHTML = `<div class="grid grid-4">
-        <div class="card stat"><span class="ic"><i data-i='trophy'></i></span><span class="num">${j.points}</span><span class="lbl">نقطة${j.rank ? " · الترتيب #" + j.rank : ""}</span></div>
-        <div class="card stat"><span class="ic"><i data-i='calendar'></i></span><span class="num">${j.weekPoints}</span><span class="lbl">نقاط هذا الأسبوع${j.weekRank ? " · #" + j.weekRank : ""}</span></div>
-        <div class="card stat"><span class="ic"><i data-i='pencil'></i></span><span class="num">${s.quizzes}</span><span class="lbl">اختبار وتدريب</span></div>
-        <div class="card stat"><span class="ic"><i data-i='target'></i></span><span class="num">${s.answered ? Math.round(s.correct / s.answered * 100) : 0}٪</span><span class="lbl">الدقة · أفضل نتيجة ${s.best}٪</span></div></div>`;
+      const dl = Store.get("step_daily_last_" + me.u, null), flame = dl && dl.streak ? dl.streak : 0;
+      $("#pStats").innerHTML = `<div class="acc-stats">
+        <a class="gs" href="#points">${emo("trophy", "gs-emo")}<div class="gs-b"><div class="gs-n">${j.points}</div><div class="gs-l">نقطة${j.rank ? " · #" + j.rank : ""}</div></div></a>
+        <a class="gs" href="compete.html">${emo("crown", "gs-emo")}<div class="gs-b"><div class="gs-n">${j.monthPoints != null ? j.monthPoints : "—"}</div><div class="gs-l">البطولة${j.monthRank ? " · #" + j.monthRank : ""}</div></div></a>
+        <div class="gs">${emo("calendar", "gs-emo")}<div class="gs-b"><div class="gs-n">${j.weekPoints}</div><div class="gs-l">هذا الأسبوع${j.weekRank ? " · #" + j.weekRank : ""}</div></div></div>
+        <div class="gs">${emo("fire", "gs-emo")}<div class="gs-b"><div class="gs-n">${flame}</div><div class="gs-l">${flame === 1 ? "يوم ورا بعض" : "أيام ورا بعض"}</div></div></div></div>
+        <p class="small muted acc-activity">${s.quizzes} اختبار وتدريب · الدقة ${s.answered ? Math.round(s.correct / s.answered * 100) : 0}٪ · أفضل نتيجة ${s.best}٪</p>`;
       $("#pResults").innerHTML = j.results.length ? `<div class="table-wrap"><table><thead><tr><th>التاريخ</th><th>النوع</th><th class="en">الدرجة</th><th>النسبة</th></tr></thead><tbody>${j.results.map(r => `<tr><td>${fmtDate(r.at)}</td><td>${r.challenge ? "<i data-i='swords'></i> تحدي" : Bank.topicLabel(r.mode === "mix" ? "اختبار شامل" : r.mode === "wrong" ? "مراجعة أخطائي" : r.mode)}</td><td class="en">${r.score} / ${r.total}</td><td><span class="badge ${r.score / r.total >= .7 ? "ok" : "bad"}">${Math.round(r.score / r.total * 100)}٪</span></td></tr>`).join("")}</tbody></table></div>` : `<p class="muted">لا توجد نتائج بعد — <a href="quiz.html">ابدأ اختبارك الأول</a>.</p>`;
     }catch(e){ $("#pStats").innerHTML = `<div class="note bad"><span class="ic"><i data-i='alert'></i></span><p>${esc(e.message)}</p></div>`; }
     renderPoints(); renderWeak(); renderMarks();
     const o = Progress.overall();
-    $("#pProg").innerHTML = `إتقانك الكلي <b>${o.pct}٪</b> · ${o.answered} إجابة · ${Progress.streak()} أيام متتالية — التقدم محفوظ على حسابك ويظهر على أي جهاز تسجّل منه.`;
+    $("#pProg").innerHTML = `${o.answered} إجابة · إتقانك ${o.pct}٪ — تقدمك محفوظ على حسابك ويظهر على أي جهاز تسجّل منه.`;
   }
 
   async function renderPoints(){
@@ -52,27 +54,24 @@
     const j = await loadPoints(true); if(!j){ host.innerHTML = `<p class="muted">تعذّر التحميل.</p>`; return; }
     const rows = [...j.areas, ...j.extras].filter(r => r.points);
     const max = Math.max(1, ...rows.map(r => r.points));
-    host.innerHTML = `<div class="grid grid-3 pts-sum">
-        <div class="card stat"><span class="num">${j.total}</span><span class="lbl">المجموع الكلي${j.rank ? " · #" + j.rank : ""}</span></div>
-        <div class="card stat"><span class="num">${j.month}</span><span class="lbl">نقاط البطولة (هذا الشهر)${j.monthRank ? " · #" + j.monthRank : ""}</span></div>
-        <div class="card stat"><span class="num">${j.week}</span><span class="lbl">هذا الأسبوع${j.weekRank ? " · #" + j.weekRank : ""}</span></div></div>
-      <div class="card sheet">${rows.length ? rows.map(r => `<div class="pts-row"><div class="pr-l">${esc(r.label)}</div><div class="pr-bar"><div style="width:${Math.round(r.points / max * 100)}%"></div></div><div class="pr-n">${r.points}</div></div>`).join("") : `<p class="muted">ما جمعت نقاطًا بعد — ابدأ بأي نشاط عليه شارة «نقاط».</p>`}
+    host.innerHTML = `<div class="card sheet">${rows.length ? rows.map(r => `<div class="pts-row"><div class="pr-l">${esc(r.label)}</div><div class="pr-bar"><div style="width:${Math.round(r.points / max * 100)}%"></div></div><div class="pr-n">${r.points}</div></div>`).join("") : `<p class="muted">ما جمعت نقاطًا بعد — ابدأ بأي نشاط عليه شارة «نقاط».</p>`}
         <div class="pts-row total"><div class="pr-l">المجموع</div><div class="pr-bar"></div><div class="pr-n">${j.sum}</div></div>
         <p class="small muted" style="margin:10px 0 0">${j.consistent ? `${I("check")} التفصيل يطابق مجموعك تمامًا.` : `${I("info")} فرق ${j.total - j.sum} نقطة من قبل تسجيل التفصيل.`} ${j.stages.length ? `· أتممت ${j.stages.length} ${j.stages.length === 1 ? "مرحلة" : "مراحل"}.` : ""}</p></div>
-      <div class="note info"><span class="ic">${I("info")}</span><p><b>ليش الأرقام تختلف؟</b> «المجموع الكلي» كل نقاطك من أول يوم. «البطولة» تبدأ من ٩ سبتمبر وهي اللي تحدد الفائز بالجائزة. «هذا الأسبوع» يرجع صفر كل اثنين. ما فيه شي ينقص من نقاطك أبدًا.</p></div>
-      <div class="note tip"><span class="ic">${I("trophy")}</span><p><b>كيف تنحسب؟</b> كل سؤال تجيبه صح <b>لأول مرة</b> = نقطة (الإعادة ما تكرر). ساعة الذهب (٩–١٠ مساءً يوميًا) = نقطتين لكل إجابة جديدة. إتمام مرحلة = +${j.stagePoints}. معركة الكلمات (الجمعة ٨–١٠ مساءً): الأول +٣٠، الثاني +٢٠، الثالث +١٠.</p></div>`;
+      <details class="pts-where acc-help"><summary>${I("info")} ليش الأرقام تختلف؟ وكيف تنحسب النقاط؟</summary><p><b>ليش تختلف؟</b> «المجموع الكلي» كل نقاطك من أول يوم. «البطولة» تبدأ من ٩ سبتمبر وهي اللي تحدد الفائز بالجائزة. «هذا الأسبوع» يرجع صفر كل اثنين. ما فيه شي ينقص من نقاطك أبدًا.</p><p><b>كيف تنحسب؟</b> كل سؤال تجيبه صح <b>لأول مرة</b> = نقطة (الإعادة ما تكرر). ساعة الذهب (٩–١٠ مساءً يوميًا) = نقطتين لكل إجابة جديدة. إتمام مرحلة = +${j.stagePoints}. معركة الكلمات (الجمعة ٨–١٠ مساءً): الأول +٣٠، الثاني +٢٠، الثالث +١٠.</p></details>`;
     hydrateIcons(host);
     if(location.hash === "#points") host.scrollIntoView({ block: "start" });
   }
   function renderWeak(){
     const host = $("#pWeak"); if(!host) return;
     const ws = Progress.weakTopics(3).slice(0, 8);
+    const sec = $("#weak"); if(sec) sec.hidden = !ws.length;
     host.innerHTML = ws.length ? ws.map(m => `<div class="mastery-row"><div><b>${Bank.topicLabel(m.t)}</b> <span class="muted small">(${m.seen}/${m.total}${m.wrong ? " · " + m.wrong + " خطأ" : ""})</span><div class="btn-row" style="margin-top:6px">${lessonLink(m.t)}<a class="mini-link" href="train.html?topic=${m.t}&start=1">${I("target")} تدرّب عليه</a></div></div><div class="pct">${m.pct}٪</div><div class="bar"><div class="${masteryClass(m.pct)}" style="width:${m.pct}%"></div></div></div>`).join("")
       : `<p class="muted">أجب على بعض الأسئلة في التدريب أو الاختبار أولًا، وستظهر هنا المواضيع الأضعف مع رابط شرح قاعدتها.</p><a class="btn btn-primary btn-sm" href="train.html?mode=smart&start=1">ابدأ التدريب الذكي</a>`;
   }
   function renderMarks(){
     const host = $("#pMarks"); if(!host) return;
     const ids = Progress.marks();
+    const secM = $("#marks"); if(secM) secM.hidden = !ids.length;
     if(!ids.length){ host.innerHTML = `<p class="muted">لم تعلّم على أي سؤال بعد. في نتائج الاختبار وفي التجميعات تجد زر «علّم» تحت كل سؤال — اضغطه وسيظهر هنا لتذاكره وقت ما تشاء.</p>`; return; }
     const qs = Bank.byIds(ids);
     const groups = {};
