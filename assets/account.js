@@ -59,6 +59,7 @@
         : `<p class="muted">متصفحك ما يدعم الإشعارات. جرّب Chrome، أو على الآيفون أضف الموقع للشاشة الرئيسية.</p>`);
       hydrateIcons(host); return;
     }
+    if(location.hash === "#notif") setTimeout(() => host.scrollIntoView({ block: "start", behavior: "smooth" }), 300);
     const sub = await Push.current().catch(() => null), perm = Notification.permission;
     const on = !!sub && perm === "granted";
     host.innerHTML = head + (perm === "denied"

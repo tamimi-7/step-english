@@ -539,6 +539,7 @@ function showDaily(j, day){
     <div class="surprise" tabindex="0" role="button"><div class="sp-front">${emo("gift", "emo-lg")}<b>اضغط وافتح مفاجأة اليوم</b></div><div class="sp-back" hidden>${surpriseHtml(surpriseOf(day))}</div></div>
     ${F.today && F.today.length ? `<div class="fam-box"><div class="small"><b>دخلوا اليوم:</b></div>${F.today.map(chip).join("")}</div>` : ""}
     ${others.length ? `<div class="fam-box warn"><div class="small"><b>شعلتهم بتنطفي اليوم:</b></div>${others.map(chip).join("")}<a class="btn btn-sm" target="_blank" rel="noopener" href="${wa}">ذكّرهم 📲</a></div>` : ""}
+    ${!Store.get("step_push_on", false) ? `<a class="push-nudge" href="account.html#notif">${emo("bell")} تبي نذكّرك قبل ما تنطفي شعلتك؟ <b>فعّل الإشعارات</b></a>` : ""}
     <div class="btn-row" style="justify-content:center"><a class="btn btn-warm btn-lg" href="general.html#/next" data-close>${I("zap")} يلا نكمل</a><button type="button" class="btn" data-close>لاحقًا</button></div>`);
   const sp = el.querySelector(".surprise");
   const open = () => { if(sp.classList.contains("open")) return; sp.classList.add("open"); sp.querySelector(".sp-front").hidden = true; sp.querySelector(".sp-back").hidden = false; try{ if(typeof SFX !== "undefined") SFX.win(); }catch(e){} };
