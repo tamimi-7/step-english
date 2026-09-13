@@ -285,6 +285,7 @@ function pointsExplain(j){
   if(j.bonus) rows.push(`<span class="px bonus">${I(j.bonusSource === "gift" ? "gift" : "zap")} ${esc(j.bonusLabel || "مضاعف")} ×٢ = +${j.bonus}</span>`);
   if(j.stage) rows.push(`<span class="px stage">${I("trophy")} إتمام مرحلة = +${j.stage.points}</span>`);
   if(j.repeated) rows.push(`<span class="px muted">${I("repeat")} ${j.repeated} ${j.repeated === 1 ? "سؤال سبق أخذ نقطته" : "أسئلة سبق أخذ نقاطها"} = 0</span>`);
+  if(!j.base && j.repeated) rows.push(`<span class="px muted">${I("info")} أحسنت! بس هذي الأسئلة أخذت نقاطها من قبل — النقاط الجديدة تلقاها في دروس ووحدات ما خلصتها، وفي مكافأة الدخول اليومي</span>`);
   if(!rows.length) rows.push(`<span class="px muted">ما فيه إجابات صحيحة جديدة هذه المرة</span>`);
   return rows.join("");
 }
@@ -360,6 +361,35 @@ async function giftCheck(){
     }));
   }
   for(const show of queue) await show();
+  await dailyCheck();
+}
+/* مكافأة الدخول اليومي + حماس المنافسة: تُطلب مرة واحدة يوميًا */
+const riyadhDay = () => { try{ return new Date().toLocaleDateString("en-CA", { timeZone: "Asia/Riyadh" }); }catch(e){ return new Date().toISOString().slice(0, 10); } };
+const DAILY_CHEERS = ["كل يوم دقائق بسيطة تفرق كثير 💪", "اللي يداوم يوميًا يسبق اللي يذاكر مرة بالأسبوع", "كلمة اليوم أفضل من عشر بكرة", "سلسلتك نار — لا تطفيها!", "المنافسة حامية، وأنت قدها"];
+async function dailyCheck(){
+  const me = Auth.user(); if(!me) return;
+  const key = "step_daily_" + me.u, day = riyadhDay();
+  if(Store.get(key, "") === day) return;
+  let j; try{ j = await Auth.api("/api/points", { method: "POST", body: { daily: 1 } }); }catch(e){ return; }
+  if(!j || j.error) return;
+  Store.set(key, day); Store.set("step_streak_" + me.u, { day, streak: j.streak, best: j.best });
+  if(!j.claimed) return;
+  loadPoints(true);
+  const r = j.rivals || {}, R = j.rewards || [3, 4, 5, 6, 7, 8, 15];
+  const rival = r.rank === 1 ? (r.below ? `أنت <b>الأول</b> في البطولة! ${esc(r.below.name)} وراك بـ <b>${r.below.gap}</b> ${r.below.gap === 1 ? "نقطة" : "نقاط"} بس — حافظ على الصدارة` : "أنت الأول في البطولة — حافظ على الصدارة")
+    : r.above ? `أنت <b>#${r.rank}</b> في البطولة، وباقي لك <b>${r.above.gap + 1}</b> ${r.above.gap + 1 === 1 ? "نقطة" : "نقاط"} وتتجاوز <b>${esc(r.above.name)}</b> 🔥`
+    : "حل أول تحدٍ اليوم وادخل البطولة على جائزة ٣٠٠ ريال";
+  const strip = R.map((pts, i) => `<div class="dd ${i + 1 < j.day ? "done" : i + 1 === j.day ? "now" : ""}"><small>${i === 6 ? "صندوق" : "يوم " + (i + 1)}</small><b>+${pts}</b></div>`).join("");
+  const next = R[j.day % 7];
+  const title = j.broke ? "سلسلة جديدة بدأت!" : j.streak > 1 ? `${j.streak} ${j.streak > 10 ? "يوم" : "أيام"} ورا بعض 🔥` : "مكافأة الدخول اليومي";
+  modalCard(`<div class="gift-box daily">${I(j.day === 7 ? "gift" : "fire")}</div><h3>${title}</h3>
+    <div class="gift-mult">+${j.reward} نقطة</div>
+    <div class="daily-days">${strip}</div>
+    <p class="small">${j.day === 7 ? "فتحت صندوق الأسبوع! بكرة تبدأ جولة جديدة" : `ارجع بكرة وتاخذ <b>+${next}</b>${j.day === 6 ? " — صندوق الأسبوع" : ""}`}. ${j.broke ? "فاتك يوم فرجعت السلسلة من أولها." : ""}</p>
+    <div class="note info daily-rival"><span class="ic">${I("trophy")}</span><p>${rival}</p></div>
+    <p class="small muted">${DAILY_CHEERS[Math.floor(Math.random() * DAILY_CHEERS.length)]}${j.best > 1 ? ` · أطول سلسلة لك: ${j.best}` : ""}</p>
+    <div class="btn-row" style="justify-content:center"><a class="btn btn-warm btn-lg" href="general.html#/daily" data-close>${I("zap")} ابدأ تحدي اليوم</a><button type="button" class="btn" data-close>لاحقًا</button></div>`);
+  try{ if(typeof SFX !== "undefined") SFX.win(); confetti(); }catch(e){}
 }
 /* إعلان بداية فعالية أو قرب موعدها — مرة واحدة لكل موعد */
 function announce(kind, id, start, title, body, href, btn){

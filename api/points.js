@@ -4,6 +4,38 @@ const H = require("../lib/http");
 const EV = require("../data/events.js");
 const AR = require("../lib/areas");
 
+/* مكافأة الدخول اليومي: مرة واحدة كل يوم (بتوقيت السعودية)، تكبر مع الأيام المتتالية، واليوم السابع صندوق */
+const DAILY = [3, 4, 5, 6, 7, 8, 15];
+async function rivals(me){
+  const mk = EV.monthKey();
+  const [flat, namesFlat] = await db.pipeline([["ZREVRANGE", "lb:month:" + mk, 0, -1, "WITHSCORES"], ["HGETALL", "names"]]);
+  const names = db.flatToObj(namesFlat), board = db.flatToPairs(flat);
+  const i = board.findIndex(x => x.member === me.u);
+  const nm = x => x ? (names[x.member] || x.member) : null;
+  if(i < 0) return { rank: null, players: board.length, leader: board[0] ? { name: nm(board[0]), points: board[0].score } : null };
+  const above = i > 0 ? board[i - 1] : null, below = board[i + 1] || null;
+  return { rank: i + 1, players: board.length, points: board[i].score,
+    above: above ? { name: nm(above), gap: above.score - board[i].score } : null,
+    below: below ? { name: nm(below), gap: board[i].score - below.score } : null };
+}
+async function claimDaily(me){
+  const now = Date.now(), today = EV.dateKey(now), yest = EV.dateKey(now - 864e5);
+  const lock = await db.call("SET", `daily:${me.u}:${today}`, "1", "NX", "EX", 172800);
+  const st = db.flatToObj(await db.call("HGETALL", "streak:" + me.u));
+  let cur = Number(st.cur || 0), best = Number(st.best || 0);
+  if(lock !== "OK") return { claimed: false, today, streak: cur, best, rewards: DAILY, day: ((Math.max(cur, 1) - 1) % 7) + 1, rivals: await rivals(me) };
+  cur = st.last === yest ? cur + 1 : 1;
+  best = Math.max(best, cur);
+  const day = ((cur - 1) % 7) + 1, reward = DAILY[day - 1];
+  const wk = db.weekKey(), mk = EV.monthKey();
+  await db.pipeline([
+    ["HSET", "streak:" + me.u, "cur", cur, "best", best, "last", today],
+    ["ZINCRBY", "lb:total", reward, me.u], ["ZINCRBY", "lb:week:" + wk, reward, me.u], ["ZINCRBY", "lb:month:" + mk, reward, me.u],
+    ["HINCRBY", "ptsx:" + me.u, "daily", reward], ["HSET", "names", me.u, me.name]
+  ]);
+  return { claimed: true, today, reward, streak: cur, best, day, rewards: DAILY, broke: !!st.last && st.last !== yest && cur === 1 && Number(st.cur || 0) > 1, rivals: await rivals(me) };
+}
+
 /* تفصيل نقاط المستخدم: لكل منطقة + البنود الإضافية، والمجموع يطابق الترتيب.
    POST {ack: id} يعلّم رسالة (تعويض/جائزة) كمقروءة. */
 module.exports = H.handler(["GET", "POST"], async (req, res) => {
@@ -11,6 +43,7 @@ module.exports = H.handler(["GET", "POST"], async (req, res) => {
   if(!me) return H.err(res, 401, "سجّل الدخول أولًا");
   if(req.method === "POST"){
     const b = await H.body(req);
+    if(b.daily) return H.ok(res, await claimDaily(me));
     const id = String(b.ack || "").slice(0, 60);
     const raw = id && await db.call("HGET", "notices:" + me.u, id);
     if(raw){ let n = null; try{ n = JSON.parse(raw); }catch(e){} if(n){ n.acked = Date.now(); await db.call("HSET", "notices:" + me.u, id, JSON.stringify(n)); } }

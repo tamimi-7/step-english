@@ -1005,3 +1005,12 @@ body.focus-open .tabbar{display:none}
 .battle-count{margin:14px auto;display:inline-block;border:3px solid var(--ink);border-radius:14px;padding:10px 22px;box-shadow:-4px 4px 0 var(--ink);background:var(--surface)}
 .bc-num{font-family:"Baloo Bhaijaan 2",sans-serif;font-weight:800;font-size:1.6rem;color:var(--accent)}
 .battle-card{margin-bottom:14px;border-color:#be185d;box-shadow:-4px 4px 0 #be185d}
+
+/* مكافأة الدخول اليومي */
+.gift-box.daily{background:linear-gradient(135deg,#fdba74,#f87171);color:#7c2d12}
+.daily-days{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin:10px 0}
+.daily-days .dd{border:2px solid var(--line);border-radius:10px;padding:4px 0;font-size:.72rem;line-height:1.3;background:var(--surface2);color:var(--ink)}
+.daily-days .dd b{display:block;font-size:.9rem}
+.daily-days .dd.done{background:#dcfce7;border-color:#16a34a;color:#166534}
+.daily-days .dd.now{background:#fde68a;color:#7c2d12;border-color:var(--ink);box-shadow:-2px 2px 0 var(--ink);transform:scale(1.08)}
+.daily-rival{text-align:start;margin:8px 0}

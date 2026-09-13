@@ -156,7 +156,7 @@
   function levelPct(lv){ const units = U.filter(u => u.lvl === lv); if(!units.length) return 0; return Math.round(units.reduce((a, u) => a + unitPct(u), 0) / units.length); }
   function nextUnit(){ return U.find(u => !GEN.units[u.id]) || U[U.length - 1]; }
   const themeDone = t => themeStats(t).pct >= 100;
-  const lessonDone = l => { const ids = l.practice.map((_, i) => `gg-${l.id}-${i}`); return ids.filter(known).length >= Math.ceil(ids.length * .7); };
+  const lessonDone = l => { const ids = l.practice.map((_, i) => `gg-${l.id}-${i}`); return ids.filter(known).length >= Math.min(5, ids.length); };
   const dialogDone = d => { const ids = d.lines.map((ln, i) => ln[0] === "B" && i > 0 ? `gd-${d.id}-${i}` : null).filter(Boolean); return ids.length ? ids.filter(known).length >= Math.ceil(ids.length * .5) : true; };
   const dialogsOf = u => (Array.isArray(u.dialogue) ? u.dialogue : u.dialogue ? [u.dialogue] : []).map(dialog).filter(Boolean);
   function unitSteps(u){
@@ -568,7 +568,7 @@
       <div class="note tip"><span class="ic">${I("sparkles")}</span><p>${mixed(l.tip)}</p></div>
       ${/past|perfect|passive|third|used-to/.test(l.id) ? `<div class="note info"><span class="ic">${I("list")}</span><p>تبي تعرف ماضي أي فعل و«بعد have»؟ <a href="#/verbs"><b>جدول تصريف الأفعال</b></a> فيه ${VB.length} فعلًا مع البحث والنطق.</p></div>` : ""}
       ${l.jargon ? `<p class="small muted jargon">اسمها في كتب القواعد (للمرجع فقط، ما تحتاج تحفظه): ${mixed(l.jargon)}</p>` : ""}
-      <div class="btn-row"><a class="btn btn-primary" href="#/practice/${l.id}">${I("pencil")} جرّبها (${l.practice.length} أسئلة) ${ptsTag()}</a><a class="btn" href="#/grammar">كل الدروس</a></div></article>`);
+      <div class="btn-row"><a class="btn btn-primary" href="#/practice/${l.id}">${I("pencil")} جرّبها (${l.practice.length} ${l.practice.length > 10 ? "سؤالًا" : "أسئلة"}) ${ptsTag()}</a><a class="btn" href="#/grammar">كل الدروس</a></div></article>`);
   };
   routes.practice = id => {
     const l = lesson(id); if(!l) return routes.grammar();
