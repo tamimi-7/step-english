@@ -44,11 +44,34 @@
         <p class="small muted acc-activity">${s.quizzes} اختبار وتدريب · الدقة ${s.answered ? Math.round(s.correct / s.answered * 100) : 0}٪ · أفضل نتيجة ${s.best}٪</p>`;
       $("#pResults").innerHTML = j.results.length ? `<div class="table-wrap"><table><thead><tr><th>التاريخ</th><th>النوع</th><th class="en">الدرجة</th><th>النسبة</th></tr></thead><tbody>${j.results.map(r => `<tr><td>${fmtDate(r.at)}</td><td>${r.challenge ? "<i data-i='swords'></i> تحدي" : Bank.topicLabel(r.mode === "mix" ? "اختبار شامل" : r.mode === "wrong" ? "مراجعة أخطائي" : r.mode)}</td><td class="en">${r.score} / ${r.total}</td><td><span class="badge ${r.score / r.total >= .7 ? "ok" : "bad"}">${Math.round(r.score / r.total * 100)}٪</span></td></tr>`).join("")}</tbody></table></div>` : `<p class="muted">لا توجد نتائج بعد — <a href="quiz.html">ابدأ اختبارك الأول</a>.</p>`;
     }catch(e){ $("#pStats").innerHTML = `<div class="note bad"><span class="ic"><i data-i='alert'></i></span><p>${esc(e.message)}</p></div>`; }
-    renderPoints(); renderWeak(); renderMarks();
+    renderPoints(); renderWeak(); renderMarks(); renderNotif();
     const o = Progress.overall();
     $("#pProg").innerHTML = `${o.answered} إجابة · إتقانك ${o.pct}٪ — تقدمك محفوظ على حسابك ويظهر على أي جهاز تسجّل منه.`;
   }
 
+  /* الإشعارات: تفعيل / إيقاف / تجربة + شرح الآيفون */
+  async function renderNotif(){
+    const host = $("#pNotif"); if(!host || typeof Push === "undefined") return;
+    const head = `<div class="section-title"><h2 style="margin:0">${emo("bell")} إشعارات الجوال</h2></div><p class="muted small" style="margin:4px 0 10px">تذكير واحد باليوم بس: لما شعلتك بتنطفي، ومعركة الجمعة، وساعة الذهب، والجوائز. ما نرسل إعلانات ولا نشارك بياناتك.</p>`;
+    if(!Push.supported()){
+      host.innerHTML = head + (Push.isIOS() && !Push.standalone()
+        ? `<div class="note info"><span class="ic">${I("info")}</span><p><b>على الآيفون تحتاج خطوة وحدة قبل:</b><br>١) افتح الموقع في <b>Safari</b><br>٢) اضغط زر <b>المشاركة</b> (المربع وفوقه سهم)<br>٣) اختر <b>«إضافة إلى الشاشة الرئيسية»</b><br>٤) افتح <b>«إنقلش»</b> من شاشة الجوال، وارجع لهالصفحة واضغط تفعيل.</p></div>`
+        : `<p class="muted">متصفحك ما يدعم الإشعارات. جرّب Chrome، أو على الآيفون أضف الموقع للشاشة الرئيسية.</p>`);
+      hydrateIcons(host); return;
+    }
+    const sub = await Push.current().catch(() => null), perm = Notification.permission;
+    const on = !!sub && perm === "granted";
+    host.innerHTML = head + (perm === "denied"
+      ? `<div class="note warn"><span class="ic">${I("alert")}</span><p>الإشعارات موقوفة من إعدادات المتصفح/الجوال. فعّلها من الإعدادات ← الإشعارات، ثم ارجع هنا.</p></div>`
+      : on ? `<div class="note ok"><span class="ic">${I("check")}</span><p><b>الإشعارات مفعّلة على هذا الجهاز.</b></p></div><div class="btn-row"><button type="button" class="btn btn-primary btn-sm" id="pushTest">${I("bell")} أرسل لي إشعار تجربة</button><button type="button" class="btn btn-sm" id="pushOff">إيقاف الإشعارات</button></div>`
+      : `<button type="button" class="btn btn-warm" id="pushOn">${I("bell")} فعّل الإشعارات</button>`);
+    hydrateIcons(host);
+    const busy = (b, t) => { b.disabled = true; b.textContent = t; };
+    const bOn = $("#pushOn"), bOff = $("#pushOff"), bTest = $("#pushTest");
+    if(bOn) bOn.addEventListener("click", async () => { busy(bOn, "… جاري التفعيل"); try{ await Push.enable(); toast("تم تفعيل الإشعارات 🔔"); }catch(e){ toast(e.message, 5000); } renderNotif(); });
+    if(bOff) bOff.addEventListener("click", async () => { busy(bOff, "…"); await Push.disable(); toast("تم إيقاف الإشعارات"); renderNotif(); });
+    if(bTest) bTest.addEventListener("click", async () => { busy(bTest, "… جاري الإرسال"); try{ const r = await Auth.api("/api/push", { method: "POST", body: { action: "test" } }); toast(r.sent ? "انرسل! شيك على الإشعارات" : "ما وصل — جرّب تعطّلها وتفعّلها من جديد", 4000); }catch(e){ toast(e.message, 4000); } renderNotif(); });
+  }
   async function renderPoints(){
     const host = $("#pPoints"); if(!host) return;
     const j = await loadPoints(true); if(!j){ host.innerHTML = `<p class="muted">تعذّر التحميل.</p>`; return; }
@@ -84,7 +107,7 @@
     $("#tabLogin").addEventListener("click", () => setKind("login"));
     $("#tabReg").addEventListener("click", () => setKind("register"));
     $("#authForm").addEventListener("submit", submit);
-    $("#logoutBtn").addEventListener("click", () => { Auth.clear(); toast("تم تسجيل الخروج"); renderNav(); render(); });
+    $("#logoutBtn").addEventListener("click", async () => { try{ if(typeof Push !== "undefined") await Push.disable(); }catch(e){} Auth.clear(); toast("تم تسجيل الخروج"); renderNav(); render(); });
     if(new URLSearchParams(location.search).get("register") === "1") setKind("register"); else setKind("login");
     render();
   });

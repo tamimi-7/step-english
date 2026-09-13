@@ -113,7 +113,7 @@ const ICONS = {
   award: 'M12 15a7 7 0 1 0 0-14 7 7 0 0 0 0 14zM8.2 13.9L7 23l5-3 5 3-1.2-9.1'
 };
 /* أيقونات ثلاثية الأبعاد (Microsoft Fluent Emoji — رخصة MIT) مع رجوع للإيموجي العادي لو ما تحمّلت */
-const EMO = { fire: ["1f525", "🔥"], books: ["1f4da", "📚"], memo: ["1f4dd", "📝"], talk: ["1f5e3-fe0f", "🗣️"], game: ["1f3ae", "🎮"], book: ["1f4d6", "📖"], repeat: ["1f501", "🔁"], trophy: ["1f3c6", "🏆"], check: ["2705", "✅"], review: ["1f504", "🔄"], star: ["2b50", "⭐"], gift: ["1f381", "🎁"], shield: ["1f6e1-fe0f", "🛡️"], sparkles: ["2728", "✨"], comet: ["2604-fe0f", "☄️"], volcano: ["1f30b", "🌋"], crown: ["1f451", "👑"], swords: ["2694-fe0f", "⚔️"], clock: ["23f0", "⏰"], target: ["1f3af", "🎯"], puzzle: ["1f9e9", "🧩"], headphones: ["1f3a7", "🎧"], chat: ["1f4ac", "💬"], party: ["1f389", "🎉"], muscle: ["1f4aa", "💪"], wave: ["1f44b", "👋"], rocket: ["1f680", "🚀"], brain: ["1f9e0", "🧠"], calendar: ["1f4c5", "📅"], user: ["1f464", "👤"], home: ["1f3e0", "🏠"], stopwatch: ["23f1-fe0f", "⏱️"], abc: ["1f524", "🔤"], link: ["1f517", "🔗"], cards: ["1f3b4", "🎴"], bulb: ["1f4a1", "💡"], mic: ["1f3a4", "🎤"], globe: ["1f30d", "🌍"], bluebook: ["1f4d8", "📘"] };
+const EMO = { fire: ["1f525", "🔥"], books: ["1f4da", "📚"], memo: ["1f4dd", "📝"], talk: ["1f5e3-fe0f", "🗣️"], game: ["1f3ae", "🎮"], book: ["1f4d6", "📖"], repeat: ["1f501", "🔁"], trophy: ["1f3c6", "🏆"], check: ["2705", "✅"], review: ["1f504", "🔄"], star: ["2b50", "⭐"], gift: ["1f381", "🎁"], shield: ["1f6e1-fe0f", "🛡️"], sparkles: ["2728", "✨"], comet: ["2604-fe0f", "☄️"], volcano: ["1f30b", "🌋"], crown: ["1f451", "👑"], swords: ["2694-fe0f", "⚔️"], clock: ["23f0", "⏰"], target: ["1f3af", "🎯"], puzzle: ["1f9e9", "🧩"], headphones: ["1f3a7", "🎧"], chat: ["1f4ac", "💬"], party: ["1f389", "🎉"], muscle: ["1f4aa", "💪"], wave: ["1f44b", "👋"], rocket: ["1f680", "🚀"], brain: ["1f9e0", "🧠"], calendar: ["1f4c5", "📅"], user: ["1f464", "👤"], home: ["1f3e0", "🏠"], bell: ["1f514", "🔔"], stopwatch: ["23f1-fe0f", "⏱️"], abc: ["1f524", "🔤"], link: ["1f517", "🔗"], cards: ["1f3b4", "🎴"], bulb: ["1f4a1", "💡"], mic: ["1f3a4", "🎤"], globe: ["1f30d", "🌍"], bluebook: ["1f4d8", "📘"] };
 /* عدد + تمييز بالعربي: ٣–١٠ جمع، غيرها مفرد (5 كلمات، 12 كلمة) */
 const arN = (n, one, many) => `${n} ${n >= 3 && n <= 10 ? many : one}`;
 function emo(name, cls){
@@ -173,6 +173,38 @@ function explainHtml(q, chosen){
   h += `<div class="btn-row" style="margin-top:8px">${typeof markBtn === "function" ? markBtn(q.id) : ""}${lessonLink(t, "افتح شرح القاعدة")}</div>`;
   return h;
 }
+/* ---- إشعارات الجوال: تسجيل آمن (لازم حساب + موافقة صريحة من الشخص) ---- */
+const Push = {
+  supported(){ return "serviceWorker" in navigator && "PushManager" in window && "Notification" in window; },
+  isIOS(){ return /iPhone|iPad|iPod/i.test(navigator.userAgent) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1); },
+  standalone(){ return (window.matchMedia && matchMedia("(display-mode: standalone)").matches) || navigator.standalone === true; },
+  async reg(){ return navigator.serviceWorker.register("/sw.js", { scope: "/" }); },
+  async current(){ if(!this.supported()) return null; const r = await navigator.serviceWorker.getRegistration("/"); return r ? r.pushManager.getSubscription() : null; },
+  keyBytes(b64){ const p = "=".repeat((4 - b64.length % 4) % 4), raw = atob((b64 + p).replace(/-/g, "+").replace(/_/g, "/")); return Uint8Array.from([...raw].map(c => c.charCodeAt(0))); },
+  async enable(){
+    if(!Auth.user()) throw new Error("سجّل الدخول أولًا");
+    if(!this.supported()) throw new Error(this.isIOS() ? "في الآيفون لازم تضيف الموقع للشاشة الرئيسية وتفتحه من هناك" : "متصفحك ما يدعم الإشعارات");
+    const perm = await Notification.requestPermission();
+    if(perm !== "granted") throw new Error("ما تم السماح بالإشعارات — تقدر تفعّلها من إعدادات المتصفح");
+    const { key } = await Auth.api("/api/push");
+    if(!key) throw new Error("الإشعارات غير جاهزة على الخادم");
+    const r = await this.reg(); await navigator.serviceWorker.ready;
+    let sub = await r.pushManager.getSubscription();
+    if(!sub) sub = await r.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: this.keyBytes(key) });
+    await Auth.api("/api/push", { method: "POST", body: { action: "subscribe", sub: sub.toJSON() } });
+    Store.set("step_push_on", true);
+    return true;
+  },
+  async disable(){
+    const sub = await this.current();
+    if(sub){ try{ await Auth.api("/api/push", { method: "POST", body: { action: "unsubscribe", endpoint: sub.endpoint } }); }catch(e){} await sub.unsubscribe(); }
+    Store.set("step_push_on", false);
+  },
+  /* يحدّث الاشتراك بهدوء لو الشخص مفعّلها من قبل */
+  async refresh(){
+    try{ if(!Auth.user() || !this.supported() || Notification.permission !== "granted" || !Store.get("step_push_on", false)) return; const sub = await this.current(); if(sub) await Auth.api("/api/push", { method: "POST", body: { action: "subscribe", sub: sub.toJSON() } }); }catch(e){}
+  }
+};
 /* شرح القاعدة في نافذة فوق السؤال — ما تطلع من الاختبار ولا يضيع تقدمك */
 let STEP_LESSONS_DOC = null;
 async function openRuleSheet(href){
@@ -263,7 +295,7 @@ function injectHead(){
   const icon = document.createElement("link"); icon.rel = "icon";
   icon.href = "data:image/svg+xml," + encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#6d28d9"/><stop offset=".55" stop-color="#4f46e5"/><stop offset="1" stop-color="#0ea5e9"/></linearGradient></defs><rect width="64" height="64" rx="16" fill="url(#g)"/><text x="32" y="41" font-family="Segoe UI,Arial,sans-serif" font-size="24" font-weight="800" fill="#fff" text-anchor="middle">STEP</text></svg>`);
   document.head.appendChild(icon);
-  const tc = document.createElement("meta"); tc.name = "theme-color"; tc.content = "#6d28d9"; document.head.appendChild(tc);
+  
 }
 
 /* ---- nav + bottom tab bar ---- */
@@ -296,7 +328,7 @@ function renderNav(){
   if(host){
     host.className = "nav";
     host.innerHTML = `<div class="container nav-inner">
-      <a class="brand" href="${info.home}"><span class="logo">${sec === "gen" ? "EN" : "STEP"}</span><span>${sec === "gen" ? "إنقلش عام" : "English"}</span></a>
+      <a class="brand" href="${info.home}"><img class="logo-img" src="assets/brand/logo.svg" alt="" width="36" height="36"><span>${sec === "gen" ? "إنقلش عام" : sec === "step" ? "تجهيز STEP" : "إنقلش"}</span></a>
       ${NAV.map(n => `<a class="link ${isActive(n.href) ? "active" : ""}" href="${n.href}"><span class="ni">${I(n.icon)} </span>${n.label}</a>`).join("")}
       <span class="spacer"></span>${sw}
       ${me ? `<a class="user-chip" href="account.html">${avatarHtml(me.name, me.u)}<span>${esc(me.name)}</span></a>` : `<a class="btn btn-sm btn-primary login-btn" href="account.html">دخول</a>`}
@@ -690,5 +722,6 @@ document.addEventListener("DOMContentLoaded", () => {
   })();
   renderEventsBar();
   giftCheck();
+  if(typeof Push !== "undefined") Push.refresh();
   if(typeof Progress !== "undefined" && Auth.user()) Progress.sync(false).then(ok => { if(ok) renderHomeStats(); });
 });

@@ -15,5 +15,11 @@
     "api/result.js": {
       "includeFiles": "data/{general,stories}/*.js"
     }
-  }
+  },
+  "crons": [
+    {
+      "path": "/api/push?cron=daily",
+      "schedule": "0 17 * * *"
+    }
+  ]
 }

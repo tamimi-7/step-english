@@ -2,6 +2,7 @@ const db = require("../lib/db");
 const A = require("../lib/auth");
 const H = require("../lib/http");
 const EV = require("../data/events.js");
+const P = require("../lib/push");
 
 /* معركة الكلمات: لوحة أفضل نتيجة لكل لاعب في كل معركة، وتوزيع الجوائز تلقائيًا بعد انتهائها */
 async function awardIfNeeded(win){
@@ -23,6 +24,7 @@ async function awardIfNeeded(win){
         title: `مبروك! المركز ${w.rank} في معركة الكلمات`, msg: `نتيجتك ${w.score} في معركة ${win.key}. أُضيفت لك جائزة +${w.prize} نقطة.` })]);
     });
     await db.pipeline(cmds);
+    for(const w of winners){ try{ await P.sendToUser(w.u, { title: `🏆 مبروك! المركز ${w.rank} في معركة الكلمات`, body: `أُضيفت لك +${w.prize} نقطة. ادخل وشوف ترتيبك.`, url: "/compete.html", tag: "battle-prize" }); }catch(e){} }
   }
   return { key: win.key, winners };
 }

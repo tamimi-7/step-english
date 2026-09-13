@@ -6,7 +6,7 @@ const fs = require("fs");
 const path = require("path");
 const ROOT = path.join(__dirname, "..");
 const PORT = Number(process.env.PORT || 8765);
-const MIME = { ".html": "text/html; charset=utf-8", ".css": "text/css; charset=utf-8", ".js": "application/javascript; charset=utf-8", ".json": "application/json", ".png": "image/png", ".jpg": "image/jpeg", ".svg": "image/svg+xml", ".ico": "image/x-icon", ".md": "text/markdown; charset=utf-8", ".mp3": "audio/mpeg", ".woff2": "font/woff2" };
+const MIME = { ".html": "text/html; charset=utf-8", ".css": "text/css; charset=utf-8", ".js": "application/javascript; charset=utf-8", ".json": "application/json", ".png": "image/png", ".jpg": "image/jpeg", ".svg": "image/svg+xml", ".webmanifest": "application/manifest+json", ".webp": "image/webp", ".ico": "image/x-icon", ".md": "text/markdown; charset=utf-8", ".mp3": "audio/mpeg", ".woff2": "font/woff2" };
 
 http.createServer(async (req, res) => {
   const url = new URL(req.url, "http://localhost");

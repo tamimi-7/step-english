@@ -1242,3 +1242,7 @@ body.sheet-open{overflow:hidden}
 @media (min-width:800px){.rule-ov{align-items:center}.rule-sheet{border-radius:22px;border-bottom:3px solid var(--ink)}}
 .why-mini{display:flex;gap:6px;align-items:flex-start;margin:6px 0;padding:6px 10px;border-radius:10px;background:var(--bad-soft);color:var(--bad);font-weight:600;font-size:.92rem;line-height:1.6}
 .why-mini .i{width:16px;height:16px;flex:none;margin-top:4px}
+
+/* الشعار */
+.brand .logo-img{width:36px;height:36px;display:block;flex:none;filter:drop-shadow(0 1px 0 rgba(0,0,0,.08))}
+[data-theme="dark"] .brand .logo-img{filter:drop-shadow(0 0 1px rgba(255,255,255,.35))}
