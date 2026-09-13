@@ -105,8 +105,8 @@
 
   document.addEventListener("DOMContentLoaded", async () => {
     const params = new URLSearchParams(location.search);
-    if(Auth.user()) await Progress.sync(false);
     renderDash();
+    if(Auth.user()) Progress.sync(false).then(ok => { if(ok && $("#session").hidden) renderDash(); });
     $("#countSeg").addEventListener("click", e => { const b = e.target.closest("button"); if(!b) return; S.count = +b.dataset.v; $("#countSeg").querySelectorAll("button").forEach(x => x.classList.toggle("on", x === b)); });
     $("#startBtn").addEventListener("click", () => startSession(S.mode, S.topics));
     $("#tNext").addEventListener("click", next);

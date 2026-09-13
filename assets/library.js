@@ -394,5 +394,8 @@
 
   document.addEventListener("click", e => { const b = e.target.closest("[data-say]"); if(b){ try{ speechSynthesis.cancel(); const u = new SpeechSynthesisUtterance(b.dataset.say); u.lang = "en-US"; u.rate = .9; speechSynthesis.speak(u); }catch(err){} } });
   window.addEventListener("hashchange", route);
-  document.addEventListener("DOMContentLoaded", async () => { if(Auth.user() && typeof Progress !== "undefined") await Progress.sync(false); route(); });
+  document.addEventListener("DOMContentLoaded", () => {
+    route();
+    if(Auth.user() && typeof Progress !== "undefined") Progress.sync(false).then(ok => { const name = (location.hash.replace(/^#\/?/, "") || "").split("/")[0] || "home"; if(ok && ["home", "level", "words"].includes(name)) route(); });
+  });
 })();

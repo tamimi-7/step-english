@@ -762,5 +762,9 @@
 
   window.addEventListener("hashchange", route);
   document.addEventListener("points:loaded", e => { const st = (e.detail && e.detail.stages) || []; let changed = false; st.forEach(id => { if(!GEN.units[id]){ GEN.units[id] = true; changed = true; } }); if(changed){ saveGen(); if(/^#\/(|level|unit)/.test(location.hash) || !location.hash) route(); } });
-  document.addEventListener("DOMContentLoaded", async () => { if(Auth.user()) await Progress.sync(false); route(); if(typeof loadPoints === "function") loadPoints(); });
+  document.addEventListener("DOMContentLoaded", () => {
+    route(); if(typeof loadPoints === "function") loadPoints();
+    /* المزامنة بالخلفية: ما ننتظرها قبل ما تشتغل الأزرار */
+    if(Auth.user()) Progress.sync(false).then(ok => { const name = (location.hash.replace(/^#\/?/, "") || "").split("/")[0] || "home"; if(ok && ["home", "level", "unit", "vocab", "grammar", "talk", "games", "verbs"].includes(name)) route(); });
+  });
 })();

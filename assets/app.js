@@ -229,8 +229,11 @@ const Auth = {
     const a = this.get(); const headers = { "Content-Type": "application/json" };
     if(a && a.token) headers.Authorization = "Bearer " + a.token;
     let r;
-    try{ r = await fetch(path, { method: opts.method || "GET", headers, body: opts.body ? JSON.stringify(opts.body) : undefined }); }
-    catch(e){ throw new Error("تعذّر الاتصال بالخادم — الحسابات والمنافسات تعمل على الموقع المنشور (الرابط)، وليس عند فتح الملف مباشرة"); }
+    const ctl = typeof AbortController !== "undefined" ? new AbortController() : null;
+    const tm = ctl ? setTimeout(() => ctl.abort(), opts.timeout || 10000) : null;
+    try{ r = await fetch(path, { method: opts.method || "GET", headers, body: opts.body ? JSON.stringify(opts.body) : undefined, signal: ctl ? ctl.signal : undefined }); }
+    catch(e){ throw new Error(e && e.name === "AbortError" ? "النت بطيء — ما وصلنا رد من الخادم، جرّب مرة ثانية" : "تعذّر الاتصال بالخادم — تأكد من الإنترنت"); }
+    finally{ if(tm) clearTimeout(tm); }
     let j = null; try{ j = await r.json(); }catch(e){}
     if(r.status === 401 && a && !path.includes("/login") && !path.includes("/register")) this.clear();
     if(!r.ok) throw new Error((j && j.error) || ("خطأ " + r.status));
