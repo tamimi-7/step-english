@@ -201,6 +201,7 @@
         <a class="gs pts" href="account.html#points" id="ptsCard">${emo("trophy", "gs-emo")}<div class="gs-b"><div class="gs-n" id="ptsCardN">${Auth.user() ? "…" : "—"}</div><div class="gs-l" id="ptsCardSub">${Auth.user() ? "نقاط المنافسة" : "سجّل الدخول لتجمع نقاطًا"}</div></div></a>
       </div>
       <details class="pts-where small muted"><summary>${I("trophy")} وين تاخذ نقاط؟</summary><p>اختبار الموضوع، اختبار الوحدة، تدريب القاعدة، تحدي اليوم، الألعاب، تمثيل الدور، تصريف الأفعال، وأسئلة القصص — كل سؤال تجيبه صح <b>لأول مرة</b> = نقطة. البطاقات والمراجعة بدون نقاط، و XP لمستواك الشخصي فقط.</p></details>
+      <div class="home-cols">
       <section class="section"><div class="section-title"><h2>المستويات</h2><span class="muted small">التقدم يزيد مع كل كلمة تتعلمها ويكتمل باختبار الوحدة</span></div>
         <div class="lvl-list">${LV.map(lv => { const units = U.filter(u => u.lvl === lv), done = units.filter(u => GEN.units[u.id]).length, pct = levelPct(lv); const st = pct === 100 ? "done" : lv === cur ? "cur" : ""; return `<a class="lvl-row ${st}" href="#/level/${lv}" style="--c:${LVC[lv]}"><div class="lvl-badge" style="background:${LVC[lv]}">${lv}</div><div class="lvl-body"><div class="lvl-head"><b>${LVN[lv]}</b><span class="lvl-pct">${pct}%</span></div>${bar(pct)}<div class="small muted">${done}/${units.length} وحدة مكتملة${lv === cur ? " · <b>أنت هنا</b>" : ""}</div></div>${I("arrow")}</a>`; }).join("")}</div>
       </section>
@@ -213,7 +214,7 @@
           <a class="card link-card c-amber" href="library.html"><div class="menu-emo">${emo("book")}</div><h3>القصص والروايات</h3><p class="muted small">اقرأ واستمع بصوت قارئ — من A1 إلى C2</p></a>
           <a class="card link-card c-blue" href="#/verbs"><div class="menu-emo">${emo("repeat")}</div><h3>تصريف الأفعال</h3><p class="muted small">${(window.GEN_VERBS || []).length} فعلًا: الماضي، بعد have، وing — مع بحث واختبار</p></a>
         </div>
-      </section>`);
+      </section></div>`);
     if(Auth.user()) Auth.api("/api/me").then(m => { const n = $("#ptsCardN"), sub = $("#ptsCardSub"); if(n) n.textContent = m.points || 0; if(sub) sub.textContent = "نقطة" + (m.monthRank ? ` · البطولة #${m.monthRank}` : m.rank ? ` · #${m.rank}` : ""); }).catch(() => {});
   };
 
@@ -319,7 +320,7 @@
       render(`${opts.header || ""}<div class="quiz-top"><h2 style="margin:0;font-size:1.15rem">${opts.title}</h2><div class="btn-row"><span class="badge ok">${I("check")} ${S.score}</span><span class="badge info">${S.i + 1} / ${S.list.length}</span>${opts.timed ? `<span class="timer" id="gt">--</span>` : ""}</div></div>${bar(S.i / S.list.length * 100)}
         <div class="card q-card"><div class="btn-row" style="justify-content:space-between"><span class="badge">${q.kind === "meaning" ? "ما معنى الكلمة؟" : q.kind === "reverse" ? "ما الكلمة الإنجليزية؟" : q.kind === "sentence" ? "أكمل الجملة" : q.kind === "grammar" ? "قاعدة: " + esc(q.sub || "") : q.kind === "dialog" ? "محادثة" : "سؤال"}</span>${q.say ? spk(q.say) : ""}</div>
         <div class="q-text ${q.kind === "reverse" ? "" : "en"}" style="${q.kind === "reverse" ? "direction:rtl;text-align:right;font-family:inherit" : ""}">${esc(q.q)}</div>${q.sub && q.kind !== "grammar" ? `<div class="muted small" style="margin-top:-8px;margin-bottom:10px">${esc(q.sub)}</div>` : ""}${q.hint ? `<div class="muted small" style="margin-bottom:10px">${I("bulb")} ${esc(q.hint)}</div>` : ""}
-        <div class="opts-list" id="gopts">${q.opts.map((o, k) => `<button type="button" class="opt ${q.kind === "meaning" ? "ar" : ""}" data-k="${k}"><span class="letter">${L[k]}</span><span>${esc(o)}</span></button>`).join("")}</div>
+        <div class="opts-list ${q.opts.every(o => String(o).length <= 26) ? "two" : ""}" id="gopts">${q.opts.map((o, k) => `<button type="button" class="opt ${q.kind === "meaning" ? "ar" : ""}" data-k="${k}"><span class="letter">${L[k]}</span><span>${esc(o)}</span></button>`).join("")}</div>
         <div class="feedback" id="gfb" hidden></div>
         <div class="quiz-nav" style="justify-content:space-between"><a class="btn btn-sm" href="${opts.backHref || "#/"}">خروج</a><button type="button" class="btn btn-primary" id="gnext" disabled>التالي ←</button></div></div>`);
       if(q.say && opts.autoSay) after(() => speak(q.say), 150);

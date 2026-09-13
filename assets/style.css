@@ -1246,3 +1246,30 @@ body.sheet-open{overflow:hidden}
 /* الشعار */
 .brand .logo-img{width:36px;height:36px;display:block;flex:none;filter:drop-shadow(0 1px 0 rgba(0,0,0,.08))}
 [data-theme="dark"] .brand .logo-img{filter:drop-shadow(0 0 1px rgba(255,255,255,.35))}
+
+/* ===== الكمبيوتر ===== */
+@media (min-width:861px){ .nav-inner{flex-wrap:nowrap} }
+@media (max-width:1440px) and (min-width:861px){ .nav .ni{display:none} .nav a.link{padding:6px 9px} }
+@media (max-width:1120px) and (min-width:861px){ .nav a.link{font-size:.84rem;padding:5px 6px} .brand > span{display:none} .nav .user-chip span:last-child{display:none} }
+/* الرئيسية: المستويات يمين والأقسام يسار بدل صفحة طويلة */
+@media (min-width:1100px){
+  .home-cols{display:grid;grid-template-columns:minmax(0,1.35fr) minmax(0,1fr);gap:28px;align-items:start}
+  .home-cols > .section{margin-top:18px}
+  .home-cols .gen-menu{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .home-cols .gen-menu .card{padding:16px}
+}
+@media (min-width:900px){
+  /* الاختبارات: في النص بعرض مريح، والخيارات القصيرة بعمودين */
+  .quiz-top,.q-card,#app > .progress,#session > .progress,.flash-wrap,.speak-card{max-width:820px;margin-inline:auto}
+  .q-card .opts-list.two{grid-template-columns:repeat(2,minmax(0,1fr))}
+  #app > .card.center.sheet{max-width:780px;margin-inline:auto}
+  /* الدروس والقصص: سطر قراءة مريح */
+  #app > .lesson,#app > article.lesson{max-width:920px;margin-inline:auto}
+  .story-text{max-width:860px;margin-inline:auto}
+  .rule-sheet .rule-body{padding-inline:24px}
+}
+@media (min-width:1000px){
+  .compete-top{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.25fr);gap:22px;align-items:start}
+  .compete-top > .section{margin-top:0}
+  #chalDetail{grid-column:1 / -1}
+}
