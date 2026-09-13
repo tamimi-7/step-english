@@ -978,3 +978,30 @@ body.focus-open .tabbar{display:none}
 .ev-bit.gift{color:#be185d}
 .ev-card.gift{border-color:#be185d;box-shadow:-4px 4px 0 #be185d}
 .ev-card.gift .ev-ic{background:#fce7f3;color:#be185d}
+
+/* شرح النقاط */
+.pts-explain{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;margin:10px 0 2px}
+.px{display:inline-flex;align-items:center;gap:5px;border:2px solid var(--line);border-radius:999px;padding:3px 10px;font-size:.85rem;font-weight:700}
+.px .i{width:14px;height:14px}
+.px.ok{border-color:var(--ok);color:var(--ok)}
+.px.bonus{border-color:#b45309;color:#b45309}
+.px.stage{border-color:var(--primary);color:var(--primary)}
+.px.muted{color:var(--muted)}
+/* تفصيل النقاط */
+.pts-row{display:grid;grid-template-columns:minmax(120px,1.2fr) 2fr 56px;gap:10px;align-items:center;padding:7px 0;border-bottom:1px dashed var(--line)}
+.pts-row.total{border-bottom:0;border-top:2px solid var(--ink);margin-top:4px;font-weight:800}
+.pr-l{font-size:.92rem}
+.pr-bar{height:10px;background:var(--surface2);border-radius:999px;overflow:hidden}
+.pr-bar>div{height:100%;background:var(--grad-warm)}
+.pr-n{text-align:end;font-family:"Baloo Bhaijaan 2",sans-serif;font-weight:800;font-size:1.1rem}
+.pts-sum .stat .num{font-size:1.8rem}
+@media (max-width:640px){.pts-row{grid-template-columns:1fr 60px}.pr-bar{grid-column:1/-1;order:3}}
+/* رسائل وإعلانات */
+.gift-box.comp{background:linear-gradient(135deg,#bfdbfe,#a5b4fc);color:#1e3a8a}
+.gift-box.live{background:linear-gradient(135deg,#fca5a5,#fbbf24);color:#7c2d12}
+/* معركة الكلمات */
+.battle-hero{text-align:center}
+.battle-hero h1{margin:6px 0}
+.battle-count{margin:14px auto;display:inline-block;border:3px solid var(--ink);border-radius:14px;padding:10px 22px;box-shadow:-4px 4px 0 var(--ink);background:var(--surface)}
+.bc-num{font-family:"Baloo Bhaijaan 2",sans-serif;font-weight:800;font-size:1.6rem;color:var(--accent)}
+.battle-card{margin-bottom:14px;border-color:#be185d;box-shadow:-4px 4px 0 #be185d}

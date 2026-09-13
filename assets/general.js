@@ -37,10 +37,11 @@
   const xpNext = xp => { const l = xpLevel(xp); return { l, cur: xp - 60 * (l - 1) * (l - 1), need: 60 * (l * l) - 60 * (l - 1) * (l - 1) }; };
   const TITLES = ["مبتدئ", "متعلم", "مثابر", "متمكن", "متقدم", "طليق", "خبير", "أستاذ"];
   const levelTitle = l => TITLES[Math.min(TITLES.length - 1, Math.floor((l - 1) / 3))];
-  async function postPoints(score, total, seconds, ids){
-    if(!Auth.user() || !score || !ids || !ids.length) return;
+  async function postPoints(score, total, seconds, ids, unit){
+    if(!Auth.user() || ((!ids || !ids.length) && !unit)) return;
     try{
-      const j = await Auth.api("/api/result", { method: "POST", body: { mode: "general", score, total, seconds: seconds || 0, ids } });
+      const j = await Auth.api("/api/result", { method: "POST", body: { mode: "general", score, total, seconds: seconds || 0, ids: ids || [], unit: unit || null } });
+      if(j.stage){ GEN.units[j.stage.unit] = true; saveGen(); }
       const box = $("#ptsBox");
       if(box) pointsReveal(j, box);
       else if(j.points > 0){ toast(`+${j.points} نقطة في المنافسة${j.mult > 1 ? " (×" + j.mult + " فعالية)" : ""}`); if(typeof SFX !== "undefined") SFX.coin(); }
@@ -191,7 +192,7 @@
         <div class="gs"><div class="gs-n">${streak}</div><div class="gs-l">${I("fire")} ${streak === 1 ? "يوم متواصل" : "أيام متواصلة"}</div></div>
         <div class="gs"><div class="gs-n">${kn}</div><div class="gs-l">${I("check")} كلمة تعرفها من ${all.length}</div></div>
         <a class="gs ${due ? "hot" : ""}" href="#/review"><div class="gs-n">${due}</div><div class="gs-l">${I("repeat")} كلمة تحتاج مراجعة</div></a>
-        <a class="gs pts" href="compete.html" id="ptsCard"><div class="gs-n" id="ptsCardN">${Auth.user() ? "…" : "—"}</div><div class="gs-l">${I("trophy")} نقاط المنافسة</div><div class="small muted" id="ptsCardSub">${Auth.user() ? "" : "سجّل الدخول لتجمع نقاطًا"}</div></a>
+        <a class="gs pts" href="account.html#points" id="ptsCard"><div class="gs-n" id="ptsCardN">${Auth.user() ? "…" : "—"}</div><div class="gs-l">${I("trophy")} نقاط المنافسة</div><div class="small muted" id="ptsCardSub">${Auth.user() ? "" : "سجّل الدخول لتجمع نقاطًا"}</div></a>
       </div>
       <p class="small muted pts-where">${I("trophy")} <b>وين تاخذ نقاط؟</b> اختبار الموضوع، اختبار الوحدة، تدريب القاعدة، تحدي اليوم، الألعاب، تمثيل الدور، تصريف الأفعال، وأسئلة القصص — كل سؤال تجيبه صح <b>لأول مرة</b> = نقطة. البطاقات والمراجعة بدون نقاط.</p>
       <section class="section"><div class="section-title"><h2>المستويات</h2><span class="muted small">التقدم يزيد مع كل كلمة تتعلمها ويكتمل باختبار الوحدة</span></div>
@@ -237,6 +238,7 @@
   /* ---------- GAMES ---------- */
   routes.games = () => {
     render(crumb([{ t: "الألعاب" }]) + `<h1>${I("timer")} الألعاب</h1><p class="muted">ألعاب سريعة على كلمات مستواك. كل إجابة صحيحة تعطيك XP.</p>
+      <a class="card link-card battle-card" href="#/battle"><div class="icon p-rose">${I("swords")}</div><h3>معركة الكلمات ${ptsTag()}</h3><p class="muted small">كل جمعة ٨–١٠ مساءً: نفس الكلمات للجميع، والأول يفوز بـ +٣٠ نقطة</p></a>
       <div class="grid grid-3">
         <a class="card link-card c-rose" href="#/game/speed"><div class="icon p-rose">${I("timer")}</div><h3>سباق ٦٠ ثانية ${ptsTag()}</h3><p class="muted small">أكبر عدد من المعاني قبل انتهاء الوقت. أفضل نتيجة: ${GEN.best.speed || 0}</p></a>
         <a class="card link-card c-blue" href="#/game/match"><div class="icon p-blue">${I("cards")}</div><h3>طابق الكلمات ${ptsTag()}</h3><p class="muted small">اربط كل كلمة بمعناها.</p></a>
@@ -443,6 +445,51 @@
     nextQ(); tick();
   }
 
+  /* ---------- معركة الكلمات ---------- */
+  function seeded(seed){ let h = 2166136261; for(const ch of String(seed)) h = Math.imul(h ^ ch.charCodeAt(0), 16777619); return () => { h ^= h << 13; h ^= h >>> 17; h ^= h << 5; return ((h >>> 0) % 100000) / 100000; }; }
+  routes.battle = async () => {
+    render(crumb([{ t: "معركة الكلمات" }]) + `<div class="card center"><p class="muted">جارٍ التحميل…</p></div>`);
+    let info; try{ info = await Auth.api("/api/battle"); }catch(e){ return render(crumb([{ t: "معركة الكلمات" }]) + `<div class="note bad"><span class="ic">${I("alert")}</span><p>${esc(e.message)}</p></div>`); }
+    const B = info.config, now = info.now;
+    const board = rows => rows.length ? `<div class="lb">${rows.map(r => `<div class="lb-row ${r.me ? "me" : ""} ${r.rank <= 3 ? "top" + r.rank : ""}"><div class="rk ${r.rank <= 3 ? "medal" : ""}">${r.rank <= 3 ? I("medal", "medal-" + r.rank) : r.rank}</div><div class="nm">${esc(r.name)}</div><div class="pt">${r.score}${r.prize ? ` · +${r.prize}` : ""}</div></div>`).join("")}</div>` : `<p class="muted small">ما أحد لعب بعد — كن الأول!</p>`;
+    const lastHtml = info.last && info.last.winners.length ? `<div class="card sheet"><h3>${I("trophy")} فائزو آخر معركة (${esc(info.last.key)})</h3>${board(info.last.winners)}</div>` : "";
+    if(!info.active){
+      return render(crumb([{ t: "معركة الكلمات" }]) + `<div class="card sheet battle-hero"><div class="gift-box live">${I("swords")}</div><h1>${esc(B.title)}</h1><p>${esc(B.desc)}</p>
+        ${info.next ? `<div class="battle-count"><div class="small muted">تبدأ بعد</div><div class="bc-num" id="bcNum">${fmtLeft(info.next.start - now)}</div><div class="small muted">${new Date(info.next.start).toLocaleString("ar-SA", { weekday: "long", hour: "numeric", minute: "2-digit" })}</div></div>` : ""}
+        <div class="btn-row" style="justify-content:center"><a class="btn btn-warm" href="#/game/speed">${I("timer")} تدرّب الحين على سباق ٦٠ ثانية</a></div>
+        <p class="small muted">بنذكّرك قبل البداية بساعة، ولما تبدأ يطلع لك إعلان.</p></div>${lastHtml}`);
+    }
+    const rand = seeded(info.seed);
+    const pool = allWords().filter(x => x.t.lvl === "A1" || x.t.lvl === "A2");
+    const order = pool.map(x => [rand(), x]).sort((p, q) => p[0] - q[0]).map(p => p[1]).slice(0, 80);
+    const intro = () => render(crumb([{ t: "معركة الكلمات" }]) + `<div class="card sheet battle-hero"><div class="gift-box live">${I("swords")}</div><h1>${esc(B.title)} — قائمة الآن!</h1><p>${esc(B.desc)}</p>
+      <div class="battle-count"><div class="small muted">تنتهي بعد</div><div class="bc-num">${fmtLeft(info.active.end - Date.now())}</div>${info.mine ? `<div class="small">أفضل نتيجة لك: <b>${info.mine.score}</b> · المركز #${info.mine.rank}</div>` : ""}</div>
+      <button type="button" class="btn btn-warm btn-lg" id="bStart">${I("swords")} ابدأ الجولة (${B.seconds} ثانية)</button></div>
+      <div class="card sheet"><h3>${I("trophy")} الترتيب الآن</h3>${board(info.board)}</div>${lastHtml}`);
+    intro();
+    $("#bStart").addEventListener("click", () => {
+      let i = 0, score = 0, answered = 0, combo = 0, lastLeft = null; const sids = []; const start = Date.now(); const DUR = B.seconds;
+      const nextQ = () => {
+        const x = order[i++ % order.length]; const q = (i % 3 === 0) ? reverseQ(x.t, x.i) : meaningQ(x.t, x.i);
+        render(`<div class="quiz-top"><h2 style="margin:0;font-size:1.15rem">${I("swords")} معركة الكلمات</h2><div class="btn-row"><span class="badge ok">${score}</span>${combo >= 3 ? `<span class="badge accent">${I("fire")} ×${combo}</span>` : ""}<span class="timer" id="st">${DUR}s</span></div></div>
+          <div class="card q-card"><div class="badge">${q.kind === "meaning" ? "ما معنى" : "ما الكلمة"}</div><div class="q-text ${q.kind === "meaning" ? "en" : ""}" style="${q.kind === "meaning" ? "" : "direction:rtl;text-align:right;font-family:inherit"}">${esc(q.q)}</div>
+          <div class="opts-list" id="gopts">${q.opts.map((o, k) => `<button type="button" class="opt" data-k="${k}"><span class="letter">${L[k]}</span><span>${esc(o)}</span></button>`).join("")}</div></div>`);
+        $("#gopts").querySelectorAll(".opt").forEach(btn => btn.addEventListener("click", () => { const ok = +btn.dataset.k === q.a; answered++; Progress.record(q.id, ok); if(ok){ combo++; score += combo >= 3 ? 2 : 1; sids.push(q.id); sfx(combo >= 3 ? "combo" : "correct"); btn.classList.add("correct"); } else { combo = 0; sfx("wrong"); btn.classList.add("wrong"); $("#gopts").querySelectorAll(".opt")[q.a].classList.add("correct"); } $("#gopts").querySelectorAll(".opt").forEach(o => o.disabled = true); after(nextQ, ok ? 220 : 800); }));
+      };
+      const tick = async () => {
+        const left = DUR - Math.round((Date.now() - start) / 1000); const el = $("#st"); if(el){ el.textContent = Math.max(0, left) + "s"; el.classList.toggle("low", left <= 10); }
+        if(left !== lastLeft){ lastLeft = left; if(left <= 0) sfx("timeout"); else if(left <= 10) sfx("tick"); }
+        if(left > 0) return after(tick, 250);
+        stopTimers();
+        let res = null; try{ res = await Auth.api("/api/battle", { method: "POST", body: { score } }); }catch(e){}
+        postPoints(sids.length, Math.max(answered, 1), DUR, sids);
+        const mine = res && res.mine;
+        resultCard("معركة الكلمات", score, Math.max(answered, score), `<p class="muted">${answered} سؤال · نتيجة المعركة <b>${score}</b>${mine ? ` · أفضل نتيجة لك ${mine.score} (المركز #${mine.rank})` : ""}</p>${res ? `<div class="card sheet" style="text-align:start">${board(res.board)}</div>` : ""}`, "#/battle", "#/battle");
+      };
+      nextQ(); tick();
+    });
+  };
+
   /* ---------- review (SRS) ---------- */
   routes.review = () => {
     const ids = dueWordIds(); const list = shuffle(ids).slice(0, 20).map(qFromWordId).filter(Boolean);
@@ -486,7 +533,7 @@
     if(l) list.push(...shuffle(l.practice.map((_, i) => grammarQ(l, i))).slice(0, ths.length ? 3 : 8));
     ds.forEach(d => { const cand = d.lines.map((_, i) => dialogQ(d, i)).filter(Boolean); list.push(...shuffle(cand).slice(0, ds.length > 1 ? 1 : 2)); });
     list = shuffle(list).slice(0, 12);
-    runQuiz({ title: "اختبار الوحدة: " + u.t, list, backHref: `#/unit/${u.id}`, xpPer: 5, onDone: (s, n, secs, ids) => { const pass = s / n >= .7; if(pass && !GEN.units[u.id]){ GEN.units[u.id] = true; gainXP(100, true); saveGen(); } postPoints(s, n, secs, ids); const next = U[U.indexOf(u) + 1]; resultCard("اختبار الوحدة: " + u.t, s, n, pass ? `<p class="muted">${I("trophy")} اكتملت الوحدة! +100 XP</p>${next ? `<a class="btn btn-warm" href="#/unit/${next.id}">الوحدة التالية: ${esc(next.t)} ←</a>` : ""}` : `<p class="muted">تحتاج ٧٠٪ لإكمال الوحدة. راجع المفردات والقاعدة ثم أعد المحاولة.</p>`, `#/unit/${u.id}`, `#/unittest/${u.id}`); } });
+    runQuiz({ title: "اختبار الوحدة: " + u.t, list, backHref: `#/unit/${u.id}`, xpPer: 5, onDone: (s, n, secs, ids) => { const pass = s / n >= .7; if(pass && !GEN.units[u.id]){ GEN.units[u.id] = true; gainXP(100, true); saveGen(); } postPoints(s, n, secs, ids, u.id); const next = U[U.indexOf(u) + 1]; resultCard("اختبار الوحدة: " + u.t, s, n, pass ? `<p class="muted">${I("trophy")} اكتملت الوحدة! +100 XP</p>${next ? `<a class="btn btn-warm" href="#/unit/${next.id}">الوحدة التالية: ${esc(next.t)} ←</a>` : ""}` : `<p class="muted">تحتاج ٧٠٪ لإكمال الوحدة. راجع المفردات والقاعدة ثم أعد المحاولة.</p>`, `#/unit/${u.id}`, `#/unittest/${u.id}`); } });
   };
 
   /* ---------- GRAMMAR ---------- */
@@ -633,5 +680,6 @@
   };
 
   window.addEventListener("hashchange", route);
-  document.addEventListener("DOMContentLoaded", async () => { if(Auth.user()) await Progress.sync(false); route(); });
+  document.addEventListener("points:loaded", e => { const st = (e.detail && e.detail.stages) || []; let changed = false; st.forEach(id => { if(!GEN.units[id]){ GEN.units[id] = true; changed = true; } }); if(changed){ saveGen(); if(/^#\/(|level|unit)/.test(location.hash) || !location.hash) route(); } });
+  document.addEventListener("DOMContentLoaded", async () => { if(Auth.user()) await Progress.sync(false); route(); if(typeof loadPoints === "function") loadPoints(); });
 })();

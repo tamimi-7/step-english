@@ -278,6 +278,16 @@ function confetti(){
 }
 /* ---- نقاط المنافسة: عرض نتيجة الحفظ (قاعدة: النقطة مرة واحدة لكل سؤال) ---- */
 /* عرض النقاط بحركة: الرقم المكتسب "يطير" إلى المجموع والمجموع يعدّ لأعلى */
+/* يشرح من أين جاءت كل نقطة في هذه الجولة */
+function pointsExplain(j){
+  const rows = [];
+  if(j.base) rows.push(`<span class="px ok">${I("check")} ${j.base} ${j.base === 1 ? "إجابة جديدة" : "إجابات جديدة"} = +${j.base}</span>`);
+  if(j.bonus) rows.push(`<span class="px bonus">${I(j.bonusSource === "gift" ? "gift" : "zap")} ${esc(j.bonusLabel || "مضاعف")} ×٢ = +${j.bonus}</span>`);
+  if(j.stage) rows.push(`<span class="px stage">${I("trophy")} إتمام مرحلة = +${j.stage.points}</span>`);
+  if(j.repeated) rows.push(`<span class="px muted">${I("repeat")} ${j.repeated} ${j.repeated === 1 ? "سؤال سبق أخذ نقطته" : "أسئلة سبق أخذ نقاطها"} = 0</span>`);
+  if(!rows.length) rows.push(`<span class="px muted">ما فيه إجابات صحيحة جديدة هذه المرة</span>`);
+  return rows.join("");
+}
 function pointsReveal(j, host){
   if(!host) return;
   if(j.already){ host.innerHTML = `<div class="note warn" style="justify-content:center"><span class="ic">${I("info")}</span><p>سبق أن أنجزت هذا التحدي، فلم تُحسب هذه المحاولة.</p></div>`; hydrateIcons(host); return; }
@@ -287,7 +297,8 @@ function pointsReveal(j, host){
       <div class="pts-arrow">${I("arrow")}</div>
       <div class="pts-total" id="ptsTotal"><div class="pts-num" id="ptsNum">${before}</div><div class="small muted">مجموعك</div></div>
     </div>
-    <p class="small muted pts-meta">${gain ? "" : (j.repeated ? "هذه الأسئلة سبق أن أخذت نقاطها — النقطة تُحسب مرة واحدة لكل سؤال." : "ما فيه إجابات صحيحة جديدة هذه المرة.")}${gain && j.repeated ? `${j.repeated} سؤال سبق أخذ نقطته · ` : ""}${j.rank ? `ترتيبك العام <b>#${j.rank}</b>` : ""}${j.monthRank ? ` · البطولة <b>#${j.monthRank}</b>` : ""}</p>`;
+    <div class="pts-explain">${pointsExplain(j)}</div>
+    <p class="small muted pts-meta">${j.rank ? `ترتيبك العام <b>#${j.rank}</b>` : ""}${j.monthRank ? ` · البطولة <b>#${j.monthRank}</b>` : ""} · <a href="account.html#points">تفصيل نقاطي</a></p>`;
   hydrateIcons(host);
   if(!gain) return;
   if(typeof SFX !== "undefined") SFX.coin();
@@ -313,40 +324,89 @@ function pointsHtml(j){
 /* ---- شريط الفعاليات والبطولة (data/events.js) ---- */
 function fmtLeft(ms){ const m = Math.max(0, Math.floor(ms / 60000)); const d = Math.floor(m / 1440), h = Math.floor(m % 1440 / 60), mm = m % 60; const ar = (n, one, two, few, many) => n === 1 ? one : n === 2 ? two : (n % 100 >= 3 && n % 100 <= 10) ? `${n} ${few}` : `${n} ${many}`; const DD = n => ar(n, "يوم", "يومين", "أيام", "يومًا"), HH = n => ar(n, "ساعة", "ساعتين", "ساعات", "ساعة"), MM = n => ar(n, "دقيقة", "دقيقتين", "دقائق", "دقيقة"); if(d > 0) return h > 0 ? `${DD(d)} و${HH(h)}` : DD(d); if(h > 0) return mm > 0 ? `${HH(h)} و${MM(mm)}` : HH(h); return MM(mm); }
 /* هدية شخصية: تظهر مرة واحدة أول ما يدخل صاحبها */
-function giftCheck(){
-  if(typeof EVENTS === "undefined" || !EVENTS.giftFor) return;
-  const me = Auth.user(); if(!me) return;
-  const g = EVENTS.giftFor(me); if(!g) return;
-  const key = "step_gift_seen_" + g.id + "_" + me.u;
-  if(Store.get(key, false)) return;
+/* بيانات النقاط من الخادم (مرة لكل صفحة) */
+let PTS_CACHE = null;
+function loadPoints(force){
+  if(!Auth.user()) return Promise.resolve(null);
+  if(PTS_CACHE && !force) return PTS_CACHE;
+  PTS_CACHE = Auth.api("/api/points").then(j => { window.PTS = j; document.dispatchEvent(new CustomEvent("points:loaded", { detail: j })); return j; }).catch(() => null);
+  return PTS_CACHE;
+}
+function modalCard(inner, onClose){
   const el = document.createElement("div"); el.className = "levelup gift-ov";
-  el.innerHTML = `<div class="lu-card gift-card"><div class="gift-box">${I("gift")}</div><h3>${esc(g.title)}</h3><p>${esc(g.msg)}</p><div class="gift-mult">نقاط ×${g.mult}</div><p class="small muted">تنتهي ${new Date(g.endsAt).toLocaleDateString("ar-SA", { day: "numeric", month: "long" })}</p><button type="button" class="btn btn-primary btn-lg">${I("sparkles")} تسلّمت الهدية</button></div>`;
+  el.innerHTML = `<div class="lu-card gift-card">${inner}</div>`;
   document.body.appendChild(el); hydrateIcons(el);
-  try{ if(typeof SFX !== "undefined") SFX.win(); confetti(); }catch(e){}
-  const close = () => { el.remove(); Store.set(key, true); };
-  el.querySelector("button").addEventListener("click", close);
+  const close = () => { el.remove(); if(onClose) onClose(); };
+  el.querySelectorAll("[data-close]").forEach(b => b.addEventListener("click", close));
+  return el;
+}
+/* رسائل غير مقروءة: تعويض، جوائز معركة، هدية — واحدة تلو الأخرى */
+async function giftCheck(){
+  const j = await loadPoints(); if(!j) return;
+  const queue = [];
+  (j.notices || []).forEach(n => queue.push(() => new Promise(done => {
+    const isComp = n.kind === "comp";
+    modalCard(`<div class="gift-box ${isComp ? "comp" : ""}">${I(isComp ? "alert" : "trophy")}</div><h3>${esc(n.title)}</h3><p>${esc(n.msg)}</p>${n.points ? `<div class="gift-mult">+${n.points} نقطة</div>` : ""}${n.detail ? `<p class="small muted">${esc(n.detail)}</p>` : ""}<button type="button" class="btn btn-primary btn-lg" data-close>${I("check")} تمام</button>`,
+      () => { Auth.api("/api/points", { method: "POST", body: { ack: n.id } }).catch(() => {}); done(); });
+    try{ if(typeof SFX !== "undefined") SFX.win(); if(!isComp) confetti(); }catch(e){}
+  })));
+  const g = j.gift, me = Auth.user();
+  if(g && me){
+    const key = "step_gift_seen_" + g.id + "_" + me.u;
+    if(!Store.get(key, false)) queue.push(() => new Promise(done => {
+      modalCard(`<div class="gift-box">${I("gift")}</div><h3>${esc(g.title)}</h3><p>${esc(g.msg)}</p><div class="gift-mult">نقاط ×${g.mult}</div><p class="small muted">${g.pending ? "تبدأ مدتها مع أول تحدٍ تحلّينه" : "باقي " + fmtLeft(g.endsAt - Date.now())}</p><button type="button" class="btn btn-primary btn-lg" data-close>${I("sparkles")} تسلّمت الهدية</button>`,
+        () => { Store.set(key, true); done(); });
+      try{ if(typeof SFX !== "undefined") SFX.win(); confetti(); }catch(e){}
+    }));
+  }
+  for(const show of queue) await show();
+}
+/* إعلان بداية فعالية أو قرب موعدها — مرة واحدة لكل موعد */
+function announce(kind, id, start, title, body, href, btn){
+  const key = `step_ann_${kind}_${id}_${start}`;
+  if(Store.get(key, false)) return;
+  Store.set(key, true);
+  if(kind === "soon"){ toast(`${title} — ${body}`, 6000); try{ if(typeof SFX !== "undefined") SFX.tick(); }catch(e){} return; }
+  modalCard(`<div class="gift-box live">${I("zap")}</div><h3>${esc(title)}</h3><p>${esc(body)}</p><div class="btn-row" style="justify-content:center">${href ? `<a class="btn btn-warm btn-lg" href="${href}" data-close>${esc(btn || "يلا")}</a>` : ""}<button type="button" class="btn" data-close>لاحقًا</button></div>`);
+  try{ if(typeof SFX !== "undefined") SFX.win(); }catch(e){}
+}
+function eventAnnouncements(s){
+  if(!Store.get("step_ann_ready", false)){ Store.set("step_ann_ready", true); } // لا نزعج بإعلانات قديمة عند أول زيارة
+  const now = s.now;
+  s.active.forEach(ev => announce("start", ev.id, ev.startsAt, `بدأت ${ev.title}!`, `${ev.desc}. تنتهي بعد ${fmtLeft(ev.endsAt - now)}.`, "general.html#/", "ابدأ أجمع نقاط"));
+  (s.upcoming || []).forEach(ev => { if(ev.startsAt - now <= 30 * 60000) announce("soon", ev.id, ev.startsAt, `${ev.title} بعد ${fmtLeft(ev.startsAt - now)}`, ev.desc); });
+  const B = s.battle;
+  if(B && B.active) announce("start", B.id, B.active.start, `بدأت ${B.title}!`, `${B.desc} تنتهي بعد ${fmtLeft(B.active.end - now)}.`, "general.html#/battle", "ادخل المعركة");
+  else if(B && B.next && B.next.start - now <= 60 * 60000) announce("soon", B.id, B.next.start, `${B.title} بعد ${fmtLeft(B.next.start - now)}`, "جهّز نفسك: ٦٠ ثانية ونفس الكلمات للجميع");
 }
 function renderEventsBar(){
   const host = document.getElementById("eventsBar"); if(!host || typeof EVENTS === "undefined") return;
   const full = host.dataset.full === "1";
   const draw = () => {
-    const s = EVENTS.status(), T = s.tournament, act = s.active[0];
+    const s = EVENTS.status(), T = s.tournament, act = s.active[0], B = s.battle;
+    try{ eventAnnouncements(s); }catch(e){}
+    const gf = window.PTS && window.PTS.gift && !window.PTS.gift.pending ? window.PTS.gift : null;
     if(!full){ /* سطر واحد رفيع حتى لا يزاحم محتوى الصفحة */
       const bits = [];
-      if(!T.ended) bits.push(`<span class="ev-bit">${I("trophy")} ${esc(T.prize)}${T.active ? " · " + fmtLeft(T.endsAt - s.now) : ""}</span>`);
-      if(act) bits.push(`<span class="ev-bit hot">${I("zap")} نقاط ×${s.mult}</span>`);
-      const gf = EVENTS.giftFor ? EVENTS.giftFor(Auth.user()) : null; if(gf) bits.push(`<span class="ev-bit gift">${I("gift")} هديتك: نقاط ×${gf.mult}</span>`);
-      host.innerHTML = bits.length ? `<a class="ev-strip" href="compete.html#tournament">${bits.join("")}<span class="ev-go">${I("arrow")}</span></a>` : "";
+      if(B && B.active) bits.push(`<span class="ev-bit hot">${I("swords")} ${esc(B.title)} الآن!</span>`);
+      else if(act) bits.push(`<span class="ev-bit hot">${I("zap")} ${esc(act.title)}: نقاط ×${s.mult} · ${fmtLeft(act.endsAt - s.now)}</span>`);
+      else if(s.next && s.next.startsAt - s.now < 6 * 3600e3) bits.push(`<span class="ev-bit">${I("clock")} ${esc(s.next.title)} بعد ${fmtLeft(s.next.startsAt - s.now)}</span>`);
+      else if(B && B.next) bits.push(`<span class="ev-bit">${I("swords")} ${esc(B.title)} بعد ${fmtLeft(B.next.start - s.now)}</span>`);
+      if(gf) bits.push(`<span class="ev-bit gift">${I("gift")} هديتك ×${gf.mult} · ${fmtLeft(gf.endsAt - s.now)}</span>`);
+      if(!T.ended) bits.push(`<span class="ev-bit">${I("trophy")} ${esc(T.prize)}</span>`);
+      const href = B && B.active ? "general.html#/battle" : "compete.html#tournament";
+      host.innerHTML = bits.length ? `<a class="ev-strip" href="${href}">${bits.join("")}<span class="ev-go">${I("arrow")}</span></a>` : "";
       hydrateIcons(host); return;
     }
     const tHtml = T.ended ? "" : `<a class="ev-card tour" href="compete.html#tournament"><span class="ev-ic">${I("trophy")}</span><div><b>${esc(T.title)} — ${esc(T.prize)}</b><div class="small">${T.upcoming ? "تبدأ بعد " + fmtLeft(T.startsAt - s.now) : "المركز الأول في ترتيب الشهر يفوز · تنتهي بعد " + fmtLeft(T.endsAt - s.now)}</div></div><span class="ev-go">${I("arrow")}</span></a>`;
     const eHtml = act ? `<div class="ev-card live"><span class="ev-ic">${I("zap")}</span><div><b>×${s.mult} نقاط الآن — ${esc(act.title)}</b><div class="small">${esc(act.desc)} · تنتهي بعد ${fmtLeft(act.endsAt - s.now)}</div></div></div>`
       : s.next ? `<div class="ev-card next"><span class="ev-ic">${I("clock")}</span><div><b>القادم: ${esc(s.next.title)} ×${s.next.mult}</b><div class="small">${esc(s.next.desc)} · بعد ${fmtLeft(s.next.startsAt - s.now)}</div></div></div>` : "";
-    const gf = EVENTS.giftFor ? EVENTS.giftFor(Auth.user()) : null;
-    const gHtml = gf ? `<div class="ev-card gift"><span class="ev-ic">${I("gift")}</span><div><b>${esc(gf.title)} — نقاط ×${gf.mult}</b><div class="small">${esc(gf.msg)}</div></div></div>` : "";
-    host.innerHTML = gHtml + tHtml + eHtml; hydrateIcons(host);
+    const gHtml = gf ? `<div class="ev-card gift"><span class="ev-ic">${I("gift")}</span><div><b>${esc(gf.title)} — نقاط ×${gf.mult}</b><div class="small">باقي ${fmtLeft(gf.endsAt - s.now)}</div></div></div>` : "";
+    const bHtml = B ? `<a class="ev-card ${B.active ? "live" : "next"}" href="general.html#/battle"><span class="ev-ic">${I("swords")}</span><div><b>${esc(B.title)}${B.active ? " — قائمة الآن!" : ""}</b><div class="small">${B.active ? "تنتهي بعد " + fmtLeft(B.active.end - s.now) : B.next ? "تبدأ بعد " + fmtLeft(B.next.start - s.now) : ""} · الجوائز +${B.prizes.join(" / +")}</div></div><span class="ev-go">${I("arrow")}</span></a>` : "";
+    host.innerHTML = gHtml + bHtml + tHtml + eHtml; hydrateIcons(host);
   };
-  draw(); setInterval(draw, 30000);
+  draw(); setInterval(draw, 20000);
+  document.addEventListener("points:loaded", draw);
 }
 function recordAnswer(id, correct){ if(typeof Progress !== "undefined") Progress.record(id, correct); }
 const fmtDate = t => new Date(t).toLocaleDateString("ar-SA", { month: "short", day: "numeric" }) + " " + new Date(t).toLocaleTimeString("ar-SA", { hour: "2-digit", minute: "2-digit" });
