@@ -3,6 +3,7 @@ const A = require("../lib/auth");
 const H = require("../lib/http");
 const EV = require("../data/events.js");
 const AR = require("../lib/areas");
+const VAL = require("../lib/validids");
 const MODES = ["grammar", "vocab", "reading", "mix", "wrong", "challenge", "train", "general"];
 const ID_RE = /^[\x21-\x7e؀-ۿ]{1,80}$/;
 const UNIT_RE = /^u\d{1,3}$/;
@@ -27,7 +28,8 @@ async function giftState(me){
    - ساعة الذهب أو هدية شخصية: الإجابات الجديدة بنقطتين (المضاعف لا يتراكم).
    - إتمام مرحلة (اجتياز اختبار الوحدة لأول مرة): +10 مرة واحدة.
    كل نقطة تُسجَّل في منطقتها (ptsa) أو في بند إضافي مسمّى (ptsx)، فيطابق المجموعُ التفصيلَ دائمًا. */
-module.exports = H.handler(["POST"], async (req, res) => {
+module.exports = H.handler(["GET", "POST"], async (req, res) => {
+  if(req.method === "GET") return H.ok(res, { validator: VAL.status() });
   const me = A.getUser(req);
   if(!me) return H.err(res, 401, "سجّل الدخول أولًا");
   const b = await H.body(req);
@@ -35,7 +37,10 @@ module.exports = H.handler(["POST"], async (req, res) => {
   const mode = MODES.includes(b.mode) ? b.mode : "mix";
   if(!(total >= 1 && total <= 200) || !(score >= 0 && score <= total)) return H.err(res, 400, "نتيجة غير صالحة");
   const challengeId = b.challenge ? String(b.challenge).replace(/[^a-z0-9]/gi, "").slice(0, 12) : null;
-  const ids = [...new Set((Array.isArray(b.ids) ? b.ids : []).map(x => String(x)).filter(x => ID_RE.test(x)))].slice(0, Math.min(score, 200));
+  const rawIds = [...new Set((Array.isArray(b.ids) ? b.ids : []).map(x => String(x)).filter(x => ID_RE.test(x)))];
+  /* أسئلة غير موجودة في محتوى الموقع ما تعطي نقاط */
+  const ids = rawIds.filter(VAL.isValid).slice(0, Math.min(score, 200));
+  const rejected = rawIds.length - rawIds.filter(VAL.isValid).length;
   const unit = b.unit && UNIT_RE.test(String(b.unit)) ? String(b.unit) : null;
   const ev = EV.status();
   const gift = await giftState(me);
@@ -90,7 +95,7 @@ module.exports = H.handler(["POST"], async (req, res) => {
   ]);
   const rk = v => v === null || v === undefined ? null : Number(v) + 1;
   H.ok(res, {
-    saved: !already, already, points, base: newIds.length, bonus, bonusSource, bonusLabel, stage,
+    saved: !already, already, rejected, points, base: newIds.length, bonus, bonusSource, bonusLabel, stage,
     newCount: newIds.length, repeated: Math.max(0, ids.length - newIds.length), mult,
     gift: gift ? { id: gift.id, title: gift.title, mult: gift.mult, endsAt: gift.endsAt } : null, activeEvents: ev.active,
     totalPoints: Number(tp || 0), weekPoints: Number(wp || 0), monthPoints: Number(mp || 0),
