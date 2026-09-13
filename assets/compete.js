@@ -76,6 +76,8 @@
   function initCreate(){
     const me = Auth.user();
     $("#createCard").hidden = true; $("#createLogin").hidden = true;
+    /* رابط مباشر لسجل مشارك: compete.html?log=<user> */
+    const lg = params.get("log"); if(lg && !window.__logOpened){ window.__logOpened = true; setTimeout(() => { if(Auth.user()) pointsLog(lg); else toast("سجّل الدخول عشان تشوف السجل", 4000); }, 700); }
     const nb = $("#newChalBtn"); if(nb && !nb.dataset.b){ nb.dataset.b = "1"; nb.addEventListener("click", () => { const card = Auth.user() ? $("#createCard") : $("#createLogin"); card.hidden = !card.hidden; if(!card.hidden) card.scrollIntoView({ block: "nearest", behavior: "smooth" }); }); }
     if(!me) return;
     $("#cModeSeg").addEventListener("click", e => { const b = e.target.closest("button"); if(!b) return; C.mode = b.dataset.v; $("#cModeSeg").querySelectorAll("button").forEach(x => x.classList.toggle("on", x === b)); $("#cTopicWrap").hidden = C.mode !== "grammar"; });
