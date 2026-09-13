@@ -68,6 +68,7 @@
     $("#tOpts").querySelectorAll(".opt").forEach(b => { b.disabled = true; if(+b.dataset.k === q.a) b.classList.add("correct"); else if(+b.dataset.k === k) b.classList.add("wrong"); });
     Progress.record(q.id, ok); if(ok){ S.correct++; S.ids.push(q.id); Pending.add(q.id, "train"); }
     if(typeof SFX !== "undefined") SFX[ok ? "correct" : "wrong"]();
+    setTimeout(() => { try{ fb.scrollIntoView({ block: "nearest", behavior: "smooth" }); }catch(e){} }, 60);
     $("#tScore").innerHTML = `<i data-i='check'></i> ${S.correct}`;
     const fb = $("#tFeedback"); fb.hidden = false; fb.className = "feedback " + (ok ? "ok" : "bad");
     fb.innerHTML = ok ? `<b>${I("check")} إجابة صحيحة</b>${I("bulb")} ${esc(q.ex)}<div class="btn-row" style="margin-top:8px">${markBtn(q.id)}${lessonLink(q.kind === "grammar" || q.kind === "coll" ? q.topic : q.kind, "افتح شرح القاعدة")}</div>` : explainHtml(q, k);

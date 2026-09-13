@@ -5,7 +5,8 @@
   "description": "STEP English study site with accounts, leaderboard, challenges and adaptive training",
   "scripts": {
     "dev": "node dev/server.js",
-    "deploy": "vercel deploy --prod --yes"
+    "deploy": "node tools/bump.js && vercel deploy --prod --yes",
+    "bump": "node tools/bump.js"
   },
   "engines": {
     "node": "22.x"

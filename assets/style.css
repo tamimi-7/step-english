@@ -1120,9 +1120,6 @@ details.pts-where p{margin:6px 0 0;line-height:1.9}
 .menu-emo img.menu-emo-img{width:56px;height:56px}
 .btn.next-btn{flex-direction:column;gap:2px;margin-top:6px;max-width:100%;white-space:normal;line-height:1.35}
 .btn.next-btn small{font-size:.8rem;font-weight:600;opacity:.92}
-#gnext.auto{position:relative;overflow:hidden}
-#gnext.auto::after{content:"";position:absolute;inset:auto 0 0 0;height:4px;background:rgba(255,255,255,.75);transform-origin:right;animation:autoNext var(--wait,1100ms) linear forwards}
-@keyframes autoNext{from{transform:scaleX(1)}to{transform:scaleX(0)}}
 .res-cheer{font-weight:700;margin:10px 0 0}
 .res-cheer img.emo{width:26px;height:26px}
 .res-actions{justify-content:center;margin-top:12px}
@@ -1279,4 +1276,13 @@ body.sheet-open{overflow:hidden}
 .hero .actions .btn{max-width:100%}
 @media (max-width:640px){
   .hero .actions .btn.continue-btn{white-space:normal;text-align:center;line-height:1.4;width:100%;justify-content:center}
+}
+
+/* زر «التالي» يبقى ظاهر تحت الشاشة بدون ما تنزل */
+.q-card .quiz-nav{position:sticky;bottom:calc(10px + env(safe-area-inset-bottom));z-index:6;margin-top:14px;padding:10px 0 4px;background:var(--surface);border-top:2px dashed var(--line);flex-wrap:nowrap;align-items:center}
+.q-card .quiz-nav .btn-primary{flex:1;justify-content:center;font-size:1.05rem;padding:12px 18px}
+.q-card .feedback{scroll-margin-bottom:96px}
+@media (max-width:860px){
+  .q-card .quiz-nav{bottom:calc(66px + env(safe-area-inset-bottom))}
+  body.focus-open .q-card .quiz-nav{bottom:calc(10px + env(safe-area-inset-bottom))}
 }

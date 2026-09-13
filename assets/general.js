@@ -347,8 +347,8 @@
       fb.innerHTML = `<b>${ok ? I("check") + " صحيح!" : I("x") + " الصحيح: " + esc(q.opts[q.a])}</b>${why ? `<div class="why-mini">${I("x")} ليش «${esc(q.opts[k])}» غلط؟ ${esc(why)}</div>` : ""}${esc(q.ex || "")} ${sayNow ? spk(sayNow, "sm") : ""}${q.lesson ? ` <a class="mini-link" href="#/lesson/${q.lesson}">${I("book")} افهم القاعدة</a>` : ""}`;
       hydrateIcons(fb); $("#gnext").disabled = false; $("#gnext").focus({ preventScroll: true });
       if(sayNow) after(() => speak(sayNow), 350);
-      /* الإجابة الصحيحة تنتقل تلقائيًا (الخطأ ينتظرك تقرأ التصحيح) */
-      if(ok && !opts.noAuto){ const my = S.i, wait = sayNow ? Math.min(5000, 1000 + String(sayNow).split(/\s+/).length * 380) : 1100; const nb = $("#gnext"); nb.classList.add("auto"); nb.style.setProperty("--wait", wait + "ms"); after(() => { if(S.i === my && S.done && !document.querySelector(".rule-ov")) next(); }, wait); }
+      /* أنت اللي تضغط «التالي» — بس نخلي التصحيح ظاهر بدون ما تنزل */
+      after(() => { try{ fb.scrollIntoView({ block: "nearest", behavior: "smooth" }); }catch(e){} }, 60);
     };
     const next = () => { if(!S.done) return; hush(); S.i++; S.done = false; show(); };
     const tick = () => { if(!opts.timed) return; const el = $("#gt"); if(!el) return; const left = Math.max(0, opts.timed - Math.round((Date.now() - S.start) / 1000)); el.textContent = left + "s"; el.classList.toggle("low", left <= 10); if(left !== S.lastLeft){ S.lastLeft = left; if(left <= 0) sfx("timeout"); else if(left <= 10) sfx("tick"); } if(left <= 0) return finish(); after(tick, 500); };
