@@ -324,7 +324,7 @@
       hydrateIcons(fb); $("#gnext").disabled = false; $("#gnext").focus({ preventScroll: true });
       if(sayNow) after(() => speak(sayNow), 350);
       /* الإجابة الصحيحة تنتقل تلقائيًا (الخطأ ينتظرك تقرأ التصحيح) */
-      if(ok && !opts.noAuto){ const my = S.i, wait = sayNow ? Math.min(5000, 1000 + String(sayNow).split(/\s+/).length * 380) : 1100; const nb = $("#gnext"); nb.classList.add("auto"); nb.style.setProperty("--wait", wait + "ms"); after(() => { if(S.i === my && S.done) next(); }, wait); }
+      if(ok && !opts.noAuto){ const my = S.i, wait = sayNow ? Math.min(5000, 1000 + String(sayNow).split(/\s+/).length * 380) : 1100; const nb = $("#gnext"); nb.classList.add("auto"); nb.style.setProperty("--wait", wait + "ms"); after(() => { if(S.i === my && S.done && !document.querySelector(".rule-ov")) next(); }, wait); }
     };
     const next = () => { if(!S.done) return; hush(); S.i++; S.done = false; show(); };
     const tick = () => { if(!opts.timed) return; const el = $("#gt"); if(!el) return; const left = Math.max(0, opts.timed - Math.round((Date.now() - S.start) / 1000)); el.textContent = left + "s"; el.classList.toggle("low", left <= 10); if(left !== S.lastLeft){ S.lastLeft = left; if(left <= 0) sfx("timeout"); else if(left <= 10) sfx("tick"); } if(left <= 0) return finish(); after(tick, 500); };
@@ -615,6 +615,17 @@
     const onScroll = () => { const btm = art.querySelector(".btn-row:last-child"); const r = btm ? btm.getBoundingClientRect() : null; fc.classList.toggle("show", scrollY > 500 && !(r && r.top < innerHeight)); };
     addEventListener("scroll", onScroll, { passive: true }); onScroll();
     timers.push({ clear(){ removeEventListener("scroll", onScroll); fc.remove(); } });
+  };
+  /* ملخص الدرس داخل نافذة الشرح (الاختبار يبقى مكانه) */
+  window.GenLessonSummary = id => {
+    const l = lesson(id); if(!l) return "";
+    return `<article class="lesson rule-lesson"><h2><span class="n" style="background:${LVC[l.lvl]}">${l.lvl}</span> ${esc(l.t)}</h2>
+      <div class="when-box"><h3>${I("clock")} متى تقولها؟</h3><ul class="when-list">${arPoints(l.when).map(x => `<li>${pointHtml(x)}</li>`).join("")}</ul></div>
+      ${l.table ? `<div class="table-wrap"><table class="gtable"><thead><tr>${l.table.head.map(h => `<th>${esc(h)}</th>`).join("")}</tr></thead><tbody>${l.table.rows.map(r => `<tr>${r.map((cell, i) => `<td class="${/[A-Za-z]/.test(cell) && i > 0 ? "en" : ""}">${esc(cell)}</td>`).join("")}</tr>`).join("")}</tbody></table></div>` : ""}
+      <div class="formula-rows">${formRows(l.form).map(x => `<div class="frow">${mixed(x)}</div>`).join("")}</div>
+      <h3>${I("bookopen")} أمثلة</h3>${l.ex.slice(0, 4).map(e => `<div class="ex right"><span class="en">${esc(e[0])} ${spk(e[0], "sm")}</span><span class="ar">${esc(e[1])}</span></div>`).join("")}
+      <h3>${I("alert")} أخطاء شائعة</h3>${l.mistakes.map(m => `<div class="rule-mk"><span class="en bad-ans">${esc(m[0])}</span> <span class="en ok-ans">${esc(m[1])}</span><div class="small muted">${mixed(m[2])}</div></div>`).join("")}
+      <div class="note tip"><span class="ic">${I("sparkles")}</span><p>${mixed(l.tip)}</p></div></article>`;
   };
   routes.practice = id => {
     const l = lesson(id); if(!l) return routes.grammar();

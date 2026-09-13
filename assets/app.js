@@ -173,6 +173,38 @@ function explainHtml(q, chosen){
   h += `<div class="btn-row" style="margin-top:8px">${typeof markBtn === "function" ? markBtn(q.id) : ""}${lessonLink(t, "افتح شرح القاعدة")}</div>`;
   return h;
 }
+/* شرح القاعدة في نافذة فوق السؤال — ما تطلع من الاختبار ولا يضيع تقدمك */
+let STEP_LESSONS_DOC = null;
+async function openRuleSheet(href){
+  const ov = document.createElement("div"); ov.className = "rule-ov";
+  ov.innerHTML = `<div class="rule-sheet" role="dialog" aria-modal="true"><div class="rule-top"><b>${I("book")} شرح القاعدة</b><button type="button" class="btn btn-primary btn-sm" data-close>${I("arrow")} رجوع للسؤال</button></div><div class="rule-body"><p class="muted">جارٍ تحميل الشرح…</p></div></div>`;
+  document.body.appendChild(ov); document.body.classList.add("sheet-open");
+  const close = () => { ov.remove(); document.body.classList.remove("sheet-open"); removeEventListener("keydown", esc_); };
+  const esc_ = e => { if(e.key === "Escape") close(); };
+  addEventListener("keydown", esc_);
+  ov.addEventListener("click", e => { if(e.target === ov || e.target.closest("[data-close]")) close(); });
+  const body = ov.querySelector(".rule-body");
+  try{
+    let html = "", full = href;
+    if(href.startsWith("#/lesson/") && typeof window.GenLessonSummary === "function"){
+      html = window.GenLessonSummary(href.split("/")[2]);
+    }else{
+      const id = href.split("#")[1];
+      if(!STEP_LESSONS_DOC){ const t = await (await fetch("grammar.html", { cache: "force-cache" })).text(); STEP_LESSONS_DOC = new DOMParser().parseFromString(t, "text/html"); }
+      const sec = STEP_LESSONS_DOC.getElementById(id);
+      if(sec){ const c = sec.cloneNode(true); c.querySelectorAll(".mini, .lesson-back, script").forEach(x => x.remove()); c.removeAttribute("id"); html = `<div class="lesson rule-lesson">${c.innerHTML}</div>`; }
+    }
+    if(!html){ body.innerHTML = `<p class="muted">ما لقيت شرح لهذا السؤال.</p>`; return; }
+    body.innerHTML = html + `<div class="btn-row rule-foot"><button type="button" class="btn btn-primary" data-close>${I("check")} فهمت، رجّعني للسؤال</button><a class="btn btn-sm" href="${full}">افتح الدرس كامل</a></div>`;
+    hydrateIcons(body);
+    body.querySelectorAll("[data-close]").forEach(b => b.addEventListener("click", close));
+  }catch(e){ body.innerHTML = `<p class="muted">تعذّر تحميل الشرح. تأكد من الإنترنت وجرّب مرة ثانية.</p>`; }
+}
+document.addEventListener("click", e => {
+  const a = e.target.closest("a.mini-link"); if(!a) return;
+  const h = a.getAttribute("href") || "";
+  if(h.startsWith("#/lesson/") || (/^grammar\.html#/.test(h) && curPage() !== "grammar.html")){ e.preventDefault(); openRuleSheet(h); }
+});
 function focusLessonFromHash(){
   const id = (location.hash || "").slice(1); if(!id) return;
   const el = document.getElementById(id); if(!el || !el.classList.contains("lesson")) return;
