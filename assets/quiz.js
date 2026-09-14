@@ -1,4 +1,4 @@
-/* ===== STEP English — exam-style quiz engine (+ challenges) ===== */
+/* ===== STEP English، exam-style quiz engine (+ challenges) ===== */
 (function(){
   const $ = s => document.querySelector(s);
   const L = Bank.LETTERS;
@@ -50,11 +50,11 @@
       const list = Bank.byIds(j.challenge.qids);
       if(!list.length) throw new Error("أسئلة هذا التحدي غير متوفرة");
       const meta = `<div class="section-title"><span class="badge pink"><i data-i='swords'></i> تحدي</span><h2 style="margin:0">${esc(j.challenge.title)}</h2></div>
-        <p class="muted">بواسطة <b>${esc(j.challenge.byName)}</b> · ${label(j.challenge.mode)}${j.challenge.mode === "grammar" && j.challenge.topic !== "all" ? " — " + label(j.challenge.topic) : ""} · ${list.length} سؤال · ${j.challenge.timed ? "<i data-i='timer'></i> بمؤقت" : "بدون مؤقت"} · ${j.board.length} مشارك</p>`;
+        <p class="muted">بواسطة <b>${esc(j.challenge.byName)}</b> · ${label(j.challenge.mode)}${j.challenge.mode === "grammar" && j.challenge.topic !== "all" ? "، " + label(j.challenge.topic) : ""} · ${list.length} سؤال · ${j.challenge.timed ? "<i data-i='timer'></i> بمؤقت" : "بدون مؤقت"} · ${j.board.length} مشارك</p>`;
       if(!Auth.user()){
         box.innerHTML = `<div class="card">${meta}<div class="note warn"><span class="ic"><i data-i='lock'></i></span><p>سجّل الدخول أو أنشئ حسابًا لتشارك في التحدي وتظهر نتيجتك في الترتيب.</p></div><a class="btn btn-primary" href="account.html?next=${encodeURIComponent("quiz.html?challenge=" + id)}">تسجيل الدخول ←</a></div>`;
       } else if(j.mine){
-        box.innerHTML = `<div class="card">${meta}<div class="note ok"><span class="ic"><i data-i='check'></i></span><p>أنجزت هذا التحدي: <b>${j.mine.score} / ${j.mine.total}</b> — ترتيبك <b>#${j.mine.rank}</b>. كل تحدٍ يُحسب من أول محاولة فقط.</p></div>
+        box.innerHTML = `<div class="card">${meta}<div class="note ok"><span class="ic"><i data-i='check'></i></span><p>أنجزت هذا التحدي: <b>${j.mine.score} / ${j.mine.total}</b>، ترتيبك <b>#${j.mine.rank}</b>. كل تحدٍ يُحسب من أول محاولة فقط.</p></div>
           <h3>الترتيب</h3><div class="lb">${j.board.map(r => lbRow({ ...r, points: r.score + " / " + r.total }, false).replace("نقطة", "")).join("")}</div>
           <div class="btn-row" style="margin-top:14px"><a class="btn" href="compete.html">كل التحديات</a><a class="btn btn-primary" href="quiz.html">اختبار عادي</a></div></div>`;
       } else {
@@ -99,7 +99,7 @@
     $("#qType").textContent = q.type === "error" ? "اختر الجزء الذي فيه الخطأ" : label(q.kind === "grammar" || q.kind === "coll" ? q.topic : q.kind);
     $("#qType").className = "badge " + (q.type === "error" ? "accent" : "");
     const pb = $("#passageBox");
-    if(q.pid){ const p = PASSAGES.find(x => x.id === q.pid); pb.hidden = false; pb.innerHTML = `<details class="passage-box" open><summary><i data-i='bookopen'></i> ${esc(p.title)} — اقرأ القطعة</summary><div class="ptext">${esc(p.text)}</div></details>`; }
+    if(q.pid){ const p = PASSAGES.find(x => x.id === q.pid); pb.hidden = false; pb.innerHTML = `<details class="passage-box" open><summary><i data-i='bookopen'></i> ${esc(p.title)}، اقرأ القطعة</summary><div class="ptext">${esc(p.text)}</div></details>`; }
     else { pb.hidden = true; pb.innerHTML = ""; }
     $("#qText").innerHTML = q.q;
     $("#opts").innerHTML = q.opts.map((o, k) => `<button type="button" class="opt ${S.ans[S.idx] === k ? "selected" : ""}" data-k="${k}"><span class="letter">${L[k]}</span><span>${esc(o)}</span></button>`).join("");
@@ -113,7 +113,7 @@
   function showReview(){
     $("#quiz").hidden = true; $("#review").hidden = false;
     const n = S.list.length, answered = Object.keys(S.ans).length;
-    $("#reviewSummary").innerHTML = `أجبت على <b>${answered}</b> من <b>${n}</b> — غير مُجاب: <b>${n - answered}</b> — معلَّم: <b>${S.flag.size}</b>`;
+    $("#reviewSummary").innerHTML = `أجبت على <b>${answered}</b> من <b>${n}</b>، غير مُجاب: <b>${n - answered}</b>، معلَّم: <b>${S.flag.size}</b>`;
     $("#reviewGrid").innerHTML = S.list.map((q, i) => `<button type="button" data-i="${i}" class="${S.ans[i] !== undefined ? "answered" : ""} ${S.flag.has(i) ? "flagged" : ""}">${i + 1}</button>`).join("");
     $("#reviewGrid").querySelectorAll("button").forEach(b => b.addEventListener("click", () => { S.idx = +b.dataset.i; $("#review").hidden = true; $("#quiz").hidden = false; renderQ(); }));
     window.scrollTo({ top: 0, behavior: "smooth" });
@@ -138,7 +138,7 @@
         ${timeout ? `<div class="note warn"><span class="ic"><i data-i='clock'></i></span><p>انتهى الوقت! تم احتساب ما أجبت عليه.</p></div>` : ""}
         <div class="score-ring" style="--p:${pct}"><span>${pct}٪</span></div>
         <h2>${score} من ${S.list.length}</h2>
-        <p class="muted">${pct >= 85 ? "ممتاز! مستوى قوي <i data-i='sparkles'></i>" : pct >= 70 ? "جيد جدًا، راجع الأخطاء وستتحسن أكثر <i data-i='check'></i>" : pct >= 50 ? "لا بأس، ركّز على المواضيع الضعيفة في الجدول أدناه <i data-i='zap'></i>" : "تحتاج مراجعة الدروس ثم أعد المحاولة — الاستمرار هو السر <i data-i='plant'></i>"} — الوقت: <span class="en">${mm}:${String(ss).padStart(2, "0")}</span></p>
+        <p class="muted">${pct >= 85 ? "ممتاز! مستوى قوي <i data-i='sparkles'></i>" : pct >= 70 ? "جيد جدًا، راجع الأخطاء وستتحسن أكثر <i data-i='check'></i>" : pct >= 50 ? "لا بأس، ركّز على المواضيع الضعيفة في الجدول أدناه <i data-i='zap'></i>" : "تحتاج مراجعة الدروس ثم أعد المحاولة، الاستمرار هو السر <i data-i='plant'></i>"}، الوقت: <span class="en">${mm}:${String(ss).padStart(2, "0")}</span></p>
         <div id="serverBox"></div>
         <div class="btn-row" style="justify-content:center;margin-top:12px">
           <button type="button" class="btn btn-primary" id="againBtn"><i data-i='refresh'></i> اختبار جديد</button>
@@ -157,7 +157,7 @@
           <div><span class="badge ${ok ? "ok" : "bad"}">${i + 1}</span> <span class="badge">${label(q.kind === "grammar" || q.kind === "coll" ? q.topic : q.kind)}</span> ${q.src === "real" ? '<span class="badge accent">نموذج حقيقي</span>' : ""}</div>
           ${p ? `<details class="passage-box" style="margin:8px 0"><summary><i data-i='bookopen'></i> ${esc(p.title)}</summary><div class="ptext">${esc(p.text)}</div></details>` : ""}
           <div class="q-text">${q.q}</div>
-          <div class="ans">${ua === undefined ? "<span style='color:var(--bad)'>— لم تُجب —</span>" : `Your answer: <b style="color:${ok ? "var(--ok)" : "var(--bad)"}">${L[ua]}) ${esc(q.opts[ua])}</b>`}</div>
+          <div class="ans">${ua === undefined ? "<span style='color:var(--bad)'>لم تُجب</span>" : `Your answer: <b style="color:${ok ? "var(--ok)" : "var(--bad)"}">${L[ua]}) ${esc(q.opts[ua])}</b>`}</div>
           ${explainHtml(q, ua)}</div>`; }).join("")}</div>`;
     if(pct >= 80) confetti();
     $("#againBtn").addEventListener("click", () => { $("#results").hidden = true; $("#setup").hidden = false; S.challenge = null; history.replaceState(null, "", "quiz.html"); renderStats(); syncSetup(); window.scrollTo({ top: 0 }); });
@@ -202,7 +202,7 @@
       const list = Bank.collModel(coll, model);
       if(list.length){ S.list = list; S.mode = { listening: "clistening", grammar: "cgrammar", reading: "creading" }[coll]; S.challenge = null; S.timed = true;
         $("#setup").hidden = true; const box = $("#chalBox"); box.hidden = false;
-        box.innerHTML = `<div class="card"><div class="section-title"><span class="badge teal"><i data-i='library'></i> تجميعات</span><h2 style="margin:0">${Bank.CLABEL[S.mode]} — النموذج ${model}</h2></div><p class="muted">${list.length} سؤالًا من هذا النموذج بالترتيب، مع مؤقت دقيقة لكل سؤال. النتيجة تُحسب نقاطًا في المنافسة.</p><div class="btn-row"><button type="button" class="btn btn-primary btn-lg" id="collStart">ابدأ ←</button><label class="check"><input type="checkbox" id="collTimed" checked> مؤقت</label><a class="btn" href="collections.html?c=${coll}&model=${model}">تصفح النموذج</a></div></div>`;
+        box.innerHTML = `<div class="card"><div class="section-title"><span class="badge teal"><i data-i='library'></i> تجميعات</span><h2 style="margin:0">${Bank.CLABEL[S.mode]}، النموذج ${model}</h2></div><p class="muted">${list.length} سؤالًا من هذا النموذج بالترتيب، مع مؤقت دقيقة لكل سؤال. النتيجة تُحسب نقاطًا في المنافسة.</p><div class="btn-row"><button type="button" class="btn btn-primary btn-lg" id="collStart">ابدأ ←</button><label class="check"><input type="checkbox" id="collTimed" checked> مؤقت</label><a class="btn" href="collections.html?c=${coll}&model=${model}">تصفح النموذج</a></div></div>`;
         $("#collStart").addEventListener("click", () => { S.timed = $("#collTimed").checked; box.hidden = true; startList(); });
       }
     }

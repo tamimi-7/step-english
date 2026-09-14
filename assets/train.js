@@ -1,4 +1,4 @@
-/* ===== STEP English — adaptive training (smart / weak points / spaced review) ===== */
+/* ===== STEP English، adaptive training (smart / weak points / spaced review) ===== */
 (function(){
   const $ = s => document.querySelector(s);
   const L = Bank.LETTERS;
@@ -22,7 +22,7 @@
       let meta = "", disabled = false;
       if(k === "smart") meta = `<span><i data-i='library'></i> ${o.total} سؤال</span><span><i data-i='target'></i> ${o.pct}٪ إتقان</span>`;
       if(k === "weak"){ if(weak.length) meta = weak.slice(0, 3).map(w => `<span>${Bank.topicLabel(w.t)} <b>${w.pct}٪</b></span>`).join(""); else { meta = `<span>أجب على بعض الأسئلة أولًا لاكتشاف نقاط ضعفك</span>`; disabled = true; } }
-      if(k === "review"){ if(due) meta = `<span><i data-i='bell'></i> ${due} سؤال حان وقت مراجعته</span>`; else { meta = `<span>${nextDue ? "لا شيء الآن — الموعد القادم " + fmtWhen(nextDue) : "أجب على بعض الأسئلة أولًا لبدء المراجعة"}</span>`; disabled = true; } }
+      if(k === "review"){ if(due) meta = `<span><i data-i='bell'></i> ${due} سؤال حان وقت مراجعته</span>`; else { meta = `<span>${nextDue ? "لا شيء الآن، الموعد القادم " + fmtWhen(nextDue) : "أجب على بعض الأسئلة أولًا لبدء المراجعة"}</span>`; disabled = true; } }
       if(k === "marks"){ const nm = Progress.marks().length; if(nm) meta = `<span><i data-i='bookmark'></i> ${nm} سؤال معلَّم</span>`; else { meta = `<span>علّم على أي سؤال من نتائج الاختبار أو التجميعات ليظهر هنا</span>`; disabled = true; } }
       return `<button type="button" class="mode-card ${k === S.mode ? "on" : ""} ${disabled ? "disabled" : ""}" data-mode="${k}" ${disabled ? "disabled" : ""}>
         <span class="mi" style="background:${m.bg}">${m.ic}</span>
@@ -43,7 +43,7 @@
     S.mode = mode; S.topics = topics || null; S.list = list; S.idx = 0; S.correct = 0; S.ids = []; S.startedAt = Date.now();
     S.before = {}; for(const m of Progress.allTopics()) S.before[m.t] = m.pct;
     $("#dash").hidden = true; $("#summary").hidden = true; $("#session").hidden = false;
-    $("#sessTitle").innerHTML = `${MODE_INFO[mode].ic} ${MODE_INFO[mode].t}${topics && topics.length === 1 ? " — " + Bank.topicLabel(topics[0]) : ""}`;
+    $("#sessTitle").innerHTML = `${MODE_INFO[mode].ic} ${MODE_INFO[mode].t}${topics && topics.length === 1 ? "، " + Bank.topicLabel(topics[0]) : ""}`;
     renderQ(); window.scrollTo({ top: 0, behavior: "smooth" });
   }
   function renderQ(){
@@ -83,7 +83,7 @@
     $("#summary").innerHTML = `<div class="card center fade-up">
         <div class="score-ring" style="--p:${pct}"><span>${pct}٪</span></div>
         <h2>${S.correct} من ${total}</h2>
-        <p class="muted">${pct >= 80 ? "ممتاز! استمر على هذا المستوى <i data-i='fire'></i>" : pct >= 60 ? "جيد — كرر التدريب وستثبت المعلومات <i data-i='check'></i>" : "لا تقلق، الأخطاء هنا هي أفضل معلّم. ستظهر لك هذه الأسئلة مجددًا في المراجعة <i data-i='plant'></i>"}</p>
+        <p class="muted">${pct >= 80 ? "ممتاز! استمر على هذا المستوى <i data-i='fire'></i>" : pct >= 60 ? "جيد، كرر التدريب وستثبت المعلومات <i data-i='check'></i>" : "لا تقلق، الأخطاء هنا هي أفضل معلّم. ستظهر لك هذه الأسئلة مجددًا في المراجعة <i data-i='plant'></i>"}</p>
         <div id="trainServer"></div>
         <div class="btn-row" style="justify-content:center;margin-top:12px">
           <button type="button" class="btn btn-primary" id="againBtn"><i data-i='refresh'></i> جولة أخرى</button>
@@ -118,7 +118,7 @@
       else if(e.key === "Enter" || e.key === "ArrowLeft") next();
     });
     const t = params.get("topic"); const m = params.get("mode");
-    if(t && Bank.topics().includes(t)){ S.topics = [t]; $("#topicHint").hidden = false; $("#topicHint").innerHTML = `<span class="ic"><i data-i='target'></i></span><p>التدريب سيقتصر على موضوع: <b>${Bank.topicLabel(t)}</b> — <a href="train.html">إلغاء التحديد</a></p>`; }
+    if(t && Bank.topics().includes(t)){ S.topics = [t]; $("#topicHint").hidden = false; $("#topicHint").innerHTML = `<span class="ic"><i data-i='target'></i></span><p>التدريب سيقتصر على موضوع: <b>${Bank.topicLabel(t)}</b>، <a href="train.html">إلغاء التحديد</a></p>`; }
     if(m && MODE_INFO[m]){ const b = $(`#modeCards [data-mode="${m}"]`); if(b && !b.disabled) b.click(); }
     if(params.get("start") === "1") startSession(S.mode, S.topics);
   });

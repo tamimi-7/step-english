@@ -1,4 +1,4 @@
-/* ===== STEP English — collections browser (تجميعات الاستماع / القرامر / القطع) ===== */
+/* ===== STEP English، collections browser (تجميعات الاستماع / القرامر / القطع) ===== */
 (function(){
   const $ = s => document.querySelector(s);
   const params = new URLSearchParams(location.search);
@@ -15,10 +15,10 @@
   function renderModels(){
     const c = COLLECTIONS[key];
     $("#collIntro").innerHTML = key === "listening"
-      ? `<span class="ic"><i data-i='headphones'></i></span><p><b>${c.models.length} نموذج استماع</b> من التجميعات — أسئلة وإجابات بدون ملفات صوتية (كما في الملف الأصلي). الفائدة: تعرف شكل الأسئلة والإجابات المتوقعة، وكثير منها يتكرر في الاختبار. الأسئلة المكتوب عندها «الحل حسب الصوت» تُحل في الاختبار حسب ما تسمعه.</p>`
+      ? `<span class="ic"><i data-i='headphones'></i></span><p><b>${c.models.length} نموذج استماع</b> من التجميعات، أسئلة وإجابات بدون ملفات صوتية (كما في الملف الأصلي). الفائدة: تعرف شكل الأسئلة والإجابات المتوقعة، وكثير منها يتكرر في الاختبار. الأسئلة المكتوب عندها «الحل حسب الصوت» تُحل في الاختبار حسب ما تسمعه.</p>`
       : key === "grammar"
-      ? `<span class="ic"><i data-i='book'></i></span><p><b>${c.models.length} نموذج قرامر</b> — كل نموذج ٤٠ سؤالًا تقريبًا. الإجابة الصحيحة هي التي كانت تحتها خط في الملف. الأسئلة بدون إجابة في الملف تظهر بعلامة «غير محلول».</p>`
-      : `<span class="ic"><i data-i='bookopen'></i></span><p><b>${c.models.length} نموذج قطع</b> — لكل نموذج عناوين القطع التي جاءت، وتحت كل قطعة الأسئلة التي سُئلت مع الإجابة المتوقعة (وترجمتها). احفظ فكرة القطعة وإجاباتها، فالقطع تتكرر بنفس الأسئلة.</p>`;
+      ? `<span class="ic"><i data-i='book'></i></span><p><b>${c.models.length} نموذج قرامر</b>، كل نموذج ٤٠ سؤالًا تقريبًا. الإجابة الصحيحة هي التي كانت تحتها خط في الملف. الأسئلة بدون إجابة في الملف تظهر بعلامة «غير محلول».</p>`
+      : `<span class="ic"><i data-i='bookopen'></i></span><p><b>${c.models.length} نموذج قطع</b>، لكل نموذج عناوين القطع التي جاءت، وتحت كل قطعة الأسئلة التي سُئلت مع الإجابة المتوقعة (وترجمتها). احفظ فكرة القطعة وإجاباتها، فالقطع تتكرر بنفس الأسئلة.</p>`;
     const grid = $("#modelGrid"); grid.hidden = false; $("#modelView").hidden = true;
     grid.innerHTML = c.models.map(m => { const n = countQ(m), solved = m.items.filter(i => i.q && (typeof i.a === "number" || (typeof i.a === "string" && i.a))).length; const titles = m.items.filter(i => i.t).slice(0, 4).map(i => i.te || i.t).join(" · ");
       return `<button type="button" class="mode-card" data-m="${m.n}" style="display:block"><span class="mt">النموذج ${m.n} ${n ? `<span class="badge">${n} سؤال</span>` : `<span class="badge">ملاحظات المختبرين</span>`}${solved < n ? `<span class="badge accent">${n - solved} غير محلول</span>` : ""}</span>${titles ? `<span class="md en" style="direction:ltr;text-align:left;font-size:.85rem">${esc(titles)}</span>` : ""}</button>`; }).join("");
@@ -30,7 +30,7 @@
     const idx = c.models.indexOf(model);
     const quizable = model.items.filter(i => i.q && ((typeof i.a === "number" && i.o && i.o.length >= 2) || (typeof i.a === "string" && i.a))).length;
     let html = `<div class="card" style="margin-bottom:14px"><div class="btn-row" style="justify-content:space-between">
-      <div class="btn-row"><button type="button" class="btn btn-sm" id="backBtn">→ كل النماذج</button><h2 style="margin:0">${KEYS[key]} — النموذج ${model.n}</h2></div>
+      <div class="btn-row"><button type="button" class="btn btn-sm" id="backBtn">→ كل النماذج</button><h2 style="margin:0">${KEYS[key]}، النموذج ${model.n}</h2></div>
       <div class="btn-row">
         <label class="check"><input type="checkbox" id="showAns" ${showAns ? "checked" : ""}> إظهار الإجابات</label>
         ${quizable >= 3 ? `<a class="btn btn-sm btn-primary" href="quiz.html?coll=${key}&model=${model.n}"><i data-i='pencil'></i> اختبرني في هذا النموذج (${quizable})</a>` : ""}

@@ -1,4 +1,4 @@
-/* ===== إنقلش عام — تطبيق تعلم اللغة (SPA) ===== */
+/* ===== إنقلش عام، تطبيق تعلم اللغة (SPA) ===== */
 (function(){
   const $ = s => document.querySelector(s);
   const V = window.GEN_VOCAB || [], G = window.GEN_GRAMMAR || [], D = window.GEN_DIALOGUES || [], U = window.GEN_UNITS || [];
@@ -26,7 +26,7 @@
   const addXP = n => gainXP(n);
   function after0(lv){
     const el = document.createElement("div"); el.className = "levelup";
-    el.innerHTML = `<div class="lu-card"><div class="lu-n">${lv}</div><h3>ارتفع مستواك!</h3><p class="muted">صرت <b>${levelTitle(lv)}</b> — واصل، خطوتك التالية تنتظرك.</p><button type="button" class="btn btn-primary">تمام</button></div>`;
+    el.innerHTML = `<div class="lu-card"><div class="lu-n">${lv}</div><h3>ارتفع مستواك!</h3><p class="muted">صرت <b>${levelTitle(lv)}</b>، واصل، خطوتك التالية تنتظرك.</p><button type="button" class="btn btn-primary">تمام</button></div>`;
     document.body.appendChild(el); hydrateIcons(el); confetti();
     const close = () => el.remove();
     el.querySelector("button").addEventListener("click", close);
@@ -80,8 +80,8 @@
   const arSegs = x => arNorm(x).split(/[\/،,()]/).map(y => y.trim()).filter(y => y.length > 2);
   const arOverlap = (a, b) => { const A = new Set(arSegs(a)); return arSegs(b).some(y => A.has(y)); };
   function pickDistract(pool, correct, n, key){ const out = []; for(const x of shuffle(pool)){ const v = key(x); if(v !== correct && !out.includes(v)) out.push(v); if(out.length === n) break; } return out; }
-  function meaningQ(t, i){ const w = t.words[i]; const pool = [...t.words.filter(x => x !== w), ...V.filter(x => x.lvl === t.lvl && x !== t).flatMap(x => x.words)].filter(x => x[0].toLowerCase() !== w[0].toLowerCase() && !arOverlap(x[1], w[1])); const dis = pickDistract(pool, w[1], 3, x => x[1]); const opts = shuffle([w[1], ...dis]); return { id: wid(t, i), kind: "meaning", q: w[0], sub: w[2], opts, a: opts.indexOf(w[1]), ex: `${w[0]} = ${w[1]} — ${w[3]}`, say: w[0] }; }
-  function reverseQ(t, i){ const w = t.words[i]; const pool = [...t.words.filter(x => x !== w), ...V.filter(x => x.lvl === t.lvl && x !== t).flatMap(x => x.words)].filter(x => x[1] !== w[1] && !arOverlap(x[1], w[1]) && x[0].toLowerCase() !== w[0].toLowerCase()); const dis = pickDistract(pool, w[0], 3, x => x[0]); const opts = shuffle([w[0], ...dis]); return { id: wid(t, i), kind: "reverse", q: w[1], opts, a: opts.indexOf(w[0]), ex: `${w[1]} = ${w[0]} — ${w[3]}`, sayAfter: w[0] }; }
+  function meaningQ(t, i){ const w = t.words[i]; const pool = [...t.words.filter(x => x !== w), ...V.filter(x => x.lvl === t.lvl && x !== t).flatMap(x => x.words)].filter(x => x[0].toLowerCase() !== w[0].toLowerCase() && !arOverlap(x[1], w[1])); const dis = pickDistract(pool, w[1], 3, x => x[1]); const opts = shuffle([w[1], ...dis]); return { id: wid(t, i), kind: "meaning", q: w[0], sub: w[2], opts, a: opts.indexOf(w[1]), ex: `${w[0]} = ${w[1]} · ${w[3]}`, say: w[0] }; }
+  function reverseQ(t, i){ const w = t.words[i]; const pool = [...t.words.filter(x => x !== w), ...V.filter(x => x.lvl === t.lvl && x !== t).flatMap(x => x.words)].filter(x => x[1] !== w[1] && !arOverlap(x[1], w[1]) && x[0].toLowerCase() !== w[0].toLowerCase()); const dis = pickDistract(pool, w[0], 3, x => x[0]); const opts = shuffle([w[0], ...dis]); return { id: wid(t, i), kind: "reverse", q: w[1], opts, a: opts.indexOf(w[0]), ex: `${w[1]} = ${w[0]} · ${w[3]}`, sayAfter: w[0] }; }
   /* مطابقة الكلمة داخل المثال مع تصريفاتها: يذاكر/ذاكر/يذاكرون، والعبارات مثل pick (you) up */
   const IRREG = { be: "was were been am is are", begin: "began begun", bite: "bit bitten", break: "broke broken", bring: "brought", build: "built", buy: "bought", can: "could", catch: "caught", choose: "chose chosen", come: "came", cost: "cost", cut: "cut", deal: "dealt", do: "did done does", draw: "drew drawn", drink: "drank drunk", drive: "drove driven", eat: "ate eaten", fall: "fell fallen", feel: "felt", find: "found", fly: "flew flown", forget: "forgot forgotten", get: "got gotten", give: "gave given", go: "went gone goes", grow: "grew grown", have: "had has", hear: "heard", hold: "held", hurt: "hurt", keep: "kept", know: "knew known", lay: "laid", lead: "led", learn: "learnt", leave: "left", lend: "lent", let: "let", lose: "lost", make: "made", may: "might", mean: "meant", meet: "met", pay: "paid", put: "put", read: "read", ride: "rode ridden", rise: "rose risen", run: "ran", say: "said", see: "saw seen", sell: "sold", send: "sent", set: "set", shall: "should", show: "showed shown", sing: "sang sung", sit: "sat", sleep: "slept", speak: "spoke spoken", spend: "spent", stand: "stood", steal: "stole stolen", swim: "swam swum", take: "took taken", teach: "taught", tell: "told", think: "thought", throw: "threw thrown", understand: "understood", wake: "woke woken", wear: "wore worn", will: "would", win: "won", wind: "wound", withdraw: "withdrew withdrawn", write: "wrote written" };
   /* كلمات قد تتغيّر أو تُحذف داخل الجملة (ضمائر، أدوات تعريف، نائب عن شخص) */
@@ -108,9 +108,9 @@
   const RE_CACHE = {};
   const wordRe = w => (w in RE_CACHE) ? RE_CACHE[w] : (RE_CACHE[w] = phraseRe(w));
   const hasSentence = w => { const re = wordRe(w[0]); return !!(re && re.test(w[3])); };
-  function sentenceQ(t, i){ const w = t.words[i]; const re = wordRe(w[0]); const m = re && w[3].match(re); if(!m) return meaningQ(t, i); if(m[2].split(/\s+/).length / w[3].split(/\s+/).length > 0.6) return meaningQ(t, i); const q = w[3].replace(re, "$1______"); const pool = [...t.words.filter(x => x !== w), ...V.filter(x => x.lvl === t.lvl && x !== t).flatMap(x => x.words)]; const dis = pickDistract(pool, w[0], 3, x => x[0]); const opts = shuffle([w[0], ...dis]); return { id: wid(t, i), kind: "sentence", q, sub: w[4], opts, a: opts.indexOf(w[0]), ex: `${w[3]} — ${w[4]}`, sayAfter: w[3], hint: "اختر الكلمة الصحيحة (قد تكون في الجملة بصيغة مختلفة)" }; }
+  function sentenceQ(t, i){ const w = t.words[i]; const re = wordRe(w[0]); const m = re && w[3].match(re); if(!m) return meaningQ(t, i); if(m[2].split(/\s+/).length / w[3].split(/\s+/).length > 0.6) return meaningQ(t, i); const q = w[3].replace(re, "$1______"); const pool = [...t.words.filter(x => x !== w), ...V.filter(x => x.lvl === t.lvl && x !== t).flatMap(x => x.words)]; const dis = pickDistract(pool, w[0], 3, x => x[0]); const opts = shuffle([w[0], ...dis]); return { id: wid(t, i), kind: "sentence", q, sub: w[4], opts, a: opts.indexOf(w[0]), ex: `${w[3]} · ${w[4]}`, sayAfter: w[3], hint: "اختر الكلمة الصحيحة (قد تكون في الجملة بصيغة مختلفة)" }; }
   function grammarQ(l, i){ const p = l.practice[i]; return { id: `gg-${l.id}-${i}`, kind: "grammar", q: p.q, sub: l.t, opts: p.o, a: p.a, ex: p.ex, lesson: l.id }; }
-  function dialogQ(d, i){ const lines = d.lines; const line = lines[i]; if(!line || line[0] !== "B" || i === 0) return null; const prev = lines[i - 1]; const others = D.filter(x => x !== d).flatMap(x => x.lines.filter(y => y[0] === "B" && y[1] !== line[1])).map(y => y[1]); const dis = pickDistract(others, line[1], 2, x => x); const opts = shuffle([line[1], ...dis]); return { id: `gd-${d.id}-${i}`, kind: "dialog", q: `${prev[1]}`, sub: `${d.t} · ${d.roles[0]} يقول — ما الرد المناسب؟`, opts, a: opts.indexOf(line[1]), ex: line[2], say: prev[1] }; }
+  function dialogQ(d, i){ const lines = d.lines; const line = lines[i]; if(!line || line[0] !== "B" || i === 0) return null; const prev = lines[i - 1]; const others = D.filter(x => x !== d).flatMap(x => x.lines.filter(y => y[0] === "B" && y[1] !== line[1])).map(y => y[1]); const dis = pickDistract(others, line[1], 2, x => x); const opts = shuffle([line[1], ...dis]); return { id: `gd-${d.id}-${i}`, kind: "dialog", q: `${prev[1]}`, sub: `${d.t} · ${d.roles[0]} يقول، ما الرد المناسب؟`, opts, a: opts.indexOf(line[1]), ex: line[2], say: prev[1] }; }
   const randomWordQ = (t, i) => [meaningQ, reverseQ, sentenceQ][Math.floor(Math.random() * 3)](t, i);
   /* يختار الكلمات اللي ما جاوبتها صح بعد أولًا، فتكمل الموضوع كله بجولتين بدل ما تتكرر نفس الكلمات */
   function themeQsFresh(t, n, builder){
@@ -200,17 +200,17 @@
     render(`
       <section class="hero gen-hero gen-simple">
         <h1>تعلّم الإنجليزية <mark>خطوة بخطوة</mark></h1>
-        <p>مستواك الآن <b>${cur} · ${LVN[cur]}</b> · الوحدة <b>${nuIdx} — ${esc(nu.t)}</b><br><span class="small">خطوتك التالية: ${esc(ns.label)}</span></p>
+        <p>مستواك الآن <b>${cur} · ${LVN[cur]}</b> · الوحدة <b>${nuIdx}: ${esc(nu.t)}</b><br><span class="small">خطوتك التالية: ${esc(ns.label)}</span></p>
         <div class="actions"><a class="btn btn-light" href="${ns.href}">${I("zap")} أكمل التعلّم</a><a class="btn btn-outline-light" href="#/today">${I("target")} مهام اليوم</a>${due ? `<a class="btn btn-outline-light" href="#/review">${I("repeat")} راجع ${due} ${due > 10 || due < 3 ? "كلمة" : "كلمات"}</a>` : ""}</div>
       </section>
-      ${Auth.user() ? `<a class="card today-card" href="#/today" id="todayCard"><span class="tc-e">🎯</span><div class="tc-b"><b>مهام اليوم</b><div class="small muted">جارٍ التحميل…</div></div><span class="tc-go">${I("arrow")}</span></a>` : ""}
+      ${Auth.user() ? `<a class="card today-card" href="#/today" id="todayCard"><span class="tc-e"></span><div class="tc-b"><b>مهام اليوم</b><div class="small muted">جارٍ التحميل…</div></div><span class="tc-go">${I("arrow")}</span></a>` : ""}
       <div class="gen-stats">
         <div class="gs">${emo("star", "gs-emo")}<div class="gs-b"><div class="gs-n">${GEN.xp}</div><div class="gs-l">XP · المستوى ${xp.l}</div>${bar(Math.round(xp.cur / xp.need * 100))}</div></div>
         <div class="gs">${emo("fire", "gs-emo")}<div class="gs-b"><div class="gs-n">${flame}</div><div class="gs-l">${flame === 1 ? "يوم ورا بعض" : "أيام ورا بعض"}</div></div></div>
         <div class="gs">${emo("check", "gs-emo")}<div class="gs-b"><div class="gs-n">${kn}</div><div class="gs-l">كلمة تعرفها من ${all.length}</div></div></div>
         <a class="gs pts" href="account.html#points" id="ptsCard">${emo("trophy", "gs-emo")}<div class="gs-b"><div class="gs-n" id="ptsCardN">${Auth.user() ? "…" : "—"}</div><div class="gs-l" id="ptsCardSub">${Auth.user() ? "نقاط المنافسة" : "سجّل الدخول لتجمع نقاطًا"}</div></div></a>
       </div>
-      <details class="pts-where small muted"><summary>${I("trophy")} وين تاخذ نقاط؟</summary><p>اختبار الموضوع، اختبار الوحدة، تدريب القاعدة، تحدي اليوم، الألعاب، تمثيل الدور، تصريف الأفعال، وأسئلة القصص — كل سؤال تجيبه صح <b>لأول مرة</b> = نقطة. <a href="#/golden">تحدي ساعة الذهب</a> (٩–١٠ مساءً) هو الوحيد اللي فيه ×٢. البطاقات والمراجعة بدون نقاط، و XP لمستواك الشخصي فقط.</p></details>
+      <details class="pts-where small muted"><summary>${I("trophy")} وين تاخذ نقاط؟</summary><p>اختبار الموضوع، اختبار الوحدة، تدريب القاعدة، تحدي اليوم، الألعاب، تمثيل الدور، تصريف الأفعال، وأسئلة القصص، كل سؤال تجيبه صح <b>لأول مرة</b> = نقطة. <a href="#/golden">تحدي ساعة الذهب</a> (٩–١٠ مساءً) هو الوحيد اللي فيه ×٢. البطاقات والمراجعة بدون نقاط، و XP لمستواك الشخصي فقط.</p></details>
       <div class="home-cols">
       <section class="section"><div class="section-title"><h2>المستويات</h2><span class="muted small">التقدم يزيد مع كل كلمة تتعلمها ويكتمل باختبار الوحدة</span></div>
         <div class="lvl-list">${LV.map(lv => { const units = U.filter(u => u.lvl === lv), done = units.filter(u => GEN.units[u.id]).length, pct = levelPct(lv); const st = pct === 100 ? "done" : lv === cur ? "cur" : ""; return `<a class="lvl-row ${st}" href="#/level/${lv}" style="--c:${LVC[lv]}"><div class="lvl-badge" style="background:${LVC[lv]}">${lv}</div><div class="lvl-body"><div class="lvl-head"><b>${LVN[lv]}</b><span class="lvl-pct">${pct}%</span></div>${bar(pct)}<div class="small muted">${done}/${units.length} وحدة مكتملة${lv === cur ? " · <b>أنت هنا</b>" : ""}</div></div>${I("arrow")}</a>`; }).join("")}</div>
@@ -221,11 +221,11 @@
           <a class="card link-card c-green" href="#/grammar"><div class="menu-emo">${emo("memo")}</div><h3>القواعد</h3><p class="muted small">${G.length} درسًا: متى ولماذا</p></a>
           <a class="card link-card c-teal" href="#/talk"><div class="menu-emo">${emo("talk")}</div><h3>المحادثة</h3><p class="muted small">${D.length} حوارًا تسمعه وتنطقه</p></a>
           <a class="card link-card c-rose" href="#/games"><div class="menu-emo">${emo("game")}</div><h3>الألعاب</h3><p class="muted small">سباق، طابق، رتّب الحروف</p></a>
-          <a class="card link-card c-amber" href="library.html"><div class="menu-emo">${emo("book")}</div><h3>القصص والروايات</h3><p class="muted small">اقرأ واستمع بصوت قارئ — من A1 إلى C2</p></a>
-          <a class="card link-card c-blue" href="#/verbs"><div class="menu-emo">${emo("repeat")}</div><h3>تصريف الأفعال</h3><p class="muted small">${(window.GEN_VERBS || []).length} فعلًا: الماضي، بعد have، وing — مع بحث واختبار</p></a>
+          <a class="card link-card c-amber" href="library.html"><div class="menu-emo">${emo("book")}</div><h3>القصص والروايات</h3><p class="muted small">اقرأ واستمع بصوت قارئ، من A1 إلى C2</p></a>
+          <a class="card link-card c-blue" href="#/verbs"><div class="menu-emo">${emo("repeat")}</div><h3>تصريف الأفعال</h3><p class="muted small">${(window.GEN_VERBS || []).length} فعلًا: الماضي، بعد have، وing، مع بحث واختبار</p></a>
         </div>
       </section></div>`);
-    if(Auth.user()) Auth.api("/api/points?today=1").then(t => { const c = $("#todayCard"); if(!c) return; const q = t.quests, n = q.quests.filter(x => x.claimed || x.done).length, toClaim = q.quests.filter(x => x.done && !x.claimed).length + (q.chest.ready && !q.chest.claimed ? 1 : 0); c.querySelector(".tc-e").textContent = q.theme.e; c.querySelector(".tc-b").innerHTML = `<b>${esc(q.theme.t)} · مهام اليوم ${n}/3</b><div class="small muted">${t.wordle.done ? (t.wordle.won ? `كلمة اليوم ✓ (${t.wordle.guesses.length}/6)` : "كلمة اليوم ✗") : "🔤 كلمة اليوم تنتظرك"} · ${q.chest.claimed ? "🎁 فتحت الصندوق" : `🎁 الصندوق +${q.chest.pts}`}${toClaim ? ` · <b class="tc-hot">${toClaim} جاهزة للاستلام!</b>` : ""}</div>`; }).catch(() => {});
+    if(Auth.user()) Auth.api("/api/points?today=1").then(t => { const c = $("#todayCard"); if(!c) return; const q = t.quests, n = q.quests.filter(x => x.claimed || x.done).length, toClaim = q.quests.filter(x => x.done && !x.claimed).length + (q.chest.ready && !q.chest.claimed ? 1 : 0); c.querySelector(".tc-e").innerHTML = I(THEME_ICON[q.theme.t] || "target"); c.querySelector(".tc-b").innerHTML = `<b>${esc(q.theme.t)} · مهام اليوم ${n}/3</b><div class="small muted">${t.wordle.done ? (t.wordle.won ? `كلمة اليوم ✓ (${t.wordle.guesses.length}/6)` : "كلمة اليوم ✗") : " كلمة اليوم تنتظرك"} · ${q.chest.claimed ? " فتحت الصندوق" : ` الصندوق +${q.chest.pts}`}${toClaim ? ` · <b class="tc-hot">${toClaim} جاهزة للاستلام!</b>` : ""}</div>`; }).catch(() => {});
     if(Auth.user()) Auth.api("/api/me").then(m => { const n = $("#ptsCardN"), sub = $("#ptsCardSub"); if(n) n.textContent = m.points || 0; if(sub) sub.textContent = "نقطة" + (m.monthRank ? ` · البطولة #${m.monthRank}` : m.rank ? ` · #${m.rank}` : ""); }).catch(() => {});
   };
 
@@ -249,7 +249,7 @@
   };
   routes.verbquiz = () => {
     const pool = shuffle(VB.filter(v => v[4])).slice(0, 12);
-    const list = pool.map(v => { const kind = Math.random() < .6 ? 1 : 2; const correct = v[kind].split("/")[0].trim(); const dis = shuffle(VB.filter(x => x !== v).map(x => x[kind].split("/")[0].trim()).filter(x => x !== correct)).slice(0, 3); const opts = shuffle([correct, ...dis]); return { id: `vb-${v[0]}-${kind}`, kind: "verb", q: kind === 1 ? `${v[0]}  →  yesterday I ___` : `${v[0]}  →  I have ___`, sub: v[3], opts, a: opts.indexOf(correct), ex: `${v[0]} · ${v[1]} · ${v[2]} — ${v[3]}`, sayAfter: `${v[0]}, ${v[1].split("/")[0].trim()}, ${v[2].split("/")[0].trim()}` }; });
+    const list = pool.map(v => { const kind = Math.random() < .6 ? 1 : 2; const correct = v[kind].split("/")[0].trim(); const dis = shuffle(VB.filter(x => x !== v).map(x => x[kind].split("/")[0].trim()).filter(x => x !== correct)).slice(0, 3); const opts = shuffle([correct, ...dis]); return { id: `vb-${v[0]}-${kind}`, kind: "verb", q: kind === 1 ? `${v[0]}  →  yesterday I ___` : `${v[0]}  →  I have ___`, sub: v[3], opts, a: opts.indexOf(correct), ex: `${v[0]} · ${v[1]} · ${v[2]} · ${v[3]}`, sayAfter: `${v[0]}, ${v[1].split("/")[0].trim()}, ${v[2].split("/")[0].trim()}` }; });
     runQuiz({ title: "اختبار تصريف الأفعال", list, backHref: "#/verbs", xpPer: 4, onDone: (s, n, secs, ids) => { postPoints(s, n, secs, ids); resultCard("تصريف الأفعال", s, n, `<p class="muted">+${s * 4} XP</p>`, "#/verbs", "#/verbquiz"); } });
   };
 
@@ -257,7 +257,7 @@
   routes.games = () => {
     render(crumb([{ t: "الألعاب" }]) + `<h1>${I("timer")} الألعاب</h1><p class="muted">ألعاب سريعة على كلمات مستواك. كل إجابة صحيحة تعطيك XP.</p>
       <a class="card link-card battle-card" href="#/battle"><div class="menu-emo">${emo("swords")}</div><h3>معركة الكلمات ${ptsTag()}</h3><p class="muted small">كل جمعة ٨–١٠ مساءً: نفس الكلمات للجميع، والأول يفوز بـ +٣٠ نقطة</p></a>
-      <a class="card link-card golden-card" href="#/golden"><div class="menu-emo">${emo("star")}</div><h3>تحدي ساعة الذهب ${ptsTag()}</h3><p class="muted small">كل يوم ٩–١٠ مساءً: ٢٠ سؤال جديد على مستواك، كل سؤال بنقطتين — المكان الوحيد للمضاعفة</p></a>
+      <a class="card link-card golden-card" href="#/golden"><div class="menu-emo">${emo("star")}</div><h3>تحدي ساعة الذهب ${ptsTag()}</h3><p class="muted small">كل يوم ٩–١٠ مساءً: ٢٠ سؤال جديد على مستواك، كل سؤال بنقطتين، المكان الوحيد للمضاعفة</p></a>
       <div class="grid grid-3">
         <a class="card link-card c-rose" href="#/game/speed"><div class="menu-emo">${emo("stopwatch")}</div><h3>سباق ٦٠ ثانية ${ptsTag()}</h3><p class="muted small">أكبر عدد من المعاني قبل انتهاء الوقت. أفضل نتيجة: ${GEN.best.speed || 0}</p></a>
         <a class="card link-card c-blue" href="#/game/match"><div class="menu-emo">${emo("link")}</div><h3>طابق الكلمات ${ptsTag()}</h3><p class="muted small">اربط كل كلمة بمعناها.</p></a>
@@ -269,8 +269,8 @@
   routes.level = lv => {
     if(!LV.includes(lv)) return routes.home();
     const units = U.filter(u => u.lvl === lv), done = units.filter(u => GEN.units[u.id]).length, pct = levelPct(lv);
-    render(crumb([{ t: `${lv} — ${LVN[lv]}` }]) + `<div class="card sheet lvl-top" style="--c:${LVC[lv]}"><div class="section-title"><div class="lvl-badge" style="background:${LVC[lv]}">${lv}</div><h1 style="margin:0">${LVN[lv]}</h1><span class="lvl-pct big">${pct}%</span></div>${bar(pct)}<p class="muted small" style="margin:8px 0 0">${done}/${units.length} وحدة مكتملة. أكمل الوحدات بالترتيب: مفردات ← قاعدة ← محادثة ← اختبار قصير.</p></div>
-      <div class="units">${units.map((u, i) => { const d = !!GEN.units[u.id], p = unitPct(u), here = !d && u === units.find(x => !GEN.units[x.id]); const dots = unitSteps(u).map(st => `<span class="ustep ${st.done ? "ok" : ""}" title="${esc(st.label)}">${st.kind === "theme" ? "📚" : st.kind === "lesson" ? "📝" : st.kind === "dialogue" ? "💬" : "🏆"}</span>`).join(""); return `<a class="unit ${d ? "done" : ""} ${here ? "here" : ""}" href="#/unit/${u.id}">${d ? `<span class="stamp">${I("check")} مكتملة</span>` : ""}<div class="unit-n" style="background:${d ? "var(--ok)" : LVC[lv]}">${d ? I("check") : i + 1}</div><div class="unit-body"><div class="unit-head"><span class="unit-t">${esc(u.t)}</span>${here ? `<span class="badge accent">أنت هنا</span>` : `<span class="lvl-pct">${p}%</span>`}</div>${here ? `<div class="muted small">${esc(u.goal)}</div>` : ""}<div class="ustep-row">${dots}</div>${bar(p)}</div></a>`; }).join("")}</div>`);
+    render(crumb([{ t: `${lv} · ${LVN[lv]}` }]) + `<div class="card sheet lvl-top" style="--c:${LVC[lv]}"><div class="section-title"><div class="lvl-badge" style="background:${LVC[lv]}">${lv}</div><h1 style="margin:0">${LVN[lv]}</h1><span class="lvl-pct big">${pct}%</span></div>${bar(pct)}<p class="muted small" style="margin:8px 0 0">${done}/${units.length} وحدة مكتملة. أكمل الوحدات بالترتيب: مفردات ← قاعدة ← محادثة ← اختبار قصير.</p></div>
+      <div class="units">${units.map((u, i) => { const d = !!GEN.units[u.id], p = unitPct(u), here = !d && u === units.find(x => !GEN.units[x.id]); const dots = unitSteps(u).map(st => `<span class="ustep ${st.done ? "ok" : ""}" title="${esc(st.label)}">${st.kind === "theme" ? "" : st.kind === "lesson" ? "" : st.kind === "dialogue" ? "" : ""}</span>`).join(""); return `<a class="unit ${d ? "done" : ""} ${here ? "here" : ""}" href="#/unit/${u.id}">${d ? `<span class="stamp">${I("check")} مكتملة</span>` : ""}<div class="unit-n" style="background:${d ? "var(--ok)" : LVC[lv]}">${d ? I("check") : i + 1}</div><div class="unit-body"><div class="unit-head"><span class="unit-t">${esc(u.t)}</span>${here ? `<span class="badge accent">أنت هنا</span>` : `<span class="lvl-pct">${p}%</span>`}</div>${here ? `<div class="muted small">${esc(u.goal)}</div>` : ""}<div class="ustep-row">${dots}</div>${bar(p)}</div></a>`; }).join("")}</div>`);
     const hereEl = $("#app .unit.here"); if(hereEl && units.indexOf(units.find(x => !GEN.units[x.id])) > 2) after(() => hereEl.scrollIntoView({ block: "center", behavior: "smooth" }), 250);
   };
 
@@ -350,7 +350,7 @@
       fb.innerHTML = `<b>${ok ? I("check") + " صحيح!" : I("x") + " الصحيح: " + esc(q.opts[q.a])}</b>${why ? `<div class="why-mini">${I("x")} ليش «${esc(q.opts[k])}» غلط؟ ${esc(why)}</div>` : ""}${esc(q.ex || "")} ${sayNow ? spk(sayNow, "sm") : ""}${q.lesson ? ` <a class="mini-link" href="#/lesson/${q.lesson}">${I("book")} افهم القاعدة</a>` : ""}`;
       hydrateIcons(fb); $("#gnext").disabled = false; $("#gnext").focus({ preventScroll: true });
       if(sayNow) after(() => speak(sayNow), 350);
-      /* أنت اللي تضغط «التالي» — بس نخلي التصحيح ظاهر بدون ما تنزل */
+      /* أنت اللي تضغط «التالي»، بس نخلي التصحيح ظاهر بدون ما تنزل */
       after(() => { try{ fb.scrollIntoView({ block: "nearest", behavior: "smooth" }); }catch(e){} }, 60);
     };
     const next = () => { if(!S.done) return; hush(); S.i++; S.done = false; show(); };
@@ -365,7 +365,7 @@
     const pct = total ? Math.round(score / total * 100) : 0; if(pct >= 80 && total) confetti();
     render(`<div class="card center sheet fade-up"><div class="score-ring" style="--p:${pct}"><span>${pct}%</span></div><h2>${score} من ${total}</h2><h3 class="muted" style="font-weight:600">${title}</h3>${extra || ""}<div id="ptsBox" class="pts-slot">${Auth.user() ? "" : `<p class="small muted">${I("lock")} <a href="account.html">سجّل الدخول</a> لتُحسب نقاطك في المنافسة.</p>`}</div>
       ${nextStep ? `<a class="btn btn-warm btn-lg next-btn" href="${nextStep.href}"><span>${I("zap")} الخطوة التالية ←</span><small>${mixed(nextStep.label)}</small></a>` : ""}
-      ${total ? `<p class="res-cheer">${pct >= 100 ? `${emo("party")} كاملة! ما شاء الله` : pct >= 80 ? `${emo("muscle")} ممتاز، قربت تتقنها` : pct >= 50 ? "زين! أعد الأخطاء وتصير أقوى" : "لا بأس — الكلمات الجديدة تحتاج تكرار. أعد الأخطاء بس"}</p>` : ""}
+      ${total ? `<p class="res-cheer">${pct >= 100 ? `${emo("party")} كاملة! ما شاء الله` : pct >= 80 ? `${emo("muscle")} ممتاز، قربت تتقنها` : pct >= 50 ? "زين! أعد الأخطاء وتصير أقوى" : "لا بأس، الكلمات الجديدة تحتاج تكرار. أعد الأخطاء بس"}</p>` : ""}
       <div class="btn-row res-actions">${LAST_WRONG.length ? `<button type="button" class="btn ${nextStep ? "" : "btn-primary"}" id="retryWrong">${I("target")} أعد الأخطاء (${LAST_WRONG.length})</button>` : ""}${againHref ? `<button type="button" class="btn ${nextStep || LAST_WRONG.length ? "" : "btn-primary"}" id="againBtn">${I("refresh")} مرة أخرى</button>` : ""}<a class="btn" href="${backHref || "#/"}">رجوع</a></div>
       ${LAST_WRONG.length ? `<details class="mistakes" ${LAST_WRONG.length <= 3 ? "open" : ""}><summary>${I("list")} شوف أخطاءك وتصحيحها (${LAST_WRONG.length})</summary>${LAST_WRONG.map(x => `<div class="mk"><div class="mk-q en">${esc(x.q.q)}</div><div class="mk-a"><span class="bad-ans">${esc(x.q.opts[x.chosen])}</span> <span class="ok-ans">${esc(x.q.opts[x.q.a])}</span>${x.q.sayAfter || x.q.say ? `<button type="button" class="spk sm" data-say="${esc(x.q.sayAfter || x.q.say)}">${I("headphones")}</button>` : ""}</div>${x.q.ex ? `<div class="small muted">${esc(x.q.ex)}</div>` : ""}</div>`).join("")}</details>` : ""}</div>`);
     if(againHref) $("#againBtn").addEventListener("click", () => { if(location.hash === againHref) route(); else location.hash = againHref; });
@@ -382,7 +382,7 @@
     if(kind === "quiz" || kind === "sentence"){
       const src = t || levelThemes(currentLevel())[0]; const n = Math.min(12, src.words.length);
       const list = themeQsFresh(src, n, kind === "sentence" ? sentenceQ : null);
-      return runQuiz({ title: (kind === "sentence" ? "أكمل الجملة — " : "اختبار المعنى — ") + src.t, list, backHref: `#/theme/${src.id}`, xpPer: 5, onDone: (s, n2, secs, ids) => { postPoints(s, n2, secs, ids); resultCard(src.t, s, n2, `<p class="muted">+${s * 5} XP</p>`, `#/theme/${src.id}`, `#/game/${kind}/${src.id}`, nextAfterTheme(src)); } });
+      return runQuiz({ title: (kind === "sentence" ? "أكمل الجملة، " : "اختبار المعنى، ") + src.t, list, backHref: `#/theme/${src.id}`, xpPer: 5, onDone: (s, n2, secs, ids) => { postPoints(s, n2, secs, ids); resultCard(src.t, s, n2, `<p class="muted">+${s * 5} XP</p>`, `#/theme/${src.id}`, `#/game/${kind}/${src.id}`, nextAfterTheme(src)); } });
     }
     if(kind === "flash") return flashGame(t || levelThemes(currentLevel())[0]);
     if(kind === "spell") return spellGame(t);
@@ -419,11 +419,11 @@
         const box = $("#fsay"); box.hidden = false; box.className = "fsay"; box.textContent = "… قلها الحين";
         Speech.listen(res => {
           fm.classList.remove("on"); const b2 = $("#fsay"); if(!b2) return;
-          if(!res){ b2.className = "fsay bad"; b2.textContent = "ما سمعت شي — قرّب الجوال وجرّب"; return; }
+          if(!res){ b2.className = "fsay bad"; b2.textContent = "ما سمعت شي، قرّب الجوال وجرّب"; return; }
           const r = Speech.evaluate(w[0], res);
           const good = r.score >= 70;
           b2.className = "fsay " + (good ? "ok" : "bad");
-          b2.innerHTML = good ? `${I("check")} ${r.score >= 100 ? "نطق ممتاز!" : "زين!"}` : `${I("x")} سمعت: <b class="en">${esc(res[0])}</b> — اسمعها وجرّب مرة ثانية`;
+          b2.innerHTML = good ? `${I("check")} ${r.score >= 100 ? "نطق ممتاز!" : "زين!"}` : `${I("x")} سمعت: <b class="en">${esc(res[0])}</b>، اسمعها وجرّب مرة ثانية`;
           hydrateIcons(b2); sfx(good ? "correct" : "wrong");
           if(!good) after(() => speak(w[0], .8), 500);
         }, null, { silence: 900, max: 5000, first: 5000 });
@@ -444,10 +444,10 @@
   function spellGame(t){
     const src = t || levelThemes(currentLevel())[Math.floor(Math.random() * 3)];
     const idx = shuffle(spellable(src)).slice(0, 10);
-    if(!idx.length){ toast("هذا الموضوع عبارات وليس كلمات مفردة — جرّب «طابق» أو الاختبار"); return go("theme/" + src.id); }
+    if(!idx.length){ toast("هذا الموضوع عبارات وليس كلمات مفردة، جرّب «طابق» أو الاختبار"); return go("theme/" + src.id); }
     let pos = 0, score = 0, built = [], sids = [], checked = false;
     const show = () => {
-      if(pos >= idx.length){ postPoints(score, idx.length, 0, sids); return resultCard("رتّب الحروف — " + src.t, score, idx.length, `<p class="muted">+${score * 8} XP</p>`, `#/theme/${src.id}`, `#/game/spell/${src.id}`, nextAfterTheme(src)); }
+      if(pos >= idx.length){ postPoints(score, idx.length, 0, sids); return resultCard("رتّب الحروف، " + src.t, score, idx.length, `<p class="muted">+${score * 8} XP</p>`, `#/theme/${src.id}`, `#/game/spell/${src.id}`, nextAfterTheme(src)); }
       checked = false;
       const w = src.words[idx[pos]]; const letters = shuffle(w[0].toLowerCase().split("")); built = [];
       render(crumb([{ t: src.t, href: `#/theme/${src.id}` }, { t: "رتّب الحروف" }]) + `<div class="quiz-top"><h2 style="margin:0;font-size:1.15rem">رتّب الحروف</h2><span class="badge info">${pos + 1} / ${idx.length}</span></div>${bar(pos / idx.length * 100)}
@@ -483,7 +483,7 @@
       moves++; $("#mmoves").textContent = moves + " حركة";
       const a = tiles[+first.dataset.k], c = tiles[+b.dataset.k];
       if(a.i === c.i && a.side !== c.side){ first.classList.add("done"); b.classList.add("done"); first.classList.remove("sel"); b.classList.remove("sel"); matched++; Progress.record(wid(src, a.i), true); sfx("coin"); first = null;
-        if(matched === idx.length){ const secs = Math.round((Date.now() - start) / 1000); const xp = Math.max(20, 80 - moves * 2); gainXP(xp, true); if(!GEN.best.match || secs < GEN.best.match) GEN.best.match = secs; saveGen(); postPoints(idx.length, idx.length, secs, idx.map(i => wid(src, i))); after(() => resultCard("طابق الكلمات — " + src.t, idx.length, idx.length, `<p class="muted">${moves} حركة · ${secs} ثانية · +${xp} XP</p>`, `#/theme/${src.id}`, `#/game/match/${src.id}`, nextAfterTheme(src)), 500); }
+        if(matched === idx.length){ const secs = Math.round((Date.now() - start) / 1000); const xp = Math.max(20, 80 - moves * 2); gainXP(xp, true); if(!GEN.best.match || secs < GEN.best.match) GEN.best.match = secs; saveGen(); postPoints(idx.length, idx.length, secs, idx.map(i => wid(src, i))); after(() => resultCard("طابق الكلمات، " + src.t, idx.length, idx.length, `<p class="muted">${moves} حركة · ${secs} ثانية · +${xp} XP</p>`, `#/theme/${src.id}`, `#/game/match/${src.id}`, nextAfterTheme(src)), 500); }
       } else { const f = first; first = null; after(() => { f.classList.remove("sel"); b.classList.remove("sel"); }, 350); if(a.side !== c.side) Progress.record(wid(src, a.side === "en" ? a.i : c.i), false); sfx("wrong"); }
     }));
   }
@@ -501,7 +501,7 @@
     };
     const keyH = e => { if(/^[1-4]$/.test(e.key)){ const b = document.querySelectorAll("#gopts .opt")[+e.key - 1]; if(b && !b.disabled) b.click(); } };
     document.addEventListener("keydown", keyH); timers.push({ clear(){ document.removeEventListener("keydown", keyH); } });
-    const tick = () => { const left = DUR - Math.round((Date.now() - start) / 1000); const el = $("#st"); if(el){ el.textContent = Math.max(0, left) + "s"; el.classList.toggle("low", left <= 10); } if(left !== lastLeft){ lastLeft = left; if(left <= 0) sfx("timeout"); else if(left <= 10) sfx("tick"); } if(left <= 0){ stopTimers(); const nb = score > best; if(nb) GEN.best.speed = score; gainXP(score * 3, true); saveGen(); postPoints(score, Math.max(answered, 1), DUR, sids); resultCard("سباق ٦٠ ثانية", score, Math.max(answered, score), `<p class="muted">${answered} سؤال · +${score * 3} XP ${nb ? "· 🏆 رقم قياسي جديد!" : "· أفضل نتيجة " + best}</p>`, "#/", "#/game/speed"); return; } after(tick, 250); };
+    const tick = () => { const left = DUR - Math.round((Date.now() - start) / 1000); const el = $("#st"); if(el){ el.textContent = Math.max(0, left) + "s"; el.classList.toggle("low", left <= 10); } if(left !== lastLeft){ lastLeft = left; if(left <= 0) sfx("timeout"); else if(left <= 10) sfx("tick"); } if(left <= 0){ stopTimers(); const nb = score > best; if(nb) GEN.best.speed = score; gainXP(score * 3, true); saveGen(); postPoints(score, Math.max(answered, 1), DUR, sids); resultCard("سباق ٦٠ ثانية", score, Math.max(answered, score), `<p class="muted">${answered} سؤال · +${score * 3} XP ${nb ? "·  رقم قياسي جديد!" : "· أفضل نتيجة " + best}</p>`, "#/", "#/game/speed"); return; } after(tick, 250); };
     nextQ(); tick();
   }
 
@@ -511,7 +511,7 @@
     render(crumb([{ t: "معركة الكلمات" }]) + `<div class="card center"><p class="muted">جارٍ التحميل…</p></div>`);
     let info; try{ info = await Auth.api("/api/battle"); }catch(e){ return render(crumb([{ t: "معركة الكلمات" }]) + `<div class="note bad"><span class="ic">${I("alert")}</span><p>${esc(e.message)}</p></div>`); }
     const B = info.config, now = info.now;
-    const board = rows => rows.length ? `<div class="lb">${rows.map(r => `<div class="lb-row ${r.me ? "me" : ""} ${r.rank <= 3 ? "top" + r.rank : ""}"><div class="rk ${r.rank <= 3 ? "medal" : ""}">${r.rank <= 3 ? I("medal", "medal-" + r.rank) : r.rank}</div><div class="nm">${esc(r.name)}</div><div class="pt">${r.score}${r.prize ? ` · +${r.prize}` : ""}</div></div>`).join("")}</div>` : `<p class="muted small">ما أحد لعب بعد — كن الأول!</p>`;
+    const board = rows => rows.length ? `<div class="lb">${rows.map(r => `<div class="lb-row ${r.me ? "me" : ""} ${r.rank <= 3 ? "top" + r.rank : ""}"><div class="rk ${r.rank <= 3 ? "medal" : ""}">${r.rank <= 3 ? I("medal", "medal-" + r.rank) : r.rank}</div><div class="nm">${esc(r.name)}</div><div class="pt">${r.score}${r.prize ? ` · +${r.prize}` : ""}</div></div>`).join("")}</div>` : `<p class="muted small">ما أحد لعب بعد، كن الأول!</p>`;
     const lastHtml = info.last && info.last.winners.length ? `<div class="card sheet"><h3>${I("trophy")} فائزو آخر معركة (${esc(info.last.key)})</h3>${board(info.last.winners)}</div>` : "";
     if(!info.active){
       return render(crumb([{ t: "معركة الكلمات" }]) + `<div class="card sheet battle-hero"><div class="gift-box live">${I("swords")}</div><h1>${esc(B.title)}</h1><p>${esc(B.desc)}</p>
@@ -522,7 +522,7 @@
     const rand = seeded(info.seed);
     const pool = allWords().filter(x => x.t.lvl === "A1" || x.t.lvl === "A2");
     const order = pool.map(x => [rand(), x]).sort((p, q) => p[0] - q[0]).map(p => p[1]).slice(0, 80);
-    const intro = () => render(crumb([{ t: "معركة الكلمات" }]) + `<div class="card sheet battle-hero"><div class="gift-box live">${I("swords")}</div><h1>${esc(B.title)} — قائمة الآن!</h1><p>${esc(B.desc)}</p>
+    const intro = () => render(crumb([{ t: "معركة الكلمات" }]) + `<div class="card sheet battle-hero"><div class="gift-box live">${I("swords")}</div><h1>${esc(B.title)}، قائمة الآن!</h1><p>${esc(B.desc)}</p>
       <div class="battle-count"><div class="small muted">تنتهي بعد</div><div class="bc-num">${fmtLeft(info.active.end - Date.now())}</div>${info.mine ? `<div class="small">أفضل نتيجة لك: <b>${info.mine.score}</b> · المركز #${info.mine.rank}</div>` : ""}</div>
       <button type="button" class="btn btn-warm btn-lg" id="bStart">${I("swords")} ابدأ الجولة (${B.seconds} ثانية)</button></div>
       <div class="card sheet"><h3>${I("trophy")} الترتيب الآن</h3>${board(info.board)}</div>${lastHtml}`);
@@ -622,10 +622,10 @@
     render(crumb(U.find(x => x.grammar === l.id) ? [...unitPath(U.find(x => x.grammar === l.id)), { t: l.t }] : [{ t: "القواعد", href: "#/grammar" }, { t: l.t }]) + `<article class="lesson focus-none"><h2><span class="n" style="background:${LVC[l.lvl]}">${l.lvl}</span> ${esc(l.t)}</h2><div class="en-title lesson-en">${esc(l.en)}</div>
       <div class="why-box"><h3>${I("bulb")} وش بتقدر تقول بعد الدرس؟</h3><p>${mixed(l.why)}</p></div>
       <div class="when-box"><h3>${I("clock")} متى تقولها؟</h3><ul class="when-list">${arPoints(l.when).map(x => `<li>${pointHtml(x)}</li>`).join("")}</ul></div>
-      ${frames.length ? `<h3>${I("type")} قوالب جاهزة — عبّي الفراغ وقلها بصوت عالٍ</h3><div class="frames">${frames.map(f => `<div class="frame"><div class="fr-en en">${esc(f[0]).replace(/___/g, '<span class="slot">___</span>')} ${spk(f[0].replace(/___/g, "something"), "sm")}</div><div class="fr-ar">${esc(f[1])}</div></div>`).join("")}</div>` : ""}
+      ${frames.length ? `<h3>${I("type")} قوالب جاهزة، عبّي الفراغ وقلها بصوت عالٍ</h3><div class="frames">${frames.map(f => `<div class="frame"><div class="fr-en en">${esc(f[0]).replace(/___/g, '<span class="slot">___</span>')} ${spk(f[0].replace(/___/g, "something"), "sm")}</div><div class="fr-ar">${esc(f[1])}</div></div>`).join("")}</div>` : ""}
       ${l.table ? `<h3>${I("list")} الخلاصة في جدول</h3><div class="table-wrap"><table class="gtable"><thead><tr>${l.table.head.map(h => `<th>${esc(h)}</th>`).join("")}</tr></thead><tbody>${l.table.rows.map(r => `<tr>${r.map((cell, i) => `<td class="${/[A-Za-z]/.test(cell) && i > 0 ? "en" : ""}">${esc(cell)}</td>`).join("")}</tr>`).join("")}</tbody></table></div>` : ""}
       <h3>${I("bookopen")} أمثلة من الحياة</h3>${l.ex.map(e => `<div class="ex right"><span class="en">${esc(e[0])} ${spk(e[0], "sm")}</span><span class="ar">${esc(e[1])}</span></div>`).join("")}
-      ${speakP.length ? `<div class="speak-box"><h3>${I("mic")} قلها عن نفسك</h3><ol>${speakP.map(p => `<li>${mixed(p)}</li>`).join("")}</ol><p class="small muted">ما تحتاج تكتب — قلها بصوتك وأنت تمشي أو تسوق. التكرار بصوت عالٍ هو اللي يثبّتها.</p></div>` : ""}
+      ${speakP.length ? `<div class="speak-box"><h3>${I("mic")} قلها عن نفسك</h3><ol>${speakP.map(p => `<li>${mixed(p)}</li>`).join("")}</ol><p class="small muted">ما تحتاج تكتب، قلها بصوتك وأنت تمشي أو تسوق. التكرار بصوت عالٍ هو اللي يثبّتها.</p></div>` : ""}
       <details class="shape" open><summary>${I("list")} شكل الجملة كامل</summary><div class="formula-rows">${formRows(l.form).map(x => `<div class="frow">${mixed(x)}</div>`).join("")}</div></details>
       <h3>${I("alert")} أخطاء يقع فيها الكثير</h3><div class="table-wrap"><table><thead><tr><th class="en">✗ خطأ</th><th class="en">✓ صحيح</th><th>ليش</th></tr></thead><tbody>${l.mistakes.map(m => `<tr><td class="en" style="color:var(--bad)">${esc(m[0])}</td><td class="en" style="color:var(--ok)">${esc(m[1])}</td><td>${mixed(m[2])}</td></tr>`).join("")}</tbody></table></div>
       <div class="note tip"><span class="ic">${I("sparkles")}</span><p>${mixed(l.tip)}</p></div>
@@ -679,19 +679,19 @@
     const addSent = (x, toEn) => {
       if(used.has(x.w[0])) return; used.add(x.w[0]);
       const dis = pick(words.filter(y => y.w[3] !== x.w[3] && y.w[4] !== x.w[4] && y.w[0] !== x.w[0]), 3); if(dis.length < 3) return;
-      if(toEn){ const opts = sh([x.w[3], ...dis.map(y => y.w[3])]); out.push({ kind: "gsent", label: "اختر الجملة الإنجليزية", rtl: true, q: x.w[4], opts, a: opts.indexOf(x.w[3]), ex: `${x.w[3]} — ${x.w[4]}`, sayAfter: x.w[3] }); }
-      else { const opts = sh([x.w[4], ...dis.map(y => y.w[4])]); out.push({ kind: "gmean", label: "وش معنى الجملة؟", arOpts: true, q: x.w[3], opts, a: opts.indexOf(x.w[4]), ex: `${x.w[3]} — ${x.w[4]}`, say: x.w[3] }); }
+      if(toEn){ const opts = sh([x.w[3], ...dis.map(y => y.w[3])]); out.push({ kind: "gsent", label: "اختر الجملة الإنجليزية", rtl: true, q: x.w[4], opts, a: opts.indexOf(x.w[3]), ex: `${x.w[3]} · ${x.w[4]}`, sayAfter: x.w[3] }); }
+      else { const opts = sh([x.w[4], ...dis.map(y => y.w[4])]); out.push({ kind: "gmean", label: "وش معنى الجملة؟", arOpts: true, q: x.w[3], opts, a: opts.indexOf(x.w[4]), ex: `${x.w[3]} · ${x.w[4]}`, say: x.w[3] }); }
     };
     pick(words, 6).forEach(x => addSent(x, true));
     pick(words, 5 + 6).forEach(x => { if(out.length < 11) addSent(x, false); });
     if(themes.length >= 2) for(let k = 0; k < 4; k++){
       const [t1, t2] = pick(themes, 2); const three = pick(t1.words, 3), odd = pick(t2.words.filter(w => !t1.words.some(z => z[0] === w[0])), 1)[0]; if(!odd || three.length < 3) continue;
       const opts = sh([...three.map(w => w[0]), odd[0]]);
-      out.push({ kind: "godd", label: "الكلمة الغريبة", rtl: true, q: `أي كلمة ما تنتمي لمجموعة «${t1.t}»؟`, opts, a: opts.indexOf(odd[0]), ex: `${odd[0]} = ${odd[1]} — هذي من «${t2.t}»، والباقي من «${t1.t}»` });
+      out.push({ kind: "godd", label: "الكلمة الغريبة", rtl: true, q: `أي كلمة ما تنتمي لمجموعة «${t1.t}»؟`, opts, a: opts.indexOf(odd[0]), ex: `${odd[0]} = ${odd[1]}، هذي من «${t2.t}»، والباقي من «${t1.t}»` });
     }
     const mistakes = lessons.flatMap(l => l.mistakes.map(m => ({ m, l })));
-    if(mistakes.length >= 4) pick(mistakes, 3).forEach(x => { const opts = sh([x.m[1], ...pick(mistakes.filter(y => y !== x), 3).map(y => y.m[0])]); out.push({ kind: "gfix", label: "أي جملة صحيحة؟", rtl: true, q: "وحدة بس صحيحة — أيها؟", opts, a: opts.indexOf(x.m[1]), ex: `${x.m[1]} — ${x.m[2]}`, lesson: x.l.id, sayAfter: x.m[1] }); });
-    if(cur.lvl !== "A1" && VB.length > 8) pick(VB.filter(v => v[4]), 2).forEach(v => { const kind = rnd() < .5 ? 1 : 2; const correct = v[kind].split("/")[0].trim(); const dis = pick(VB.filter(x => x !== v).map(x => x[kind].split("/")[0].trim()).filter(x => x !== correct), 3); const opts = sh([correct, ...dis]); out.push({ kind: "verb", label: "تصريف الفعل", q: kind === 1 ? `${v[0]}  →  yesterday I ___` : `${v[0]}  →  I have ___`, sub: v[3], opts, a: opts.indexOf(correct), ex: `${v[0]} · ${v[1]} · ${v[2]} — ${v[3]}` }); });
+    if(mistakes.length >= 4) pick(mistakes, 3).forEach(x => { const opts = sh([x.m[1], ...pick(mistakes.filter(y => y !== x), 3).map(y => y.m[0])]); out.push({ kind: "gfix", label: "أي جملة صحيحة؟", rtl: true, q: "وحدة بس صحيحة، أيها؟", opts, a: opts.indexOf(x.m[1]), ex: `${x.m[1]} · ${x.m[2]}`, lesson: x.l.id, sayAfter: x.m[1] }); });
+    if(cur.lvl !== "A1" && VB.length > 8) pick(VB.filter(v => v[4]), 2).forEach(v => { const kind = rnd() < .5 ? 1 : 2; const correct = v[kind].split("/")[0].trim(); const dis = pick(VB.filter(x => x !== v).map(x => x[kind].split("/")[0].trim()).filter(x => x !== correct), 3); const opts = sh([correct, ...dis]); out.push({ kind: "verb", label: "تصريف الفعل", q: kind === 1 ? `${v[0]}  →  yesterday I ___` : `${v[0]}  →  I have ___`, sub: v[3], opts, a: opts.indexOf(correct), ex: `${v[0]} · ${v[1]} · ${v[2]} · ${v[3]}` }); });
     pick(words, GOLD_N).forEach((x, i) => { if(out.length < GOLD_N) addSent(x, i % 2 === 0); });
     return sh(out).slice(0, GOLD_N).map((q, i) => ({ ...q, id: `gh-${day}-${i}` }));
   }
@@ -701,7 +701,7 @@
     GEN.golden = GEN.golden || {}; const done = GEN.golden[day];
     const nextG = (s.upcoming || []).find(a => a.id === "golden") || s.next;
     const head = crumb([{ t: "تحدي ساعة الذهب" }]);
-    const rules = `<ul class="tour-rules" style="text-align:start"><li><b>٢٠ سؤال جديد</b> على مستواك: جُمل كاملة، الكلمة الغريبة، أي جملة صحيحة، وتصريف — مو أسئلة الدروس.</li><li><b>كل سؤال بنقطتين</b> — وهذا المكان الوحيد للمضاعفة. باقي الموقع نقطة لكل سؤال حتى أثناء الساعة.</li><li><b>مرة باليوم</b>: نفس الأسئلة لو أعدت، فما فيه نقاط جديدة.</li><li>الأسئلة من الوحدات اللي وصلتها — كل ما تقدمت صارت أصعب.</li></ul>`;
+    const rules = `<ul class="tour-rules" style="text-align:start"><li><b>٢٠ سؤال جديد</b> على مستواك: جُمل كاملة، الكلمة الغريبة، أي جملة صحيحة، وتصريف، مو أسئلة الدروس.</li><li><b>كل سؤال بنقطتين</b>، وهذا المكان الوحيد للمضاعفة. باقي الموقع نقطة لكل سؤال حتى أثناء الساعة.</li><li><b>مرة باليوم</b>: نفس الأسئلة لو أعدت، فما فيه نقاط جديدة.</li><li>الأسئلة من الوحدات اللي وصلتها، كل ما تقدمت صارت أصعب.</li></ul>`;
     if(!act){
       render(head + `<div class="card center sheet"><div class="gift-box live">${emo("star")}</div><h1 style="margin:.2em 0">تحدي ساعة الذهب</h1><p class="muted" style="margin:0">كل يوم من ٩ إلى ١٠ مساءً</p>${nextG ? `<div class="gift-mult">يبدأ بعد ${fmtLeft(nextG.startsAt - s.now)}</div>` : ""}${done ? `<div class="note ok"><span class="ic">${I("check")}</span><p>خلصت تحدي اليوم: <b>${done.score}/${done.total}</b></p></div>` : ""}${rules}<div class="btn-row" style="justify-content:center"><a class="btn btn-primary" href="#/next">${I("zap")} كمّل تعلّمك الحين (نقطة لكل سؤال)</a></div></div>`);
       return;
@@ -714,7 +714,7 @@
     goldenRetry = false;
     const list = goldenQs(day);
     if(list.length < 8){ render(head + `<div class="card center sheet"><p class="muted">تعلّم كم موضوع أول عشان يتجهّز تحديك.</p><a class="btn btn-primary" href="#/next">ابدأ</a></div>`); return; }
-    runQuiz({ title: "⭐ تحدي ساعة الذهب", list, backHref: "#/golden", xpPer: 6, onDone: (sc, n, secs, ids) => {
+    runQuiz({ title: " تحدي ساعة الذهب", list, backHref: "#/golden", xpPer: 6, onDone: (sc, n, secs, ids) => {
       if(!GEN.golden[day]) GEN.golden[day] = { score: sc, total: n, at: Date.now() }; saveGen();
       postPoints(sc, n, secs, ids);
       resultCard("تحدي ساعة الذهب", sc, n, `<p class="muted">+${sc * 6} XP · باقي على نهاية الساعة ${fmtLeft(Math.max(0, act.endsAt - Date.now()))}</p>`, "#/golden", null, { href: "compete.html", label: "شوف الترتيب بعد التحدي" });
@@ -722,7 +722,8 @@
   };
 
   /* ---------- اليوم: مهام اليوم + كلمة اليوم + ساعة الذهب + هدف العائلة ---------- */
-  const QICON = { story: "📖", gloss: "🔤", daily: "📅", unit: "🏆", golden: "⭐", step: "🎯", wordle: "🧩", battle: "⚔️", perfect: "💯", rounds4: "🔁" };
+  const QICON = { story: "bookopen", gloss: "type", daily: "calendar", unit: "trophy", golden: "star", step: "target", wordle: "cards", battle: "swords", perfect: "check", rounds4: "repeat", correct20: "check", correct30: "check", new10: "sparkles", new15: "sparkles", new20: "sparkles" };
+  const THEME_ICON = { "سبت القصص": "bookopen", "أحد الكلمات": "type", "اثنين التحدي": "zap", "ثلاثاء الذهب": "star", "أربعاء الإنجاز": "trophy", "خميس STEP": "target", "جمعة المعركة": "swords" };
   routes.today = async () => {
     if(!Auth.user()){ render(crumb([{ t: "اليوم" }]) + `<div class="card center sheet"><h2>سجّل الدخول</h2><p class="muted">مهام اليوم وكلمة اليوم تحتاج حساب عشان تنحسب نقاطك.</p><a class="btn btn-primary" href="account.html?next=general.html%23/today">تسجيل الدخول</a></div>`); return; }
     render(crumb([{ t: "اليوم" }]) + `<div class="card center sheet"><p class="muted">جارٍ تجهيز يومك…</p></div>`);
@@ -731,32 +732,32 @@
     const q = t.quests, w = t.wordle, f = t.family;
     const s = EVENTS.status(), gAct = s.active.find(a => a.id === "golden"), gNext = (s.upcoming || []).find(a => a.id === "golden"), gDone = (GEN.golden || {})[EVENTS.dateKey(Date.now())];
     const B = s.battle;
-    const qRow = x => `<div class="quest ${x.claimed ? "claimed" : x.done ? "done" : ""}"><span class="q-ic">${x.claimed ? "✅" : QICON[x.key] || "🎯"}</span><div class="q-b"><div class="q-t">${esc(x.t)}</div>${bar(Math.round(x.progress / x.goal * 100), x.done ? "ok" : "")}<div class="small muted">${x.progress}/${x.goal}</div></div><div class="q-a">${x.claimed ? `<span class="badge ok">+${x.pts}</span>` : x.done ? `<button type="button" class="btn btn-warm btn-sm" data-claim="${x.i}">استلم +${x.pts}</button>` : x.href ? `<a class="btn btn-sm" href="${x.href}">ابدأ</a>` : `<span class="small muted">+${x.pts}</span>`}</div></div>`;
+    const qRow = x => `<div class="quest ${x.claimed ? "claimed" : x.done ? "done" : ""}"><span class="q-ic">${I(x.claimed ? "check" : QICON[x.key] || "target")}</span><div class="q-b"><div class="q-t">${esc(x.t)}</div>${bar(Math.round(x.progress / x.goal * 100), x.done ? "ok" : "")}<div class="small muted">${x.progress}/${x.goal}</div></div><div class="q-a">${x.claimed ? `<span class="badge ok">+${x.pts}</span>` : x.done ? `<button type="button" class="btn btn-warm btn-sm" data-claim="${x.i}">استلم +${x.pts}</button>` : x.href ? `<a class="btn btn-sm" href="${x.href}">ابدأ</a>` : `<span class="small muted">+${x.pts}</span>`}</div></div>`;
     const claimedN = q.quests.filter(x => x.claimed).length;
     render(crumb([{ t: "اليوم" }]) + `
-      <div class="card sheet today-head"><div class="th-e">${q.theme.e}</div><div><h1 style="margin:0">${esc(q.theme.t)}</h1><p class="muted small" style="margin:2px 0 0">كل يوم له طابع ومهام جديدة — خلّص الثلاث وافتح الصندوق</p></div></div>
-      <div class="card sheet"><div class="section-title"><h2 style="margin:0">🎯 مهام اليوم</h2><span class="badge">${claimedN}/3</span></div>${q.quests.map(qRow).join("")}
-        <div class="chest ${q.chest.claimed ? "open" : q.chest.ready ? "ready" : ""}"><span class="ch-e">${q.chest.claimed ? "🎉" : "🎁"}</span><div class="ch-b"><b>${q.chest.claimed ? `فتحت صندوق اليوم (+${q.chest.pts})` : q.chest.ready ? "الصندوق جاهز!" : "صندوق اليوم"}</b><div class="small muted">${q.chest.claimed ? "تعال بكرة لمهام جديدة" : `خلّص المهام الثلاث واستلمها عشان يفتح (+${q.chest.pts})`}</div></div>${q.chest.ready && !q.chest.claimed ? `<button type="button" class="btn btn-warm" data-claim="chest">افتح 🎁</button>` : ""}</div>
+      <div class="card sheet today-head"><div class="th-e">${I(THEME_ICON[q.theme.t] || "calendar")}</div><div><h1 style="margin:0">${esc(q.theme.t)}</h1><p class="muted small" style="margin:2px 0 0">كل يوم له طابع ومهام جديدة، خلّص الثلاث وافتح الصندوق</p></div></div>
+      <div class="card sheet"><div class="section-title"><h2 style="margin:0"> مهام اليوم</h2><span class="badge">${claimedN}/3</span></div>${q.quests.map(qRow).join("")}
+        <div class="chest ${q.chest.claimed ? "open" : q.chest.ready ? "ready" : ""}"><span class="ch-e">${I(q.chest.claimed ? "check" : "gift")}</span><div class="ch-b"><b>${q.chest.claimed ? `فتحت صندوق اليوم (+${q.chest.pts})` : q.chest.ready ? "الصندوق جاهز!" : "صندوق اليوم"}</b><div class="small muted">${q.chest.claimed ? "تعال بكرة لمهام جديدة" : `خلّص المهام الثلاث واستلمها عشان يفتح (+${q.chest.pts})`}</div></div>${q.chest.ready && !q.chest.claimed ? `<button type="button" class="btn btn-warm" data-claim="chest">افتح </button>` : ""}</div>
       </div>
       <div class="today-grid">
-        <a class="card link-card today-tile wordle-tile" href="#/wordle"><div class="tt-e">🧩</div><h3>كلمة اليوم</h3><p class="small muted">${w.done ? (w.won ? `حليتها بـ ${w.guesses.length} محاولات ✓ · +${w.points}` : "ما لحقت عليها — بكرة كلمة جديدة") : w.guesses.length ? `محاولة ${w.guesses.length}/6 — كمّل!` : "خمّن الكلمة الإنجليزية بـ ٦ محاولات · حتى +٦"}</p>${w.family.length ? `<div class="small">${w.family.slice(0, 4).map(x => `${esc(x.name)} ${x.won ? "✓" + x.tries : x.done ? "✗" : "…"}`).join(" · ")}</div>` : ""}${w.streak > 1 ? `<div class="small">🔥 ${w.streak} أيام ورا بعض</div>` : ""}</a>
-        <a class="card link-card today-tile" href="#/golden"><div class="tt-e">⭐</div><h3>تحدي ساعة الذهب</h3><p class="small muted">${gDone ? `خلصته اليوم: ${gDone.score}/${gDone.total} ✓` : gAct ? `قائم الحين! باقي ${fmtLeft(gAct.endsAt - s.now)}` : gNext ? `يبدأ بعد ${fmtLeft(gNext.startsAt - s.now)} (٩–١٠ مساءً)` : "كل يوم ٩–١٠ مساءً"} · ٢٠ سؤال × نقطتين</p></a>
-        ${B ? `<a class="card link-card today-tile" href="#/battle"><div class="tt-e">⚔️</div><h3>معركة الكلمات</h3><p class="small muted">${B.active ? "قائمة الحين! ادخل" : B.next ? `الجمعة ٨–١٠ مساءً · بعد ${fmtLeft(B.next.start - s.now)}` : ""} · الأول +٣٠</p></a>` : ""}
+        <a class="card link-card today-tile wordle-tile" href="#/wordle"><div class="tt-e">${I("cards")}</div><h3>كلمة اليوم</h3><p class="small muted">${w.done ? (w.won ? `حليتها بـ ${w.guesses.length} محاولات ✓ · +${w.points}` : "ما لحقت عليها، بكرة كلمة جديدة") : w.guesses.length ? `محاولة ${w.guesses.length}/6، كمّل!` : "خمّن الكلمة الإنجليزية بـ ٦ محاولات · حتى +٦"}</p>${w.family.length ? `<div class="small">${w.family.slice(0, 4).map(x => `${esc(x.name)} ${x.won ? "✓" + x.tries : x.done ? "✗" : "…"}`).join(" · ")}</div>` : ""}${w.streak > 1 ? `<div class="small"> ${w.streak} أيام ورا بعض</div>` : ""}</a>
+        <a class="card link-card today-tile" href="#/golden"><div class="tt-e">${I("star")}</div><h3>تحدي ساعة الذهب</h3><p class="small muted">${gDone ? `خلصته اليوم: ${gDone.score}/${gDone.total} ✓` : gAct ? `قائم الحين! باقي ${fmtLeft(gAct.endsAt - s.now)}` : gNext ? `يبدأ بعد ${fmtLeft(gNext.startsAt - s.now)} (٩–١٠ مساءً)` : "كل يوم ٩–١٠ مساءً"} · ٢٠ سؤال × نقطتين</p></a>
+        ${B ? `<a class="card link-card today-tile" href="#/battle"><div class="tt-e">${I("swords")}</div><h3>معركة الكلمات</h3><p class="small muted">${B.active ? "قائمة الحين! ادخل" : B.next ? `الجمعة ٨–١٠ مساءً · بعد ${fmtLeft(B.next.start - s.now)}` : ""} · الأول +٣٠</p></a>` : ""}
       </div>
-      <div class="card sheet family-goal"><div class="section-title"><h2 style="margin:0">👨‍👩‍👧 هدف العائلة لهالأسبوع</h2><span class="badge ${f.reached ? "ok" : ""}">${f.reached ? "وصلنا! 🎉" : `${f.sum}/${f.target}`}</span></div>
-        <p class="small muted" style="margin:4px 0 8px">كلنا مع بعض نتعلّم <b>${f.target}</b> سؤال جديد هالأسبوع، وكل واحد ساهم بـ ${f.minShare}+ ياخذ <b>+${f.pts}</b>. تعاون مو منافسة 🤝</p>
+      <div class="card sheet family-goal"><div class="section-title"><h2 style="margin:0"> هدف العائلة لهالأسبوع</h2><span class="badge ${f.reached ? "ok" : ""}">${f.reached ? "وصلنا! " : `${f.sum}/${f.target}`}</span></div>
+        <p class="small muted" style="margin:4px 0 8px">كلنا مع بعض نتعلّم <b>${f.target}</b> سؤال جديد هالأسبوع، وكل واحد ساهم بـ ${f.minShare}+ ياخذ <b>+${f.pts}</b>. تعاون مو منافسة </p>
         ${bar(Math.min(100, Math.round(f.sum / f.target * 100)), f.reached ? "ok" : "")}
-        <div class="fam-list">${f.members.length ? f.members.map(m => `<span class="fam ${m.me ? "me" : ""}">${esc(m.name)} <b>${m.got}</b></span>`).join("") : `<span class="small muted">ما أحد بدأ هالأسبوع — كن الأول!</span>`}</div>
-        ${f.reached ? (f.claimed ? `<div class="note ok"><span class="ic">${I("check")}</span><p>استلمت +${f.pts}</p></div>` : f.eligible ? `<button type="button" class="btn btn-warm" data-family="1">استلم +${f.pts} 🤝</button>` : `<p class="small muted">تحتاج ${f.minShare} سؤال جديد على الأقل هالأسبوع عشان تستلم (عندك ${f.mine}).</p>`) : `<p class="small muted">ساهمتك هالأسبوع: <b>${f.mine}</b> سؤال جديد${f.mine < f.minShare ? ` (تحتاج ${f.minShare} عشان تستلم الجائزة)` : " ✓"}</p>`}
+        <div class="fam-list">${f.members.length ? f.members.map(m => `<span class="fam ${m.me ? "me" : ""}">${esc(m.name)} <b>${m.got}</b></span>`).join("") : `<span class="small muted">ما أحد بدأ هالأسبوع، كن الأول!</span>`}</div>
+        ${f.reached ? (f.claimed ? `<div class="note ok"><span class="ic">${I("check")}</span><p>استلمت +${f.pts}</p></div>` : f.eligible ? `<button type="button" class="btn btn-warm" data-family="1">استلم +${f.pts} </button>` : `<p class="small muted">تحتاج ${f.minShare} سؤال جديد على الأقل هالأسبوع عشان تستلم (عندك ${f.mine}).</p>`) : `<p class="small muted">ساهمتك هالأسبوع: <b>${f.mine}</b> سؤال جديد${f.mine < f.minShare ? ` (تحتاج ${f.minShare} عشان تستلم الجائزة)` : " ✓"}</p>`}
       </div>`);
     const again = () => { if(location.hash.startsWith("#/today")) routes.today(); };
     document.querySelectorAll("#app [data-claim]").forEach(b => b.addEventListener("click", async () => {
       b.disabled = true;
-      try{ const r = await Auth.api("/api/points", { method: "POST", body: { quest: b.dataset.claim } }); sfx("coin"); if(b.dataset.claim === "chest"){ try{ confetti(); }catch(e){} } toast(`+${r.points} نقطة — مجموعك ${r.total}`, 2600); if(typeof loadPoints === "function") loadPoints(true); after(again, 500); }
+      try{ const r = await Auth.api("/api/points", { method: "POST", body: { quest: b.dataset.claim } }); sfx("coin"); if(b.dataset.claim === "chest"){ try{ confetti(); }catch(e){} } toast(`+${r.points} نقطة، مجموعك ${r.total}`, 2600); if(typeof loadPoints === "function") loadPoints(true); after(again, 500); }
       catch(e){ toast(e.message, 3500); b.disabled = false; }
     }));
     const fb = document.querySelector("#app [data-family]");
-    if(fb) fb.addEventListener("click", async () => { fb.disabled = true; try{ const r = await Auth.api("/api/points", { method: "POST", body: { family: 1 } }); sfx("coin"); try{ confetti(); }catch(e){} toast(`+${r.points} من هدف العائلة 🤝`, 3000); after(again, 500); }catch(e){ toast(e.message, 3500); fb.disabled = false; } });
+    if(fb) fb.addEventListener("click", async () => { fb.disabled = true; try{ const r = await Auth.api("/api/points", { method: "POST", body: { family: 1 } }); sfx("coin"); try{ confetti(); }catch(e){} toast(`+${r.points} من هدف العائلة `, 3000); after(again, 500); }catch(e){ toast(e.message, 3500); fb.disabled = false; } });
   };
 
   /* كلمة اليوم (مثل وردل): ٦ محاولات، نفس الكلمة للجميع، والخادم هو اللي يعرف الجواب */
@@ -766,7 +767,7 @@
     let cur = "", busy = false;
     const KEYS = ["qwertyuiop", "asdfghjkl", "zxcvbnm"];
     const keyState = () => { const m = {}; st.guesses.forEach(g => [...g.w].forEach((ch, i) => { const v = g.fb[i]; if(m[ch] === "g") return; if(v === "g" || (v === "y" && m[ch] !== "g") || !m[ch]) m[ch] = v === "b" && m[ch] ? m[ch] : v; })); return m; };
-    const shareText = () => `إنقلش — كلمة اليوم ${st.date} ${st.won ? st.guesses.length : "X"}/6\n` + st.guesses.map(g => [...g.fb].map(c => c === "g" ? "🟩" : c === "y" ? "🟨" : "⬛").join("")).join("\n");
+    const shareText = () => `إنقلش، كلمة اليوم ${st.date} ${st.won ? st.guesses.length : "X"}/6\n` + st.guesses.map(g => [...g.fb].map(c => c === "g" ? "🟩" : c === "y" ? "🟨" : "⬛").join("")).join("\n");
     let revealRow = -1;
     const draw = () => {
       if(!location.hash.startsWith("#/wordle")) return;
@@ -774,21 +775,21 @@
       const ks = keyState();
       const kb = st.done ? "" : `<div class="wd-kb">${KEYS.map((row, ri) => `<div class="wd-kr">${ri === 2 ? `<button type="button" class="wd-k wide" data-k="enter">إدخال</button>` : ""}${[...row].map(ch => `<button type="button" class="wd-k ${ks[ch] ? "t-" + ks[ch] : ""}" data-k="${ch}">${ch.toUpperCase()}</button>`).join("")}${ri === 2 ? `<button type="button" class="wd-k wide" data-k="back">⌫</button>` : ""}</div>`).join("")}</div>`;
       const fam = st.family.filter(x => !x.me);
-      const end = st.done ? `<div class="card center sheet wd-end">${st.won ? `<h2 style="margin:.2em 0">🎉 حليتها بـ ${st.guesses.length} ${st.guesses.length === 1 ? "محاولة" : "محاولات"}!</h2><div class="gift-mult">+${st.points} نقطة</div>` : `<h2 style="margin:.2em 0">ما لحقت عليها 😅</h2>`}
+      const end = st.done ? `<div class="card center sheet wd-end">${st.won ? `<h2 style="margin:.2em 0"> حليتها بـ ${st.guesses.length} ${st.guesses.length === 1 ? "محاولة" : "محاولات"}!</h2><div class="gift-mult">+${st.points} نقطة</div>` : `<h2 style="margin:.2em 0">ما لحقت عليها </h2>`}
           <div class="wd-ans"><span class="en">${esc(st.answer.w.toUpperCase())}</span> ${spk(st.answer.w, "sm")} = <b>${esc(st.answer.ar)}</b></div>
           ${st.answer.ex ? `<div class="ex right"><span class="en">${esc(st.answer.ex)} ${spk(st.answer.ex, "sm")}</span><span class="ar">${esc(st.answer.exAr)}</span></div>` : ""}
-          ${st.streak > 1 ? `<p>🔥 ${st.streak} أيام ورا بعض حليتها</p>` : ""}
+          ${st.streak > 1 ? `<p> ${st.streak} أيام ورا بعض حليتها</p>` : ""}
           <div class="btn-row" style="justify-content:center"><button type="button" class="btn btn-primary" id="wdShare">${I("link")} شارك نتيجتك</button><a class="btn" href="#/today">مهام اليوم</a></div>
           <p class="small muted">كلمة جديدة كل يوم الساعة ١٢ بالليل</p></div>` : "";
       render(crumb([{ t: "اليوم", href: "#/today" }, { t: "كلمة اليوم" }]) + `<div class="wordle">
-        <div class="wd-top"><h1 style="margin:0">🧩 كلمة اليوم</h1><span class="badge">${st.guesses.length}/6</span></div>
+        <div class="wd-top"><h1 style="margin:0"> كلمة اليوم</h1><span class="badge">${st.guesses.length}/6</span></div>
         <p class="small muted wd-help">خمّن الكلمة الإنجليزية (٥ حروف). 🟩 الحرف في مكانه · 🟨 موجود بس بمكان ثاني · ⬛ مو موجود. كل ما قلّت محاولاتك زادت نقاطك (حتى +٦).</p>
         ${st.hint ? `<div class="note tip"><span class="ic">${I("bulb")}</span><p>تلميح: معناها «<b>${esc(st.hint)}</b>»</p></div>` : ""}
         <div class="wd-grid">${rows}</div>${kb}${end}
         ${fam.length ? `<div class="card sheet"><h3 style="margin:0 0 6px">العائلة اليوم</h3>${fam.map(x => `<div class="wd-fam"><span>${esc(x.name)}</span><span class="small muted">${x.won ? `✓ ${x.tries}/6` : x.done ? "✗" : `يحاول… ${x.tries}/6`}</span>${x.grid ? `<span class="wd-mini">${x.grid.map(r => `<i>${[...r].map(c => `<b class="t-${c}"></b>`).join("")}</i>`).join("")}</span>` : ""}</div>`).join("")}</div>` : ""}
       </div>`);
       document.querySelectorAll("#app .wd-k").forEach(b => b.addEventListener("click", () => press(b.dataset.k)));
-      const sh = $("#wdShare"); if(sh) sh.addEventListener("click", async () => { const txt = shareText(); try{ if(navigator.share) await navigator.share({ text: txt }); else { await navigator.clipboard.writeText(txt); toast("انتسخت النتيجة — الصقها لأهلك 📋"); } }catch(e){ try{ await navigator.clipboard.writeText(txt); toast("انتسخت النتيجة 📋"); }catch(err){} } });
+      const sh = $("#wdShare"); if(sh) sh.addEventListener("click", async () => { const txt = shareText(); try{ if(navigator.share) await navigator.share({ text: txt }); else { await navigator.clipboard.writeText(txt); toast("انتسخت النتيجة، الصقها لأهلك "); } }catch(e){ try{ await navigator.clipboard.writeText(txt); toast("انتسخت النتيجة "); }catch(err){} } });
     };
     const shake = () => { const r = document.querySelector("#app .wd-row.cur"); if(r){ r.classList.remove("shake"); void r.offsetWidth; r.classList.add("shake"); } };
     const press = async k => {
@@ -812,7 +813,7 @@
   /* ---------- TALK ---------- */
   routes.talk = () => {
     render(crumb([{ t: "تكلّم" }]) + `<h1>${I("mic")} محادثات المواقف</h1><p class="muted">استمع للحوار جملة جملة، أخفِ الترجمة وتحدَّ نفسك، مثّل دورك بالاختيار، ثم انطق الجمل ويقيّمك الموقع كلمة كلمة (يشتغل على Chrome وSafari الآيفون).</p>
-      <div class="card sheet"><div class="section-title"><h3 style="margin:0">${I("mic")} مستوى النطق: ${SPK_TIERS[spkTierIdx()].t}</h3><span class="badge">${spkDone()} جملة ناجحة</span></div><p class="muted small" style="margin:0">${SPK_TIERS[spkTierIdx()].desc}. ${SPK_TIERS[spkTierIdx()].upto === Infinity ? "أنت في أعلى مستوى — أحسنت!" : `كل جملة تنجح فيها تقرّبك، وبعد ${Math.max(0, SPK_TIERS[spkTierIdx()].upto - spkDone())} جملة يرتفع المستوى وتصير أصعب شوي.`}</p>${bar(SPK_TIERS[spkTierIdx()].upto === Infinity ? 100 : Math.round(spkDone() / SPK_TIERS[spkTierIdx()].upto * 100))}</div>` +
+      <div class="card sheet"><div class="section-title"><h3 style="margin:0">${I("mic")} مستوى النطق: ${SPK_TIERS[spkTierIdx()].t}</h3><span class="badge">${spkDone()} جملة ناجحة</span></div><p class="muted small" style="margin:0">${SPK_TIERS[spkTierIdx()].desc}. ${SPK_TIERS[spkTierIdx()].upto === Infinity ? "أنت في أعلى مستوى، أحسنت!" : `كل جملة تنجح فيها تقرّبك، وبعد ${Math.max(0, SPK_TIERS[spkTierIdx()].upto - spkDone())} جملة يرتفع المستوى وتصير أصعب شوي.`}</p>${bar(SPK_TIERS[spkTierIdx()].upto === Infinity ? 100 : Math.round(spkDone() / SPK_TIERS[spkTierIdx()].upto * 100))}</div>` +
       LV.map(lv => { const ds = D.filter(d => d.lvl === lv); return ds.length ? `<div class="section" data-lv="${lv}"><div class="section-title"><h2 style="color:${LVC[lv]}">${lv} · ${LVN[lv]}</h2></div><div class="grid grid-3">${ds.map(d => `<a class="card link-card" href="#/dialogue/${d.id}" style="--c:${LVC[lv]}"><div class="icon" style="background:${LVC[lv]}22">${I(d.icon || "chat")}</div><h3>${esc(d.t)}</h3><p class="muted small">${d.roles[0]} و ${d.roles[1]} · ${d.lines.length} جملة</p></a>`).join("")}</div></div>` : ""; }).join(""));
     levelTabs("talk");
   };
@@ -841,7 +842,7 @@
   routes.roleplay = id => {
     const d = dialog(id); if(!d) return routes.talk();
     const list = d.lines.map((_, i) => dialogQ(d, i)).filter(Boolean);
-    runQuiz({ title: "مثّل دور " + d.roles[1] + " — " + d.t, list, backHref: `#/dialogue/${d.id}`, xpPer: 6, autoSay: true, onDone: (s, n, secs, ids) => { postPoints(s, n, secs, ids); resultCard("تمثيل الدور: " + d.t, s, n, `<p class="muted">+${s * 6} XP</p>`, `#/dialogue/${d.id}`, `#/roleplay/${d.id}`); } });
+    runQuiz({ title: "مثّل دور " + d.roles[1] + "، " + d.t, list, backHref: `#/dialogue/${d.id}`, xpPer: 6, autoSay: true, onDone: (s, n, secs, ids) => { postPoints(s, n, secs, ids); resultCard("تمثيل الدور: " + d.t, s, n, `<p class="muted">+${s * 6} XP</p>`, `#/dialogue/${d.id}`, `#/roleplay/${d.id}`); } });
   };
   /* ---------- النطق: يبدأ سهلًا ثم يصعب تدريجيًا ---------- */
   const SPK_TIERS = [
@@ -851,7 +852,7 @@
   ];
   const spkDone = () => GEN.spk || 0;
   const spkTierIdx = () => { const n = spkDone(); return n < SPK_TIERS[0].upto ? 0 : n < SPK_TIERS[1].upto ? 1 : 2; };
-  /* الجملة كلمات: الأخضر انقال صح، والأحمر باقي — اضغط أي كلمة تسمعها */
+  /* الجملة كلمات: الأخضر انقال صح، والأحمر باقي، اضغط أي كلمة تسمعها */
   const wordChips = (words, state) => words.map((w, i) => `<button type="button" class="wq ${state ? state[i] : ""}" data-say="${esc(w.replace(/[^A-Za-z0-9' -]/g, ""))}">${esc(w)}</button>`).join(" ");
   routes.speak = id => {
     const d = dialog(id); if(!d) return routes.talk();
@@ -879,7 +880,7 @@
           <div class="btn-row" style="justify-content:center;margin-top:12px">${spk(ln[1], "big")}${T.hint ? `<button type="button" class="btn btn-sm" id="slow">${I("headphones")} ببطء</button>` : ""}</div>
           <button type="button" class="mic-btn" id="rec" ${SR ? "" : "disabled"}><span class="mic-ic">${I("mic")}</span><span class="mic-t" id="recT">اضغط وتكلّم</span></button>
           <div class="live small en" id="live" hidden></div>
-          <p class="small muted" style="margin:6px 0 0">تكلّم براحتك — ما يوقف إلا إذا سكتّ ثانيتين أو ضغطت «خلصت». الكلمات اللي تقولها صح تبقى خضراء، وتقدر تعيد الحمراء بس.</p>
+          <p class="small muted" style="margin:6px 0 0">تكلّم براحتك، ما يوقف إلا إذا سكتّ ثانيتين أو ضغطت «خلصت». الكلمات اللي تقولها صح تبقى خضراء، وتقدر تعيد الحمراء بس.</p>
           <div class="btn-row" style="justify-content:center;margin-top:10px"><button type="button" class="btn" id="skip">تخطَّ</button><button type="button" class="btn btn-primary" id="nx" hidden>التالي ←</button></div>
           ${SR ? "" : `<div class="note warn"><span class="ic">${I("alert")}</span><p>التعرف على الصوت غير مدعوم في هذا المتصفح. استخدم Chrome على الجوال أو الكمبيوتر، أو Safari على الآيفون.</p></div>`}
         </div>`);
@@ -891,7 +892,7 @@
       timers.push({ clear(){ try{ stopRec(); }catch(e){} } });
       $("#skip").addEventListener("click", () => { stopRec(); finishLine(); pos++; show(); });
       $("#nx").addEventListener("click", () => { stopRec(); finishLine(); pos++; show(); });
-      const setBtn = on => { const b = $("#rec"); if(!b) return; b.classList.toggle("on", on); $("#recT").textContent = on ? "خلصت ⏹" : tries ? "أعد المحاولة" : "اضغط وتكلّم"; };
+      const setBtn = on => { const b = $("#rec"); if(!b) return; b.classList.toggle("on", on); $("#recT").textContent = on ? "خلصت " : tries ? "أعد المحاولة" : "اضغط وتكلّم"; };
       $("#rec").addEventListener("click", () => {
         if(rec){ stopRec(); return; }
         hush(); setBtn(true);
@@ -911,8 +912,8 @@
           live2.textContent = "سمعت: " + res[0];
           const miss = r.missing.filter(Boolean);
           $("#spMsg").innerHTML = best >= 100 ? `<b>${emo("party")} ممتاز! ١٠٠٪</b>`
-            : pass ? `<b>أحسنت — ناجح</b><div class="small">${miss.length ? `تبي ١٠٠٪؟ قل بس: <b class="en">${miss.slice(0, 4).map(esc).join(" · ")}</b>` : ""}</div>`
-            : `<b>${gained > 0 && tries > 1 ? `تحسّنت +${gained}٪` : `تحتاج ${T.pass}٪`}</b><div class="small">${miss.length ? `قل الكلمات الحمراء: <b class="en">${miss.slice(0, 4).map(esc).join(" · ")}</b> — اضغطها تسمعها` : "حاول مرة ثانية بصوت أوضح"}</div>`;
+            : pass ? `<b>أحسنت، ناجح</b><div class="small">${miss.length ? `تبي ١٠٠٪؟ قل بس: <b class="en">${miss.slice(0, 4).map(esc).join(" · ")}</b>` : ""}</div>`
+            : `<b>${gained > 0 && tries > 1 ? `تحسّنت +${gained}٪` : `تحتاج ${T.pass}٪`}</b><div class="small">${miss.length ? `قل الكلمات الحمراء: <b class="en">${miss.slice(0, 4).map(esc).join(" · ")}</b>، اضغطها تسمعها` : "حاول مرة ثانية بصوت أوضح"}</div>`;
           sfx(best >= 100 ? "win" : pass ? "correct" : "wrong");
           if(best >= 100) try{ confetti(); }catch(e){}
           if(pass){ $("#nx").hidden = false; $("#nx").focus({ preventScroll: true }); } else $("#nx").hidden = tries < 3;

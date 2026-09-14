@@ -1,4 +1,4 @@
-/* ===== مكتبة القصص — قراءة واستماع مدرّجة من A1 إلى C2 ===== */
+/* ===== مكتبة القصص، قراءة واستماع مدرّجة من A1 إلى C2 ===== */
 (function(){
   const $ = s => document.querySelector(s);
   const LV = ["A1", "A2", "B1", "B2", "C1", "C2"];
@@ -105,12 +105,12 @@
   routes.gloss = id => routes.quiz(id, "gloss");
   routes.home = () => {
     const cur = currentLevel(); const last = LIB.last && byId(LIB.last.id);
-    render(`<section class="hero gen-hero gen-simple lib-hero"><span class="badge">إنقلش عام — قراءة واستماع</span><h1>قصص وروايات <mark>تقرأها وتسمعها</mark></h1><p>روايات وحكايات مشهورة مبسّطة ومرتبة من A1 إلى C2، كل قصة بصوت قارئ، وترجمة لكل فقرة، وأسئلة فهم تعطيك نقاطًا.</p>
+    render(`<section class="hero gen-hero gen-simple lib-hero"><span class="badge">إنقلش عام، قراءة واستماع</span><h1>قصص وروايات <mark>تقرأها وتسمعها</mark></h1><p>روايات وحكايات مشهورة مبسّطة ومرتبة من A1 إلى C2، كل قصة بصوت قارئ، وترجمة لكل فقرة، وأسئلة فهم تعطيك نقاطًا.</p>
       ${last ? `<div class="actions"><a class="btn btn-light" href="#/read/${last.id}">${I("zap")} أكمل: ${esc(last.title)} (فقرة ${(LIB.last.para || 0) + 1} من ${last.paras.length})</a></div>` : `<div class="actions"><a class="btn btn-light" href="#/level/${cur}">${I("zap")} ابدأ من مستوى ${cur}</a></div>`}
     </section>
     <div class="events-bar" id="eventsBar"></div>
     ${Object.keys(LIB.words || {}).length ? `<section class="section"><div class="section-title"><h2>${I("bookmark")} كلماتي من القصص</h2><a class="btn btn-sm" href="#/words">كلها (${Object.keys(LIB.words).length})</a></div><div class="gloss-grid">${Object.entries(LIB.words).slice(-8).reverse().map(([w, v]) => `<div class="gl"><b class="en">${esc(w)}</b><button type="button" class="spk sm" data-say="${esc(w)}">${I("headphones")}</button><div>${esc(v.ar)}</div></div>`).join("")}</div></section>` : ""}
-    <section class="section"><div class="section-title"><h2>المستويات</h2><span class="muted small">أنت في مستوى <b>${cur}</b> — الشريط يوضح ما أكملته</span></div>
+    <section class="section"><div class="section-title"><h2>المستويات</h2><span class="muted small">أنت في مستوى <b>${cur}</b>، الشريط يوضح ما أكملته</span></div>
       <div class="lvl-list">${LV.map(lv => { const st = levelStats(lv); return `<a class="lvl-row ${st.pct === 100 ? "done" : lv === cur ? "cur" : ""}" href="#/level/${lv}" style="--c:${LVC[lv]}"><div class="lvl-badge" style="background:${LVC[lv]}">${lv}</div><div class="lvl-body"><div class="lvl-head"><b>${LVN[lv]}</b><span class="lvl-pct">${st.pct}%</span></div>${bar(st.pct)}<div class="small muted">${LVD[lv]} · ${st.done}/${st.n} قصة${lv === cur ? " · <b>أنت هنا</b>" : ""}</div></div>${I("arrow")}</a>`; }).join("")}</div>
     </section>`);
     if(typeof renderEventsBar === "function") renderEventsBar();
@@ -174,7 +174,7 @@
   routes.level = lv => {
     if(!LV.includes(lv)) return routes.home();
     const list = ALL.filter(s => s.lvl === lv); const st = levelStats(lv);
-    render(crumb([{ t: `${lv} — ${LVN[lv]}` }]) + `<div class="card sheet lvl-top" style="--c:${LVC[lv]}"><div class="section-title"><div class="lvl-badge" style="background:${LVC[lv]}">${lv}</div><h1 style="margin:0">${LVN[lv]}</h1><span class="lvl-pct big">${st.pct}%</span></div>${bar(st.pct)}<p class="muted small" style="margin:8px 0 0">${LVD[lv]}. القصص مرتبة من الأسهل إلى الأصعب — ${st.done}/${st.n} مكتملة.</p></div>
+    render(crumb([{ t: `${lv} · ${LVN[lv]}` }]) + `<div class="card sheet lvl-top" style="--c:${LVC[lv]}"><div class="section-title"><div class="lvl-badge" style="background:${LVC[lv]}">${lv}</div><h1 style="margin:0">${LVN[lv]}</h1><span class="lvl-pct big">${st.pct}%</span></div>${bar(st.pct)}<p class="muted small" style="margin:8px 0 0">${LVD[lv]}. القصص مرتبة من الأسهل إلى الأصعب، ${st.done}/${st.n} مكتملة.</p></div>
       <div class="story-list">${list.map((s, i) => { const status = storyStatus(s); const d = LIB.done[s.id]; return `<a class="story ${status}" href="#/read/${s.id}"><div class="story-n" style="background:${status === "done" ? "var(--ok)" : LVC[lv]}">${status === "done" ? I("check") : i + 1}</div><div class="story-body"><div class="story-t en">${esc(s.title)}</div><div class="story-ar">${esc(s.ar)} <span class="muted small">· ${esc(s.author)}</span></div><div class="small muted">${KIND[s.kind] || ""} · ${wordsOf(s)} كلمة · ${I("headphones")} ${minutesOf(s)} دقيقة${d ? ` · <b style="color:var(--ok)">${d.score}/${d.total} في الأسئلة</b>` : status === "started" ? " · <b>بدأتها</b>" : ""}</div></div>${I("arrow")}</a>`; }).join("")}</div>
       ${LV.indexOf(lv) < LV.length - 1 ? `<div class="btn-row" style="justify-content:center;margin-top:16px"><a class="btn" href="#/level/${LV[LV.indexOf(lv) + 1]}">المستوى التالي: ${LV[LV.indexOf(lv) + 1]} ←</a></div>` : ""}`);
   };
@@ -189,7 +189,7 @@
     let listenMode = false, arMode = LIB.arMode || (LIB.ar === false ? "off" : "on"), showGloss = false, dictMode = LIB.dict !== false, curK = -1, focusOn = false, isPlaying = false;
     LIB.last = { id, para: LIB.pos[id] || 0 }; save();
     const draw = () => {
-      render(crumb([{ t: `${s.lvl} — ${LVN[s.lvl]}`, href: `#/level/${s.lvl}` }, { t: s.ar }]) + `
+      render(crumb([{ t: `${s.lvl} · ${LVN[s.lvl]}`, href: `#/level/${s.lvl}` }, { t: s.ar }]) + `
       <div class="card sheet story-head"><div class="section-title">${lvBadge(s.lvl)}<span class="badge">${KIND[s.kind] || ""}</span>${LIB.done[id] ? `<span class="badge ok">${I("check")} مكتملة</span>` : ""}</div>
         <h1 class="en story-title">${esc(s.title)}</h1><div class="story-ar-title">${esc(s.ar)}</div>
         <p class="muted small">${esc(s.author)} · ${esc(s.origin || "")} · ${wordsOf(s)} كلمة · ${minutesOf(s)} دقائق استماع</p>
@@ -253,7 +253,7 @@
            ${(() => { const v = verbOf((hit.word || key).toLowerCase()); return v ? `<div class="wp-forms en"><span>${esc(v[1])}</span><span>${esc(v[2])}</span><span>${esc(ingOf(v[0]))}</span></div>` : ""; })()}
            <div class="wp-actions"><button type="button" class="btn btn-sm ${saved ? "" : "btn-primary"}" id="wpSave">${saved ? I("check") + " في كلماتي" : I("bookmark") + " احفظها"}</button></div>
            <div class="small muted">${esc(hit.src)}</div>`
-        : (() => { const pe = el.closest(".para"); const par = pe ? s.paras[+pe.dataset.pi] : null; const sent = el.closest(".sent"); return `<div class="wp-top"><b class="en">${esc(raw)}</b><button type="button" class="spk sm" data-say="${esc(raw)}">${I("headphones")}</button><button type="button" class="wp-x" aria-label="إغلاق">${I("x")}</button></div><div class="muted small">ما لقيت هذي الكلمة وحدها في القاموس — هذا معنى الجملة كاملة:</div>${sent ? `<div class="small en" style="opacity:.85">${esc(sent.textContent)}</div>` : ""}${par ? `<div class="wp-ar" style="font-size:.98rem">${esc(par.ar)}</div>` : ""}`; })();
+        : (() => { const pe = el.closest(".para"); const par = pe ? s.paras[+pe.dataset.pi] : null; const sent = el.closest(".sent"); return `<div class="wp-top"><b class="en">${esc(raw)}</b><button type="button" class="spk sm" data-say="${esc(raw)}">${I("headphones")}</button><button type="button" class="wp-x" aria-label="إغلاق">${I("x")}</button></div><div class="muted small">ما لقيت هذي الكلمة وحدها في القاموس، هذا معنى الجملة كاملة:</div>${sent ? `<div class="small en" style="opacity:.85">${esc(sent.textContent)}</div>` : ""}${par ? `<div class="wp-ar" style="font-size:.98rem">${esc(par.ar)}</div>` : ""}`; })();
       document.body.appendChild(pop);
       if(innerWidth <= 640){ pop.classList.add("sheet-pop"); }
       else {
@@ -324,7 +324,7 @@
       ["loadedmetadata", "loadeddata", "canplay", "canplaythrough", "playing", "durationchange", "seeked"].forEach(ev => a.addEventListener(ev, trySeek));
       a.addEventListener("play", () => { setBtn(true); tick(); try{ if("mediaSession" in navigator){ navigator.mediaSession.metadata = new MediaMetadata({ title: s.title, artist: s.ar, album: "مكتبة القصص" }); navigator.mediaSession.setActionHandler("play", () => a.play()); navigator.mediaSession.setActionHandler("pause", () => a.pause()); navigator.mediaSession.setActionHandler("previoustrack", () => P.prev()); navigator.mediaSession.setActionHandler("nexttrack", () => P.next()); } }catch(e){} }); a.addEventListener("pause", () => { setBtn(false); LIB.at = LIB.at || {}; LIB.at[id] = Math.floor(a.currentTime); save(); });
       a.addEventListener("ended", () => { setBtn(false); cur = -1; if(LIB.at) { delete LIB.at[id]; save(); } document.querySelectorAll(".sent.now").forEach(e => e.classList.remove("now")); LIB.listened[id] = true; save(); });
-      a.addEventListener("error", () => { if(dead || fallen || !a.error) return; fallen = true; toast("تعذّر تحميل الصوت — سيقرأها صوت المتصفح"); player = ttsPlayer(); player.playFrom(Math.max(0, cur)); });
+      a.addEventListener("error", () => { if(dead || fallen || !a.error) return; fallen = true; toast("تعذّر تحميل الصوت، سيقرأها صوت المتصفح"); player = ttsPlayer(); player.playFrom(Math.max(0, cur)); });
       const P = {
         toggle(){ if(a.paused){ a.play().catch(() => {}); } else a.pause(); },
         playFrom(k){ cur = k; highlight(k); seekTo((times[k] ? times[k].start : 0) + 0.02); a.play().catch(() => {}); },
@@ -393,11 +393,11 @@
       if(first) addXP(20 + score * 5); else if(gloss) addXP(score * 3);
       if(pct >= 80) confetti();
       const nx = nextStory(s);
-      render(`<div class="card center sheet fade-up"><div class="score-ring" style="--p:${pct}"><span>${pct}%</span></div><h2>${score} من ${list.length}</h2><h3 class="muted" style="font-weight:600">${esc(s.title)}${gloss ? " — كلمات القصة" : ""}</h3><div id="srv"></div>
+      render(`<div class="card center sheet fade-up"><div class="score-ring" style="--p:${pct}"><span>${pct}%</span></div><h2>${score} من ${list.length}</h2><h3 class="muted" style="font-weight:600">${esc(s.title)}${gloss ? "، كلمات القصة" : ""}</h3><div id="srv"></div>
         <div class="btn-row" style="justify-content:center;margin-top:12px">${!gloss && (s.glossary || []).length >= 4 ? `<a class="btn btn-warm btn-lg" href="#/gloss/${id}">${I("type")} كلمات القصة (+${(s.glossary || []).length}) ←</a>` : ""}${nx ? `<a class="btn ${gloss ? "btn-warm btn-lg" : ""}" href="#/read/${nx.id}">${I("zap")} القصة التالية: ${esc(nx.ar)} ←</a>` : ""}<a class="btn" href="#/read/${id}">أعد القراءة</a><a class="btn" href="#/level/${s.lvl}">قصص ${s.lvl}</a></div></div>`);
       const sb = $("#srv");
       if(!Auth.user()){ sb.innerHTML = `<p class="small muted">${I("lock")} <a href="account.html">سجّل الدخول</a> لتُحسب نقاطك في المنافسة.</p>`; hydrateIcons(sb); return; }
-      if(!ids.length){ sb.innerHTML = `<p class="small muted">لا إجابات صحيحة هذه المرة — أعد قراءة القصة وحاول مجددًا.</p>`; return; }
+      if(!ids.length){ sb.innerHTML = `<p class="small muted">لا إجابات صحيحة هذه المرة، أعد قراءة القصة وحاول مجددًا.</p>`; return; }
       try{ const j = await Auth.api("/api/result", { method: "POST", body: { mode: "reading", score, total: list.length, seconds: 0, ids, story: gloss ? null : id, tag: gloss ? "gloss" : "story" } }); pointsReveal(j, sb); Pending.remove(ids); if(typeof Progress !== "undefined") Progress.sync(true); }catch(e){ sb.innerHTML = `<p class="small" style="color:var(--bad)">${esc(e.message)}</p>`; }
     };
     show();

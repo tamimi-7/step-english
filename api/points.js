@@ -7,6 +7,12 @@ const RC = require("../lib/recap");
 const LG = require("../lib/log");
 const DL = require("../lib/daily");
 
+async function feedbackTally(v, u){
+  const all = db.flatToObj(await db.call("HGETALL", "feedback:" + v));
+  const tally = { love: 0, ok: 0, no: 0 }; let mine = null; const voters = [];
+  Object.entries(all).forEach(([k, raw]) => { try{ const x = JSON.parse(raw); tally[x.rating] = (tally[x.rating] || 0) + 1; voters.push({ name: x.name || k, rating: x.rating }); if(k === u) mine = x; }catch(e){} });
+  return { v, tally, total: voters.length, voters, mine };
+}
 /* الحضور اليومي بدون نقاط: سلسلة أيام متتالية، ودرع يحمي السلسلة من يوم فائت (درع لكل ٧ أيام، حدّه ٢)،
    ومين من المشاركين دخل اليوم ومين سلسلته مهددة */
 async function family(me, today, yest){
@@ -47,6 +53,16 @@ module.exports = H.handler(["GET", "POST"], async (req, res) => {
   if(req.method === "POST"){
     const b = await H.body(req);
     if(b.daily) return H.ok(res, await claimDaily(me));
+    /* رأي المشارك في الشكل الجديد */
+    if(b.feedback){
+      const f = b.feedback, v = String(f.v || "").replace(/[^a-z0-9-]/g, "").slice(0, 20);
+      const rating = ["love", "ok", "no"].includes(f.rating) ? f.rating : null;
+      if(!v || !rating) return H.err(res, 400, "رأي غير صالح");
+      const tags = (Array.isArray(f.tags) ? f.tags : []).map(x => String(x).slice(0, 30)).slice(0, 8);
+      const comment = String(f.comment || "").replace(/\s+/g, " ").trim().slice(0, 400);
+      await db.pipeline([["HSET", "feedback:" + v, me.u, JSON.stringify({ rating, tags, comment, name: me.name, at: Date.now() })], ["HSET", "names", me.u, me.name]]);
+      return H.ok(res, { ok: true, tally: await feedbackTally(v, me.u) });
+    }
     /* فعاليات اليوم */
     if(b.quest !== undefined){ const r = await DL.claimQuest(me.u, String(b.quest)); return r.error ? H.err(res, 400, r.error) : H.ok(res, r); }
     if(b.wordle !== undefined){ const r = await DL.wordleGuess(me.u, b.wordle); return r.error ? H.err(res, 400, r.error) : H.ok(res, r); }
@@ -62,6 +78,7 @@ module.exports = H.handler(["GET", "POST"], async (req, res) => {
     const lg = await LG.userLog(String(q.log || me.u).slice(0, 40));
     return lg ? H.ok(res, lg) : H.err(res, 404, "المستخدم غير موجود");
   }
+  if(q.feedback){ const v = String(q.feedback).replace(/[^a-z0-9-]/g, "").slice(0, 20); return H.ok(res, await feedbackTally(v, me.u)); }
   if(q.today){ const [quests, wordle, family] = await Promise.all([DL.questState(me.u), DL.wordleState(me.u), DL.familyState(me.u)]); return H.ok(res, { quests, wordle, family }); }
   if(q.wordle){ return H.ok(res, await DL.wordleState(me.u)); }
   if(q.recap){

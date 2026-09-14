@@ -1,4 +1,4 @@
-/* ===== STEP English — leaderboard & challenges ===== */
+/* ===== STEP English، leaderboard & challenges ===== */
 (function(){
   const $ = s => document.querySelector(s);
   const params = new URLSearchParams(location.search);
@@ -26,7 +26,7 @@
     const B = EVENTS.CONFIG.battle, G = EVENTS.CONFIG.recurring[0];
     host.innerHTML = `<div class="card tour-card">
       <div class="tour-head">${emo("trophy", "tour-emo")}<div><h2 style="margin:0">${esc(T.title)}</h2><div class="tour-prize">${esc(T.prize)}</div></div><span class="badge ${T.active ? "ok" : ""}">${left}</span></div>
-      <div class="tour-lead">${top ? `<div class="small muted">المتصدر الآن</div><div class="tour-top">${avatarHtml(top.name, top.u)}<b>${esc(top.name)}</b><span class="badge accent">${top.points} نقطة</span></div>` : `<div class="small muted">لا متصدر بعد — أول نقطة تضعك في الصدارة!</div>`}</div>
+      <div class="tour-lead">${top ? `<div class="small muted">المتصدر الآن</div><div class="tour-top">${avatarHtml(top.name, top.u)}<b>${esc(top.name)}</b><span class="badge accent">${top.points} نقطة</span></div>` : `<div class="small muted">لا متصدر بعد، أول نقطة تضعك في الصدارة!</div>`}</div>
       <div class="btn-row" style="margin-top:12px"><a class="btn btn-warm" href="${gen ? "general.html#/daily" : "quiz.html"}">${I("pencil")} اجمع نقاطًا الآن</a></div>
       <details class="tour-rules-box"><summary>${I("info")} القوانين وكيف تنحسب النقاط</summary>
         <ul class="tour-rules">
@@ -47,9 +47,9 @@
       const j = await Auth.api("/api/challenges");
       host.innerHTML = j.challenges.length ? `<div class="grid grid-3">${j.challenges.map(c => `<div class="chal">
           <div class="ct"><i data-i='swords'></i> ${esc(c.title)} ${c.done ? '<span class="badge ok">أنجزته </span>' : ""}</div>
-          <div class="cm"><span><i data-i='user'></i> ${esc(c.byName)}</span><span>${modeLabel(c.mode)}${c.mode === "grammar" && c.topic !== "all" ? " — " + Bank.topicLabel(c.topic) : ""}</span><span>${c.count} سؤال</span><span>${c.timed ? "<i data-i='timer'></i> بمؤقت" : "بدون مؤقت"}</span><span><i data-i='users'></i> ${c.participants}</span></div>
+          <div class="cm"><span><i data-i='user'></i> ${esc(c.byName)}</span><span>${modeLabel(c.mode)}${c.mode === "grammar" && c.topic !== "all" ? "، " + Bank.topicLabel(c.topic) : ""}</span><span>${c.count} سؤال</span><span>${c.timed ? "<i data-i='timer'></i> بمؤقت" : "بدون مؤقت"}</span><span><i data-i='users'></i> ${c.participants}</span></div>
           <div class="ca">${c.done ? "" : `<a class="btn btn-sm btn-warm" href="quiz.html?challenge=${c.id}"><i data-i='fire'></i> ابدأ</a>`}<a class="btn btn-sm" href="compete.html?c=${c.id}">الترتيب</a><button type="button" class="btn btn-sm" data-copy="${c.id}"><i data-i='link'></i> نسخ الرابط</button></div></div>`).join("")}</div>`
-        : `<p class="muted">لا توجد تحديات بعد — أنشئ أول تحدٍ وأرسل رابطه لإخوانك!</p>`;
+        : `<p class="muted">لا توجد تحديات بعد، أنشئ أول تحدٍ وأرسل رابطه لإخوانك!</p>`;
       host.querySelectorAll("[data-copy]").forEach(b => b.addEventListener("click", () => copyLink(b.dataset.copy)));
     }catch(e){ host.innerHTML = `<div class="note bad"><span class="ic"><i data-i='alert'></i></span><p>${esc(e.message)}</p></div>`; }
   }
@@ -66,7 +66,7 @@
       const c = j.challenge;
       box.innerHTML = `<div class="card">
         <div class="section-title"><span class="badge pink"><i data-i='swords'></i> تحدي</span><h2 style="margin:0">${esc(c.title)}</h2></div>
-        <p class="muted">بواسطة <b>${esc(c.byName)}</b> · ${modeLabel(c.mode)}${c.mode === "grammar" && c.topic !== "all" ? " — " + Bank.topicLabel(c.topic) : ""} · ${c.qids.length} سؤال · ${c.timed ? "<i data-i='timer'></i> بمؤقت" : "بدون مؤقت"} · ${fmtDate(c.created)}</p>
+        <p class="muted">بواسطة <b>${esc(c.byName)}</b> · ${modeLabel(c.mode)}${c.mode === "grammar" && c.topic !== "all" ? "، " + Bank.topicLabel(c.topic) : ""} · ${c.qids.length} سؤال · ${c.timed ? "<i data-i='timer'></i> بمؤقت" : "بدون مؤقت"} · ${fmtDate(c.created)}</p>
         ${j.board.length ? `<div class="lb">${j.board.map(r => `<div class="lb-row ${r.me ? "me" : ""} ${r.rank <= 3 ? "top" + r.rank : ""}"><div class="rk ${r.rank <= 3 ? "medal" : ""}">${r.rank <= 3 ? I("medal", "medal-" + r.rank) : r.rank}</div>${avatarHtml(r.name, r.u)}<div class="nm">${esc(r.name)}<div class="sub">${Math.floor(r.seconds / 60)}:${String(r.seconds % 60).padStart(2, "0")} دقيقة · ${fmtDate(r.at)}</div></div><div class="pt">${r.score} / ${r.total}</div></div>`).join("")}</div>` : `<p class="muted">لا أحد أنجز هذا التحدي بعد.</p>`}
         <div class="btn-row" style="margin-top:14px">${j.mine ? "" : `<a class="btn btn-warm" href="quiz.html?challenge=${c.id}"><i data-i='fire'></i> ابدأ التحدي</a>`}<button type="button" class="btn" id="copyDetail"><i data-i='link'></i> نسخ الرابط</button><a class="btn" href="compete.html">كل التحديات</a></div></div>`;
       $("#copyDetail").addEventListener("click", () => copyLink(c.id));

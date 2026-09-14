@@ -1,4 +1,4 @@
-/* ===== STEP English — account page ===== */
+/* ===== STEP English، account page ===== */
 (function(){
   const $ = s => document.querySelector(s);
   const next = new URLSearchParams(location.search).get("next");
@@ -42,11 +42,11 @@
         <div class="gs">${emo("calendar", "gs-emo")}<div class="gs-b"><div class="gs-n">${j.weekPoints}</div><div class="gs-l">هذا الأسبوع${j.weekRank ? " · #" + j.weekRank : ""}</div></div></div>
         <div class="gs">${emo("fire", "gs-emo")}<div class="gs-b"><div class="gs-n">${flame}</div><div class="gs-l">${flame === 1 ? "يوم ورا بعض" : "أيام ورا بعض"}</div></div></div></div>
         <p class="small muted acc-activity">${s.quizzes} اختبار وتدريب · الدقة ${s.answered ? Math.round(s.correct / s.answered * 100) : 0}٪ · أفضل نتيجة ${s.best}٪</p>`;
-      $("#pResults").innerHTML = j.results.length ? `<div class="table-wrap"><table><thead><tr><th>التاريخ</th><th>النوع</th><th class="en">الدرجة</th><th>النسبة</th></tr></thead><tbody>${j.results.map(r => `<tr><td>${fmtDate(r.at)}</td><td>${r.challenge ? "<i data-i='swords'></i> تحدي" : Bank.topicLabel(r.mode === "mix" ? "اختبار شامل" : r.mode === "wrong" ? "مراجعة أخطائي" : r.mode)}</td><td class="en">${r.score} / ${r.total}</td><td><span class="badge ${r.score / r.total >= .7 ? "ok" : "bad"}">${Math.round(r.score / r.total * 100)}٪</span></td></tr>`).join("")}</tbody></table></div>` : `<p class="muted">لا توجد نتائج بعد — <a href="quiz.html">ابدأ اختبارك الأول</a>.</p>`;
+      $("#pResults").innerHTML = j.results.length ? `<div class="table-wrap"><table><thead><tr><th>التاريخ</th><th>النوع</th><th class="en">الدرجة</th><th>النسبة</th></tr></thead><tbody>${j.results.map(r => `<tr><td>${fmtDate(r.at)}</td><td>${r.challenge ? "<i data-i='swords'></i> تحدي" : Bank.topicLabel(r.mode === "mix" ? "اختبار شامل" : r.mode === "wrong" ? "مراجعة أخطائي" : r.mode)}</td><td class="en">${r.score} / ${r.total}</td><td><span class="badge ${r.score / r.total >= .7 ? "ok" : "bad"}">${Math.round(r.score / r.total * 100)}٪</span></td></tr>`).join("")}</tbody></table></div>` : `<p class="muted">لا توجد نتائج بعد، <a href="quiz.html">ابدأ اختبارك الأول</a>.</p>`;
     }catch(e){ $("#pStats").innerHTML = `<div class="note bad"><span class="ic"><i data-i='alert'></i></span><p>${esc(e.message)}</p></div>`; }
     renderPoints(); renderWeak(); renderMarks(); renderNotif();
     const o = Progress.overall();
-    $("#pProg").innerHTML = `${o.answered} إجابة · إتقانك ${o.pct}٪ — تقدمك محفوظ على حسابك ويظهر على أي جهاز تسجّل منه.`;
+    $("#pProg").innerHTML = `${o.answered} إجابة · إتقانك ${o.pct}٪، تقدمك محفوظ على حسابك ويظهر على أي جهاز تسجّل منه.`;
   }
 
   /* الإشعارات: تفعيل / إيقاف / تجربة + شرح الآيفون */
@@ -69,9 +69,9 @@
     hydrateIcons(host);
     const busy = (b, t) => { b.disabled = true; b.textContent = t; };
     const bOn = $("#pushOn"), bOff = $("#pushOff"), bTest = $("#pushTest");
-    if(bOn) bOn.addEventListener("click", async () => { busy(bOn, "… جاري التفعيل"); try{ await Push.enable(); toast("تم تفعيل الإشعارات 🔔"); }catch(e){ toast(e.message, 5000); } renderNotif(); });
+    if(bOn) bOn.addEventListener("click", async () => { busy(bOn, "… جاري التفعيل"); try{ await Push.enable(); toast("تم تفعيل الإشعارات "); }catch(e){ toast(e.message, 5000); } renderNotif(); });
     if(bOff) bOff.addEventListener("click", async () => { busy(bOff, "…"); await Push.disable(); toast("تم إيقاف الإشعارات"); renderNotif(); });
-    if(bTest) bTest.addEventListener("click", async () => { busy(bTest, "… جاري الإرسال"); try{ const r = await Auth.api("/api/push", { method: "POST", body: { action: "test" } }); toast(r.sent ? "انرسل! شيك على الإشعارات" : "ما وصل — جرّب تعطّلها وتفعّلها من جديد", 4000); }catch(e){ toast(e.message, 4000); } renderNotif(); });
+    if(bTest) bTest.addEventListener("click", async () => { busy(bTest, "… جاري الإرسال"); try{ const r = await Auth.api("/api/push", { method: "POST", body: { action: "test" } }); toast(r.sent ? "انرسل! شيك على الإشعارات" : "ما وصل، جرّب تعطّلها وتفعّلها من جديد", 4000); }catch(e){ toast(e.message, 4000); } renderNotif(); });
   }
   async function renderPoints(){
     const host = $("#pPoints"); if(!host) return;
@@ -79,7 +79,7 @@
     const rows = [...j.areas, ...j.extras].filter(r => r.points);
     const max = Math.max(1, ...rows.map(r => r.points));
     host.innerHTML = `<div class="btn-row" style="margin:0 0 10px"><button type="button" class="btn btn-primary btn-sm" id="myLog">${I("list")} سجل نقاطي كامل (كل جولة ووقتها)</button></div>
-      <div class="card sheet">${rows.length ? rows.map(r => `<div class="pts-row"><div class="pr-l">${esc(r.label)}</div><div class="pr-bar"><div style="width:${Math.round(r.points / max * 100)}%"></div></div><div class="pr-n">${r.points}</div></div>`).join("") : `<p class="muted">ما جمعت نقاطًا بعد — ابدأ بأي نشاط عليه شارة «نقاط».</p>`}
+      <div class="card sheet">${rows.length ? rows.map(r => `<div class="pts-row"><div class="pr-l">${esc(r.label)}</div><div class="pr-bar"><div style="width:${Math.round(r.points / max * 100)}%"></div></div><div class="pr-n">${r.points}</div></div>`).join("") : `<p class="muted">ما جمعت نقاطًا بعد، ابدأ بأي نشاط عليه شارة «نقاط».</p>`}
         <div class="pts-row total"><div class="pr-l">المجموع</div><div class="pr-bar"></div><div class="pr-n">${j.sum}</div></div>
         <p class="small muted" style="margin:10px 0 0">${j.consistent ? `${I("check")} التفصيل يطابق مجموعك تمامًا.` : `${I("info")} فرق ${j.total - j.sum} نقطة من قبل تسجيل التفصيل.`} ${j.stages.length ? `· أتممت ${j.stages.length} ${j.stages.length === 1 ? "مرحلة" : "مراحل"}.` : ""}</p></div>
       <details class="pts-where acc-help"><summary>${I("info")} ليش الأرقام تختلف؟ وكيف تنحسب النقاط؟</summary><p><b>ليش تختلف؟</b> «المجموع الكلي» كل نقاطك من أول يوم. «البطولة» تبدأ من ٩ سبتمبر وهي اللي تحدد الفائز بالجائزة. «هذا الأسبوع» يرجع صفر كل اثنين. ما فيه شي ينقص من نقاطك أبدًا.</p><p><b>كيف تنحسب؟</b> كل سؤال تجيبه صح <b>لأول مرة</b> = نقطة (الإعادة ما تكرر). ساعة الذهب (٩–١٠ مساءً يوميًا) = نقطتين لكل إجابة جديدة. إتمام مرحلة = +${j.stagePoints}. معركة الكلمات (الجمعة ٨–١٠ مساءً): الأول +٣٠، الثاني +٢٠، الثالث +١٠.</p></details>`;
@@ -98,7 +98,7 @@
     const host = $("#pMarks"); if(!host) return;
     const ids = Progress.marks();
     const secM = $("#marks"); if(secM) secM.hidden = !ids.length;
-    if(!ids.length){ host.innerHTML = `<p class="muted">لم تعلّم على أي سؤال بعد. في نتائج الاختبار وفي التجميعات تجد زر «علّم» تحت كل سؤال — اضغطه وسيظهر هنا لتذاكره وقت ما تشاء.</p>`; return; }
+    if(!ids.length){ host.innerHTML = `<p class="muted">لم تعلّم على أي سؤال بعد. في نتائج الاختبار وفي التجميعات تجد زر «علّم» تحت كل سؤال، اضغطه وسيظهر هنا لتذاكره وقت ما تشاء.</p>`; return; }
     const qs = Bank.byIds(ids);
     const groups = {};
     qs.forEach(q => { const t = q.kind === "grammar" || q.kind === "coll" ? q.topic : q.kind; (groups[t] = groups[t] || []).push(q); });

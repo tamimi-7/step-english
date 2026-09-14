@@ -1,4 +1,4 @@
-/* ===== STEP English — shared script ===== */
+/* ===== STEP English، shared script ===== */
 /* قسمان منفصلان: ستيب (تجهيز الاختبار) وإنقلش عام (تعلّم اللغة). الحساب والمنافسة مشتركان. */
 const NAV_STEP = [
   { href: "step.html", label: "الرئيسية", icon: "home" },
@@ -113,11 +113,13 @@ const ICONS = {
   smile: 'M12 22a10 10 0 1 0 0-20 10 10 0 0 0 0 20zM8 14s1.5 2 4 2 4-2 4-2M9 9h.01M15 9h.01',
   award: 'M12 15a7 7 0 1 0 0-14 7 7 0 0 0 0 14zM8.2 13.9L7 23l5-3 5 3-1.2-9.1'
 };
-/* أيقونات ثلاثية الأبعاد (Microsoft Fluent Emoji — رخصة MIT) مع رجوع للإيموجي العادي لو ما تحمّلت */
-const EMO = { fire: ["1f525", "🔥"], books: ["1f4da", "📚"], memo: ["1f4dd", "📝"], talk: ["1f5e3-fe0f", "🗣️"], game: ["1f3ae", "🎮"], book: ["1f4d6", "📖"], repeat: ["1f501", "🔁"], trophy: ["1f3c6", "🏆"], check: ["2705", "✅"], review: ["1f504", "🔄"], star: ["2b50", "⭐"], gift: ["1f381", "🎁"], shield: ["1f6e1-fe0f", "🛡️"], sparkles: ["2728", "✨"], comet: ["2604-fe0f", "☄️"], volcano: ["1f30b", "🌋"], crown: ["1f451", "👑"], swords: ["2694-fe0f", "⚔️"], clock: ["23f0", "⏰"], target: ["1f3af", "🎯"], puzzle: ["1f9e9", "🧩"], headphones: ["1f3a7", "🎧"], chat: ["1f4ac", "💬"], party: ["1f389", "🎉"], muscle: ["1f4aa", "💪"], wave: ["1f44b", "👋"], rocket: ["1f680", "🚀"], brain: ["1f9e0", "🧠"], calendar: ["1f4c5", "📅"], user: ["1f464", "👤"], home: ["1f3e0", "🏠"], bell: ["1f514", "🔔"], stopwatch: ["23f1-fe0f", "⏱️"], abc: ["1f524", "🔤"], link: ["1f517", "🔗"], cards: ["1f3b4", "🎴"], bulb: ["1f4a1", "💡"], mic: ["1f3a4", "🎤"], globe: ["1f30d", "🌍"], bluebook: ["1f4d8", "📘"] };
+/* أيقونات ثلاثية الأبعاد (Microsoft Fluent Emoji، رخصة MIT) مع رجوع للإيموجي العادي لو ما تحمّلت */
+const EMO = { fire: ["1f525", ""], books: ["1f4da", ""], memo: ["1f4dd", ""], talk: ["1f5e3-fe0f", ""], game: ["1f3ae", ""], book: ["1f4d6", ""], repeat: ["1f501", ""], trophy: ["1f3c6", ""], check: ["2705", ""], review: ["1f504", ""], star: ["2b50", ""], gift: ["1f381", ""], shield: ["1f6e1-fe0f", ""], sparkles: ["2728", ""], comet: ["2604-fe0f", ""], volcano: ["1f30b", ""], crown: ["1f451", ""], swords: ["2694-fe0f", ""], clock: ["23f0", ""], target: ["1f3af", ""], puzzle: ["1f9e9", ""], headphones: ["1f3a7", ""], chat: ["1f4ac", ""], party: ["1f389", ""], muscle: ["1f4aa", ""], wave: ["1f44b", ""], rocket: ["1f680", ""], brain: ["1f9e0", ""], calendar: ["1f4c5", ""], user: ["1f464", ""], home: ["1f3e0", ""], bell: ["1f514", ""], stopwatch: ["23f1-fe0f", ""], abc: ["1f524", ""], link: ["1f517", ""], cards: ["1f3b4", ""], bulb: ["1f4a1", ""], mic: ["1f3a4", ""], globe: ["1f30d", ""], bluebook: ["1f4d8", ""] };
 /* عدد + تمييز بالعربي: ٣–١٠ جمع، غيرها مفرد (5 كلمات، 12 كلمة) */
 const arN = (n, one, many) => `${n} ${n >= 3 && n <= 10 ? many : one}`;
+const EMO_ICON = { fire: "fire", books: "library", memo: "pencil", talk: "mic", game: "timer", book: "bookopen", repeat: "repeat", trophy: "trophy", check: "check", review: "repeat", star: "star", gift: "gift", shield: "lock", sparkles: "sparkles", comet: "zap", volcano: "fire", crown: "award", swords: "swords", clock: "clock", target: "target", puzzle: "type", headphones: "headphones", chat: "chat", party: "trophy", muscle: "zap", wave: "smile", rocket: "zap", brain: "brain", calendar: "calendar", user: "user", home: "home", stopwatch: "timer", abc: "type", link: "link", cards: "cards", bulb: "bulb", mic: "mic", globe: "globe", bluebook: "book", bell: "bell" };
 function emo(name, cls){
+  const ic = EMO_ICON[name]; if(ic) return `<span class="emo-i ${cls || ""}">${I(ic)}</span>`;
   const e = EMO[name]; if(!e) return "";
   return `<img class="emo ${cls || ""}" src="https://cdn.jsdelivr.net/npm/@lobehub/fluent-emoji-3d@1.1.0/assets/${e[0]}.webp" alt="${e[1]}" decoding="async" draggable="false" onerror="this.replaceWith(document.createTextNode(this.alt))">`;
 }
@@ -166,7 +168,7 @@ function explainHtml(q, chosen){
   const L = ["A","B","C","D","E"]; const ok = chosen === q.a;
   const why = (typeof WHY !== "undefined" && WHY[q.id] && chosen !== undefined && chosen !== null) ? WHY[q.id][chosen] : null;
   let h = "";
-  if(!ok && chosen !== undefined && chosen !== null) h += `<div class="why-wrong"><b>${I("x")} لماذا إجابتك (${L[chosen]}) ${esc(q.opts[chosen])} خطأ؟</b><div>${why ? esc(why) : "«" + esc(q.opts[chosen]) + "» لا تحقق القاعدة المطلوبة في هذه الجملة — اقرأ التلميح أدناه وقارنها بالإجابة الصحيحة."}</div></div>`;
+  if(!ok && chosen !== undefined && chosen !== null) h += `<div class="why-wrong"><b>${I("x")} لماذا إجابتك (${L[chosen]}) ${esc(q.opts[chosen])} خطأ؟</b><div>${why ? esc(why) : "«" + esc(q.opts[chosen]) + "» لا تحقق القاعدة المطلوبة في هذه الجملة، اقرأ التلميح أدناه وقارنها بالإجابة الصحيحة."}</div></div>`;
   if(!ok && (chosen === undefined || chosen === null)) h += `<div class="why-wrong"><b>${I("x")} لم تُجب على هذا السؤال</b></div>`;
   const rule = q.kind === "coll" ? `${esc(q.ex)}<br>${esc(autoHint(q))}` : esc(q.ex);
   h += `<div class="why-rule"><b>${I("check")} الصحيح: (${L[q.a]}) ${esc(q.opts[q.a])}</b><div>${rule}</div></div>`;
@@ -174,7 +176,7 @@ function explainHtml(q, chosen){
   h += `<div class="btn-row" style="margin-top:8px">${typeof markBtn === "function" ? markBtn(q.id) : ""}${lessonLink(t, "افتح شرح القاعدة")}</div>`;
   return h;
 }
-/* ---- سجل النقاط: شفاف للجميع — تضغط أي اسم في الترتيب وتشوف من وين جات كل نقطة ---- */
+/* ---- سجل النقاط: شفاف للجميع، تضغط أي اسم في الترتيب وتشوف من وين جات كل نقطة ---- */
 const MODE_AR = { general: "إنقلش عام", train: "تدريب STEP", grammar: "اختبار قواعد STEP", vocab: "مفردات", reading: "قراءة / قصة", mix: "اختبار STEP شامل", wrong: "مراجعة أخطاء", challenge: "تحدي", clistening: "تجميعات استماع", cgrammar: "تجميعات قرامر", creading: "تجميعات قطع" };
 async function pointsLog(u){
   const ov = modalCard(`<div class="log-wrap"><p class="muted">جارٍ تحميل السجل…</p></div>`);
@@ -188,7 +190,7 @@ async function pointsLog(u){
     const note = [r.stage ? "إتمام وحدة +10" : "", r.story ? "إتمام قصة" : "", r.mult > 1 && r.bonus ? `×${r.mult} فعالية` : "", r.partial ? "إجابات انحفظت بعد الخروج" : "", r.challenge ? "تحدي" : ""].filter(Boolean).join(" · ");
     return head + `<tr><td class="log-t">${new Date(r.at).toLocaleTimeString("ar-SA", { hour: "2-digit", minute: "2-digit" })}</td><td>${MODE_AR[r.mode] || esc(r.mode)}<div class="small muted">${note}</div></td><td class="log-s">${r.score}/${r.total}</td><td class="log-p ${r.points ? "" : "muted"}">${r.points ? "+" + r.points : "0"}${r.base != null && r.points && r.base !== r.points ? `<div class="small muted">${r.base} جديد</div>` : ""}</td></tr>`;
   }).join("");
-  box.innerHTML = `<div class="log-head">${avatarHtml(j.name, j.u)}<div><h3 style="margin:0">${esc(j.name)}</h3><div class="small muted">${j.total} نقطة · ${j.uniqueQuestions} سؤال مختلف · ${j.rounds.length} جولة${j.streak ? ` · 🔥${j.streak}` : ""}</div></div></div>
+  box.innerHTML = `<div class="log-head">${avatarHtml(j.name, j.u)}<div><h3 style="margin:0">${esc(j.name)}</h3><div class="small muted">${j.total} نقطة · ${j.uniqueQuestions} سؤال مختلف · ${j.rounds.length} جولة${j.streak ? ` · ${j.streak}` : ""}</div></div></div>
     <div class="log-breakdown">${parts.map(p => `<div class="pts-row"><div class="pr-l">${esc(p.label)}</div><div class="pr-bar"><div style="width:${Math.round(p.points / Math.max(1, ...parts.map(x => x.points)) * 100)}%"></div></div><div class="pr-n">${p.points}</div></div>`).join("")}<div class="pts-row total"><div class="pr-l">المجموع</div><div class="pr-bar"></div><div class="pr-n">${j.sum}</div></div>${j.consistent ? "" : `<p class="small muted">فرق ${j.total - j.sum} من قبل تسجيل التفصيل.</p>`}</div>
     <p class="small muted log-rule">${I("info")} كل سؤال = نقطة <b>مرة واحدة في العمر</b> أول ما تجاوبه صح (الإعادة = 0). ساعة الذهب ٩–١٠ مساءً ونقاط الهدايا = ×٢. إتمام وحدة = +10. السيرفر يتأكد أن كل سؤال موجود فعلًا في الموقع قبل ما يحسبه.</p>
     <div class="table-wrap log-table"><table><thead><tr><th>الوقت</th><th>وش سوى</th><th>النتيجة</th><th>النقاط</th></tr></thead><tbody>${rows || `<tr><td colspan="4" class="muted center">ما فيه جولات محفوظة</td></tr>`}</tbody></table></div>
@@ -210,10 +212,57 @@ function renderNotifNudge(){
   const el = document.createElement("div"); el.className = "card push-card";
   el.innerHTML = ios
     ? `${emo("bell")}<div class="pc-b"><b>تبي تنبيهات ساعة الذهب وشعلتك على جوالك؟</b><div class="small muted">على الآيفون: اضغط زر المشاركة في Safari ← «إضافة إلى الشاشة الرئيسية»، وافتح «إنقلش» من هناك وفعّلها.</div></div><div class="pc-a"><a class="btn btn-sm btn-primary" href="account.html#notif">كيف؟</a><button type="button" class="btn btn-sm" data-off>لاحقًا</button></div>`
-    : `${emo("bell")}<div class="pc-b"><b>فعّل الإشعارات</b><div class="small muted">تذكير واحد باليوم: ساعة الذهب، شعلتك، ومعركة الجمعة — ما نرسل غيرها.</div></div><div class="pc-a"><button type="button" class="btn btn-sm btn-primary" data-on>${I("bell")} فعّل</button><button type="button" class="btn btn-sm" data-off>لاحقًا</button></div>`;
+    : `${emo("bell")}<div class="pc-b"><b>فعّل الإشعارات</b><div class="small muted">تذكير واحد باليوم: ساعة الذهب، شعلتك، ومعركة الجمعة، ما نرسل غيرها.</div></div><div class="pc-a"><button type="button" class="btn btn-sm btn-primary" data-on>${I("bell")} فعّل</button><button type="button" class="btn btn-sm" data-off>لاحقًا</button></div>`;
   host.insertAdjacentElement("afterend", el); hydrateIcons(el);
   const off = el.querySelector("[data-off]"); if(off) off.addEventListener("click", () => { Store.set("step_push_nudge_off_" + me.u, true); el.remove(); });
-  const on = el.querySelector("[data-on]"); if(on) on.addEventListener("click", async () => { on.disabled = true; on.textContent = "… جاري التفعيل"; try{ await Push.enable(); toast("تم تفعيل الإشعارات 🔔 — بنرسل لك إشعار تجربة", 4000); el.remove(); try{ await Auth.api("/api/push", { method: "POST", body: { action: "test" } }); }catch(e){} }catch(e){ toast(e.message, 5000); on.disabled = false; on.innerHTML = I("bell") + " فعّل"; } });
+  const on = el.querySelector("[data-on]"); if(on) on.addEventListener("click", async () => { on.disabled = true; on.textContent = "… جاري التفعيل"; try{ await Push.enable(); toast("تم تفعيل الإشعارات ، بنرسل لك إشعار تجربة", 4000); el.remove(); try{ await Auth.api("/api/push", { method: "POST", body: { action: "test" } }); }catch(e){} }catch(e){ toast(e.message, 5000); on.disabled = false; on.innerHTML = I("bell") + " فعّل"; } });
+}
+/* ---- «شرايك في الشكل الجديد؟» — مرة واحدة لكل شخص ---- */
+const FB_V = "design-v3";
+async function designFeedback(done){
+  const me = Auth.user(); if(!me){ done && done(); return; }
+  try{ const t = await Auth.api("/api/points?feedback=" + FB_V); if(t && t.mine){ Store.set("step_fb_" + FB_V + "_" + me.u, true); done && done(); return; } }catch(e){}
+  const RATE = { love: { t: "عجبني", ic: "check" }, ok: { t: "عادي", ic: "smile" }, no: { t: "ما عجبني", ic: "x" } };
+  const TAGS = { love: ["الألوان", "الترتيب", "الخط", "أوضح من قبل", "أسرع"], ok: ["الألوان", "الخط", "الترتيب", "ألقى الأشياء بصعوبة", "كان أحلى قبل"], no: ["الألوان", "الخط", "الترتيب", "ألقى الأشياء بصعوبة", "كان أحلى قبل", "غامق زيادة"] };
+  let rating = null; const picked = new Set();
+  const el = modalCard(`<div class="fb-wrap"></div>`, () => { Store.set("step_fb_" + FB_V + "_" + me.u, true); done && done(); });
+  const box = el.querySelector(".fb-wrap");
+  const close = () => { const b = el.querySelector("[data-close]"); if(b) b.click(); else { el.remove(); Store.set("step_fb_" + FB_V + "_" + me.u, true); done && done(); } };
+  const step1 = () => {
+    box.innerHTML = `<div class="gift-box fb-logo"><img src="assets/brand/logo.svg" alt="" width="44" height="44"></div><h3 style="margin:.3em 0">شكل جديد للموقع</h3>
+      <p class="muted" style="margin:0">غيّرنا الشكل كامل يا ${esc(me.name)}: أسود وأحمر، أبسط وأوضح. شرايك؟</p>
+      <div class="feedback-choices">${Object.entries(RATE).map(([k, r]) => `<button type="button" data-r="${k}">${I(r.ic)}<span>${r.t}</span></button>`).join("")}</div>
+      <button type="button" class="btn btn-sm" data-close>بعدين</button>`;
+    hydrateIcons(box);
+    box.querySelectorAll("[data-r]").forEach(b => b.addEventListener("click", () => { rating = b.dataset.r; try{ if(typeof SFX !== "undefined") SFX.tick(); }catch(e){} step2(); }));
+    box.querySelector("[data-close]").addEventListener("click", () => { el.remove(); done && done(); });
+  };
+  const step2 = () => {
+    const q = rating === "love" ? "وش أكثر شي عجبك؟" : rating === "ok" ? "وش نحسّن عشان يصير يعجبك؟" : "وش اللي ما عجبك؟ نبي نصلّحه";
+    box.innerHTML = `<div class="gift-box">${I(RATE[rating].ic)}</div><h3 style="margin:.3em 0">${q}</h3>
+      <div class="fb-tags">${TAGS[rating].map(t => `<button type="button" data-t="${esc(t)}">${esc(t)}</button>`).join("")}</div>
+      <textarea class="input" id="fbComment" rows="2" maxlength="400" placeholder="تبي تكتب شي؟ (اختياري)" style="width:100%;margin-top:6px;font-size:16px"></textarea>
+      <div class="btn-row" style="justify-content:center;margin-top:10px"><button type="button" class="btn btn-primary" id="fbSend">أرسل رأيي</button><button type="button" class="btn btn-sm" id="fbBack">رجوع</button></div>`;
+    box.querySelectorAll("[data-t]").forEach(b => b.addEventListener("click", () => { const t = b.dataset.t; picked.has(t) ? picked.delete(t) : picked.add(t); b.classList.toggle("on", picked.has(t)); }));
+    box.querySelector("#fbBack").addEventListener("click", step1);
+    box.querySelector("#fbSend").addEventListener("click", async () => {
+      const btn = box.querySelector("#fbSend"); btn.disabled = true; btn.textContent = "…";
+      let r = null;
+      try{ r = await Auth.api("/api/points", { method: "POST", body: { feedback: { v: FB_V, rating, tags: [...picked], comment: box.querySelector("#fbComment").value } } }); }catch(e){ toast(e.message, 3000); btn.disabled = false; btn.textContent = "أرسل رأيي"; return; }
+      Store.set("step_fb_" + FB_V + "_" + me.u, true);
+      const t = r.tally || { tally: {}, voters: [] };
+      const others = (t.voters || []).filter(x => x.name !== me.name);
+      box.innerHTML = `<div class="gift-box">${I("check")}</div><h3 style="margin:.3em 0">شكرًا ${esc(me.name)}!</h3>
+        <p class="muted" style="margin:0">${rating === "love" ? "يسعدنا إنه عجبك" : "وصلنا رأيك، وبنشتغل عليه"}. نقرأ كل رأي.</p>
+        <div class="fb-tally"><span>عجبهم <b>${t.tally.love || 0}</b></span><span>عادي <b>${t.tally.ok || 0}</b></span><span>ما عجبهم <b>${t.tally.no || 0}</b></span></div>
+        ${others.length ? `<p class="small muted" style="margin:6px 0 0">${others.slice(0, 4).map(x => `${esc(x.name)}: ${RATE[x.rating] ? RATE[x.rating].t : ""}`).join(" · ")}</p>` : `<p class="small muted" style="margin:6px 0 0">أنت أول واحد يصوّت</p>`}
+        <button type="button" class="btn btn-primary" data-close style="margin-top:12px">تمام</button>`;
+      hydrateIcons(box);
+      box.querySelector("[data-close]").addEventListener("click", () => { el.remove(); done && done(); });
+      try{ if(typeof SFX !== "undefined") SFX.win(); }catch(e){}
+    });
+  };
+  step1();
 }
 /* ---- نقاط معلّقة: كل إجابة صحيحة تنحفظ فورًا، فلو علق الموقع أو خرجت قبل نهاية الاختبار ما تضيع ---- */
 const Pending = {
@@ -251,7 +300,7 @@ const Push = {
     if(!Auth.user()) throw new Error("سجّل الدخول أولًا");
     if(!this.supported()) throw new Error(this.isIOS() ? "في الآيفون لازم تضيف الموقع للشاشة الرئيسية وتفتحه من هناك" : "متصفحك ما يدعم الإشعارات");
     const perm = await Notification.requestPermission();
-    if(perm !== "granted") throw new Error("ما تم السماح بالإشعارات — تقدر تفعّلها من إعدادات المتصفح");
+    if(perm !== "granted") throw new Error("ما تم السماح بالإشعارات، تقدر تفعّلها من إعدادات المتصفح");
     const { key } = await Auth.api("/api/push");
     if(!key) throw new Error("الإشعارات غير جاهزة على الخادم");
     const r = await this.reg(); await navigator.serviceWorker.ready;
@@ -271,7 +320,7 @@ const Push = {
     try{ if(!Auth.user() || !this.supported() || Notification.permission !== "granted" || !Store.get("step_push_on", false)) return; const sub = await this.current(); if(sub) await Auth.api("/api/push", { method: "POST", body: { action: "subscribe", sub: sub.toJSON() } }); }catch(e){}
   }
 };
-/* شرح القاعدة في نافذة فوق السؤال — ما تطلع من الاختبار ولا يضيع تقدمك */
+/* شرح القاعدة في نافذة فوق السؤال، ما تطلع من الاختبار ولا يضيع تقدمك */
 let STEP_LESSONS_DOC = null;
 async function openRuleSheet(href){
   const ov = document.createElement("div"); ov.className = "rule-ov";
@@ -330,7 +379,7 @@ const Auth = {
     const ctl = typeof AbortController !== "undefined" ? new AbortController() : null;
     const tm = ctl ? setTimeout(() => ctl.abort(), opts.timeout || 10000) : null;
     try{ r = await fetch(path, { method: opts.method || "GET", headers, body: opts.body ? JSON.stringify(opts.body) : undefined, signal: ctl ? ctl.signal : undefined }); }
-    catch(e){ throw new Error(e && e.name === "AbortError" ? "النت بطيء — ما وصلنا رد من الخادم، جرّب مرة ثانية" : "تعذّر الاتصال بالخادم — تأكد من الإنترنت"); }
+    catch(e){ throw new Error(e && e.name === "AbortError" ? "النت بطيء، ما وصلنا رد من الخادم، جرّب مرة ثانية" : "تعذّر الاتصال بالخادم، تأكد من الإنترنت"); }
     finally{ if(tm) clearTimeout(tm); }
     let j = null; try{ j = await r.json(); }catch(e){}
     if(r.status === 401 && a && !path.includes("/login") && !path.includes("/register")) this.clear();
@@ -415,7 +464,7 @@ function renderNav(){
     document.body.appendChild(tb);
   }
   const f = document.getElementById("footer");
-  if(f) f.innerHTML = `<div class="container">STEP English — موقع عائلي لتعلّم الإنجليزية وتجهيز اختبار STEP. للاستخدام الشخصي.</div>`;
+  if(f) f.innerHTML = `<div class="container">STEP English، موقع عائلي لتعلّم الإنجليزية وتجهيز اختبار STEP. للاستخدام الشخصي.</div>`;
 }
 
 /* ---- small UI helpers ---- */
@@ -444,7 +493,7 @@ function pointsExplain(j){
   if(j.storyBonus) rows.push(`<span class="px stage">${I("bookopen")} إتمام قصة = +${j.storyBonus.points}</span>`);
   if(j.repeated) rows.push(`<span class="px muted">${I("repeat")} ${j.repeated} ${j.repeated === 1 ? "سؤال سبق أخذ نقطته" : "أسئلة سبق أخذ نقاطها"}${j.repeatedAt ? ` (آخرها ${fmtDate(j.repeatedAt)})` : ""} = 0</span>`);
   if(!j.bonus && j.base && typeof EVENTS !== "undefined" && EVENTS.status().active.some(a => a.id === "golden") && !String(location.hash).includes("golden")) rows.push(`<a class="px" href="general.html#/golden">${I("zap")} ×٢ في تحدي ساعة الذهب فقط ←</a>`);
-  if(!j.base && j.repeated) rows.push(`<span class="px muted">${I("info")} أحسنت! بس هذي الأسئلة أخذت نقاطها من قبل — النقاط الجديدة تلقاها في دروس ووحدات ما خلصتها</span>`);
+  if(!j.base && j.repeated) rows.push(`<span class="px muted">${I("info")} أحسنت! بس هذي الأسئلة أخذت نقاطها من قبل، النقاط الجديدة تلقاها في دروس ووحدات ما خلصتها</span>`);
   if(!rows.length) rows.push(`<span class="px muted">ما فيه إجابات صحيحة جديدة هذه المرة</span>`);
   return rows.join("");
 }
@@ -456,14 +505,14 @@ function eventGain(a){ try{ const me = Auth.user(); return me && a ? Number(Stor
 /* ملخص ساعة الذهب بعد انتهائها: تبريكات + كم ارتفع */
 function showRecap(r, done){
   const m = r.me, pct = m.before > 0 ? Math.round(m.gained / m.before * 100) : null;
-  const rankTxt = m.rankBefore && m.rankAfter ? (m.rankAfter < m.rankBefore ? `ترتيبك صعد من #${m.rankBefore} إلى <b>#${m.rankAfter}</b> ⬆️` : m.rankAfter === 1 ? `ثبّت الصدارة <b>#1</b> 👑` : `ترتيبك <b>#${m.rankAfter}</b>`) : m.rankAfter ? `ترتيبك <b>#${m.rankAfter}</b>` : "";
+  const rankTxt = m.rankBefore && m.rankAfter ? (m.rankAfter < m.rankBefore ? `ترتيبك صعد من #${m.rankBefore} إلى <b>#${m.rankAfter}</b> ` : m.rankAfter === 1 ? `ثبّت الصدارة <b>#1</b> ` : `ترتيبك <b>#${m.rankAfter}</b>`) : m.rankAfter ? `ترتيبك <b>#${m.rankAfter}</b>` : "";
   const topOther = r.top.find(x => !x.me);
-  const cheer = m.rankAfter === 1 && r.top[0] && r.top[0].me ? "أنت الأول والأكثر تجميعًا! حافظ عليها بكرة 👑" : r.top[0] && !r.top[0].me ? `${esc(r.top[0].name)} جمع +${r.top[0].gained} الليلة — بكرة دورك 💪` : "بكرة ساعة ذهب جديدة الساعة ٩ ⭐";
+  const cheer = m.rankAfter === 1 && r.top[0] && r.top[0].me ? "أنت الأول والأكثر تجميعًا! حافظ عليها بكرة " : r.top[0] && !r.top[0].me ? `${esc(r.top[0].name)} جمع +${r.top[0].gained} الليلة، بكرة دورك ` : "بكرة ساعة ذهب جديدة الساعة ٩ ";
   modalCard(`<div class="gift-box live">${emo("party")}</div><h3>خلصت ${esc(r.title)}!</h3>
     <div class="gift-mult">+${m.gained} نقطة</div>
     <div class="recap-grid"><div><small>مجموعك</small><b>${m.before} ← ${m.after}</b>${pct != null ? `<span class="up">▲ ${pct}٪</span>` : ""}</div><div><small>أسئلة جديدة</small><b>${m.newQ}</b><span class="small muted">في ${m.rounds} ${m.rounds >= 3 && m.rounds <= 10 ? "جولات" : "جولة"}</span></div></div>
     ${rankTxt ? `<p style="margin:6px 0">${rankTxt}</p>` : ""}
-    ${r.top.length > 1 ? `<div class="recap-top"><div class="small muted">الأكثر تجميعًا الليلة</div>${r.top.slice(0, 3).map((x, i) => `<div class="rt ${x.me ? "me" : ""}"><span>${["🥇", "🥈", "🥉"][i]} ${esc(x.name)}</span><b>+${x.gained}</b></div>`).join("")}</div>` : ""}
+    ${r.top.length > 1 ? `<div class="recap-top"><div class="small muted">الأكثر تجميعًا الليلة</div>${r.top.slice(0, 3).map((x, i) => `<div class="rt ${x.me ? "me" : ""}"><span>${["", "", ""][i]} ${esc(x.name)}</span><b>+${x.gained}</b></div>`).join("")}</div>` : ""}
     <p class="small muted">${cheer}</p>
     <div class="btn-row" style="justify-content:center"><a class="btn btn-warm btn-lg" href="compete.html" data-close>${I("trophy")} شوف الترتيب</a><button type="button" class="btn" data-close>تمام</button></div>`, done);
   try{ if(typeof SFX !== "undefined") SFX.win(); confetti(); }catch(e){}
@@ -497,7 +546,7 @@ function pointsHtml(j){
   if(j.already) return `<div class="note warn" style="justify-content:center"><span class="ic">${I("info")}</span><p>سبق أن أنجزت هذا التحدي، لذلك لم تُحسب هذه المحاولة.</p></div>`;
   const ev = j.mult > 1 && j.activeEvents && j.activeEvents.length ? ` <span class="badge accent">${I("zap")} ×${j.mult} ${esc(j.activeEvents[0].title)}</span>` : "";
   let html = j.points > 0 ? `<div class="points-pop">+${j.points} نقطة</div>${ev}` : `<span class="badge">لا نقاط جديدة في هذه الجولة</span>`;
-  if(j.repeated > 0) html += `<p class="small muted" style="margin-top:6px">${j.repeated} ${j.repeated === 1 ? "سؤال سبق أن أخذت نقطته" : "أسئلة سبق أن أخذت نقاطها"} — النقطة تُحسب مرة واحدة لكل سؤال، فأعد الأسئلة التي أخطأت فيها لتكمل نقاطها.</p>`;
+  if(j.repeated > 0) html += `<p class="small muted" style="margin-top:6px">${j.repeated} ${j.repeated === 1 ? "سؤال سبق أن أخذت نقطته" : "أسئلة سبق أن أخذت نقاطها"}، النقطة تُحسب مرة واحدة لكل سؤال، فأعد الأسئلة التي أخطأت فيها لتكمل نقاطها.</p>`;
   html += `<p class="small muted" style="margin-top:8px">مجموعك: <b>${j.totalPoints}</b> نقطة${j.rank ? ` · ترتيبك العام <b>#${j.rank}</b>` : ""}${j.monthRank ? ` · البطولة <b>#${j.monthRank}</b>` : ""}</p>`;
   if(j.points > 0 && typeof SFX !== "undefined") SFX.coin();
   return html;
@@ -521,7 +570,7 @@ function modalCard(inner, onClose){
   el.querySelectorAll("[data-close]").forEach(b => b.addEventListener("click", close));
   return el;
 }
-/* رسائل غير مقروءة: تعويض، جوائز معركة، هدية — واحدة تلو الأخرى */
+/* رسائل غير مقروءة: تعويض، جوائز معركة، هدية، واحدة تلو الأخرى */
 async function giftCheck(){
   const j = await loadPoints(); if(!j) return;
   const queue = [];
@@ -545,49 +594,50 @@ async function giftCheck(){
       if(r && r.me && r.me.gained > 0 && !Store.get(key, false)) queue.push(() => new Promise(done => showRecap(r, () => { Store.set(key, true); done(); })));
     }catch(e){}
   }
+  if(me && !Store.get("step_fb_design-v3_" + me.u, false)) queue.push(() => new Promise(done => designFeedback(done)));
   for(const show of queue) await show();
   await dailyCheck();
 }
-/* الحضور اليومي — بدون نقاط: شعلة تكبر، درع يحمي السلسلة، مفاجأة اليوم، ومين دخل من المشاركين */
+/* الحضور اليومي، بدون نقاط: شعلة تكبر، درع يحمي السلسلة، مفاجأة اليوم، ومين دخل من المشاركين */
 const riyadhDay = () => { try{ return new Date().toLocaleDateString("en-CA", { timeZone: "Asia/Riyadh" }); }catch(e){ return new Date().toISOString().slice(0, 10); } };
-const FLAMES = [{ n: 1, t: "شرارة", e: "✨", k: "sparkles" }, { n: 3, t: "شعلة", e: "🔥", k: "fire" }, { n: 7, t: "نار", e: "☄️", k: "comet" }, { n: 14, t: "بركان", e: "🌋", k: "volcano" }, { n: 30, t: "أسطورة", e: "👑", k: "crown" }];
+const FLAMES = [{ n: 1, t: "شرارة", e: "", k: "sparkles" }, { n: 3, t: "شعلة", e: "", k: "fire" }, { n: 7, t: "نار", e: "", k: "comet" }, { n: 14, t: "بركان", e: "", k: "volcano" }, { n: 30, t: "أسطورة", e: "", k: "crown" }];
 const flameOf = n => FLAMES.filter(f => n >= f.n).pop() || FLAMES[0];
 const SURPRISES = [
-  ["r", "What has keys but can't open locks?", "وش الشي اللي عنده مفاتيح بس ما يفتح ولا قفل؟", "A piano 🎹 — مفاتيح البيانو اسمها keys"],
-  ["i", "It's raining cats and dogs", "حرفيًا: تمطر قطط وكلاب 🐱🐶", "معناها: تمطر بغزارة"],
+  ["r", "What has keys but can't open locks?", "وش الشي اللي عنده مفاتيح بس ما يفتح ولا قفل؟", "A piano ، مفاتيح البيانو اسمها keys"],
+  ["i", "It's raining cats and dogs", "حرفيًا: تمطر قطط وكلاب ", "معناها: تمطر بغزارة"],
   ["t", "She sells seashells by the seashore.", "قلها ٣ مرات بسرعة بدون ما تتلخبط"],
-  ["w", "Hangry", "جوعان لدرجة إنك معصّب 😤 (hungry + angry)"],
+  ["w", "Hangry", "جوعان لدرجة إنك معصّب  (hungry + angry)"],
   ["f", "كلمات إنجليزية أصلها عربي: algebra (الجبر)، coffee (قهوة)، sugar (سكّر)، cotton (قطن)، giraffe (زرافة)."],
-  ["r", "What gets wetter the more it dries?", "وش الشي اللي كل ما نشّف غيره تبلل أكثر؟", "A towel — المنشفة"],
-  ["i", "Break a leg!", "حرفيًا: اكسر رجلك!", "معناها: بالتوفيق — يقولونها قبل عرض أو اختبار"],
+  ["r", "What gets wetter the more it dries?", "وش الشي اللي كل ما نشّف غيره تبلل أكثر؟", "A towel، المنشفة"],
+  ["i", "Break a leg!", "حرفيًا: اكسر رجلك!", "معناها: بالتوفيق، يقولونها قبل عرض أو اختبار"],
   ["t", "Red lorry, yellow lorry.", "قلها ٥ مرات ورا بعض بسرعة"],
-  ["w", "Bookworm", "دودة كتب 🐛📚 = الشخص اللي يحب القراءة"],
+  ["w", "Bookworm", "دودة كتب  = الشخص اللي يحب القراءة"],
   ["f", "جملة «The quick brown fox jumps over the lazy dog» فيها كل حروف الإنجليزي الـ26!"],
-  ["r", "What has hands but can't clap?", "وش اللي له أيدين وما يقدر يصفّق؟", "A clock ⏰ — عقارب الساعة اسمها hands"],
-  ["i", "A piece of cake", "حرفيًا: قطعة كيك 🍰", "معناها: سهلة مرّة"],
-  ["t", "Six sticky skeletons.", "قلها بسرعة ٣ مرات — أصعب مما تتوقع!"],
-  ["w", "Couch potato", "بطاطس الكنبة 🥔 = اللي يقضي يومه قدام التلفزيون"],
+  ["r", "What has hands but can't clap?", "وش اللي له أيدين وما يقدر يصفّق؟", "A clock ، عقارب الساعة اسمها hands"],
+  ["i", "A piece of cake", "حرفيًا: قطعة كيك ", "معناها: سهلة مرّة"],
+  ["t", "Six sticky skeletons.", "قلها بسرعة ٣ مرات، أصعب مما تتوقع!"],
+  ["w", "Couch potato", "بطاطس الكنبة  = اللي يقضي يومه قدام التلفزيون"],
   ["f", "أكثر حرف يتكرر في الإنجليزي هو E، ومن أقلها Q."],
-  ["r", "What can you catch but not throw?", "وش الشي اللي «تمسكه» وما تقدر ترميه؟", "A cold 🤧 — catch a cold = يجيك زكام"],
-  ["i", "Hit the books", "حرفيًا: اضرب الكتب 📚", "معناها: ذاكر بجد"],
+  ["r", "What can you catch but not throw?", "وش الشي اللي «تمسكه» وما تقدر ترميه؟", "A cold ، catch a cold = يجيك زكام"],
+  ["i", "Hit the books", "حرفيًا: اضرب الكتب ", "معناها: ذاكر بجد"],
   ["t", "Peter Piper picked a peck of pickled peppers.", "تحدَّ نفسك: مرتين بدون غلط"],
-  ["w", "Butterfingers", "أصابع زبدة 🧈 = اللي كل شي يطيح من يده"],
-  ["f", "كلمة SWIMS تنقرأ نفس الشي لو قلبت الشاشة راس على عقب 🙃"],
-  ["r", "What goes up but never comes down?", "وش اللي يطلع وما ينزل أبدًا؟", "Your age 🎂 — عمرك"],
-  ["i", "Under the weather", "حرفيًا: تحت الطقس ☁️", "معناها: تعبان شوي"],
+  ["w", "Butterfingers", "أصابع زبدة  = اللي كل شي يطيح من يده"],
+  ["f", "كلمة SWIMS تنقرأ نفس الشي لو قلبت الشاشة راس على عقب "],
+  ["r", "What goes up but never comes down?", "وش اللي يطلع وما ينزل أبدًا؟", "Your age ، عمرك"],
+  ["i", "Under the weather", "حرفيًا: تحت الطقس ", "معناها: تعبان شوي"],
   ["t", "Fresh French fried fish.", "قلها ٤ مرات بسرعة"],
-  ["w", "Brunch", "breakfast + lunch = وجبة بين الفطور والغدا 🥞"],
+  ["w", "Brunch", "breakfast + lunch = وجبة بين الفطور والغدا "],
   ["f", "كلمة queue (طابور) تنطق مثل حرف Q بس، والحروف ueue بعده كلها صامتة!"],
-  ["r", "What has a neck but no head?", "وش اللي له رقبة وما له راس؟", "A bottle 🍾 — عنق القارورة"],
-  ["i", "Spill the beans", "حرفيًا: كبّ الفول 🫘", "معناها: فضح السر"],
+  ["r", "What has a neck but no head?", "وش اللي له رقبة وما له راس؟", "A bottle ، عنق القارورة"],
+  ["i", "Spill the beans", "حرفيًا: كبّ الفول ", "معناها: فضح السر"],
   ["t", "How can a clam cram in a clean cream can?", "جرّبها بصوت عالي وشوف كم مرة تتلخبط"],
-  ["w", "Selfie", "صورة تاخذها لنفسك 🤳"],
+  ["w", "Selfie", "صورة تاخذها لنفسك "],
   ["f", "كلمة Go! لحالها جملة كاملة: فعل أمر والفاعل (you) مفهوم."],
-  ["r", "Which building has the most stories?", "أي مبنى فيه أكثر stories؟", "The library 📚 — story = قصة، و storey = طابق وتنطق نفسها!"],
-  ["i", "Once in a blue moon", "حرفيًا: مرة كل قمر أزرق 🌙", "معناها: نادرًا جدًا"],
-  ["i", "Cost an arm and a leg", "حرفيًا: كلّف ذراع ورجل 💸", "معناها: غالي مرّة"],
-  ["r", "What has many teeth but can't bite?", "وش اللي له أسنان كثير وما يعض؟", "A comb — المشط"],
-  ["i", "The ball is in your court", "حرفيًا: الكورة في ملعبك 🎾", "معناها: القرار صار عندك"],
+  ["r", "Which building has the most stories?", "أي مبنى فيه أكثر stories؟", "The library ، story = قصة، و storey = طابق وتنطق نفسها!"],
+  ["i", "Once in a blue moon", "حرفيًا: مرة كل قمر أزرق ", "معناها: نادرًا جدًا"],
+  ["i", "Cost an arm and a leg", "حرفيًا: كلّف ذراع ورجل ", "معناها: غالي مرّة"],
+  ["r", "What has many teeth but can't bite?", "وش اللي له أسنان كثير وما يعض؟", "A comb، المشط"],
+  ["i", "The ball is in your court", "حرفيًا: الكورة في ملعبك ", "معناها: القرار صار عندك"],
   ["i", "Call it a day", "حرفيًا: سمّها يوم", "معناها: خلاص نوقف الشغل لليوم"]
 ];
 function surpriseOf(day){
@@ -596,11 +646,11 @@ function surpriseOf(day){
 }
 function surpriseHtml(x){
   const say = t => `<button type="button" class="btn btn-sm sp-say" data-say="${esc(t)}">${I("volume")} اسمعها</button>`;
-  if(x[0] === "r") return `<div class="sp-kind">لغز اليوم 🧩</div><div class="en sp-en">${esc(x[1])}</div><div class="small">${esc(x[2])}</div><button type="button" class="btn btn-sm sp-ans">اكشف الجواب</button><div class="sp-hidden" hidden>${esc(x[3])}</div>`;
-  if(x[0] === "i") return `<div class="sp-kind">عبارة غريبة 🤔</div><div class="en sp-en">${esc(x[1])}</div><div class="small">${esc(x[2])}</div><button type="button" class="btn btn-sm sp-ans">وش معناها؟</button><div class="sp-hidden" hidden>${esc(x[3])}</div>`;
-  if(x[0] === "t") return `<div class="sp-kind">تحدي اللسان 👅</div><div class="en sp-en">${esc(x[1])}</div><div class="small">${esc(x[2])}</div>${say(x[1])}`;
-  if(x[0] === "w") return `<div class="sp-kind">كلمة ظريفة 😄</div><div class="en sp-en">${esc(x[1])}</div><div class="small">${esc(x[2])}</div>${say(x[1])}`;
-  return `<div class="sp-kind">تعرف؟ 💡</div><p>${esc(x[1])}</p>`;
+  if(x[0] === "r") return `<div class="sp-kind">لغز اليوم </div><div class="en sp-en">${esc(x[1])}</div><div class="small">${esc(x[2])}</div><button type="button" class="btn btn-sm sp-ans">اكشف الجواب</button><div class="sp-hidden" hidden>${esc(x[3])}</div>`;
+  if(x[0] === "i") return `<div class="sp-kind">عبارة غريبة </div><div class="en sp-en">${esc(x[1])}</div><div class="small">${esc(x[2])}</div><button type="button" class="btn btn-sm sp-ans">وش معناها؟</button><div class="sp-hidden" hidden>${esc(x[3])}</div>`;
+  if(x[0] === "t") return `<div class="sp-kind">تحدي اللسان </div><div class="en sp-en">${esc(x[1])}</div><div class="small">${esc(x[2])}</div>${say(x[1])}`;
+  if(x[0] === "w") return `<div class="sp-kind">كلمة ظريفة </div><div class="en sp-en">${esc(x[1])}</div><div class="small">${esc(x[2])}</div>${say(x[1])}`;
+  return `<div class="sp-kind">تعرف؟ </div><p>${esc(x[1])}</p>`;
 }
 async function dailyCheck(){
   const me = Auth.user(); if(!me) return;
@@ -615,24 +665,24 @@ async function dailyCheck(){
 function showDaily(j, day){
   const fl = flameOf(j.streak), nxt = FLAMES.find(f => f.n > j.streak);
   const cyc = ((Math.max(1, j.streak) - 1) % 7) + 1;
-  const strip = Array.from({ length: 7 }, (_, i) => `<div class="dd ${i < cyc ? "done" : ""} ${i === cyc - 1 ? "now" : ""}"><span>${i < cyc ? "🔥" : "·"}</span><small>${i === 6 ? "🛡️" : i + 1}</small></div>`).join("");
+  const strip = Array.from({ length: 7 }, (_, i) => `<div class="dd ${i < cyc ? "done" : ""} ${i === cyc - 1 ? "now" : ""}"><span>${i < cyc ? "" : "·"}</span><small>${i === 6 ? "" : i + 1}</small></div>`).join("");
   const title = j.broke ? "بدأت شعلة جديدة!" : j.streak > 1 ? `${j.streak} ${j.streak > 10 ? "يوم" : "أيام"} ورا بعض!` : "أول يوم في سلسلتك!";
   const F = j.family || { today: [], waiting: [] };
-  const chip = r => `<span class="fam ${r.me ? "me" : ""}">${esc(r.name)} ${r.streak >= 2 ? "🔥" + r.streak : "✨"}</span>`;
+  const chip = r => `<span class="fam ${r.me ? "me" : ""}">${esc(r.name)} ${r.streak >= 2 ? "" + r.streak : ""}</span>`;
   const others = (F.waiting || []).filter(r => !r.me);
-  const wa = others.length ? `https://wa.me/?text=${encodeURIComponent(`${others.map(r => r.name).join(" و")} 🔥 شعلتكم بتنطفي! ادخلوا قبل نهاية اليوم 😄 ${location.origin}`)}` : "";
-  const note = !j.claimed ? "" : j.usedShield ? `<div class="note info"><span class="ic">${I("check")}</span><p>🛡️ الدرع حمى سلسلتك — فاتك يوم وما انطفت الشعلة!</p></div>`
-    : j.gotShield ? `<div class="note tip"><span class="ic">${I("sparkles")}</span><p>🛡️ كسبت درع! لو فاتك يوم، الدرع يحمي شعلتك.</p></div>`
-    : j.broke ? `<p class="small muted">انطفت شعلة الـ${j.lost} أيام… بس هذي فرصة تكسر رقمك 💪</p>` : "";
+  const wa = others.length ? `https://wa.me/?text=${encodeURIComponent(`${others.map(r => r.name).join(" و")}  شعلتكم بتنطفي! ادخلوا قبل نهاية اليوم  ${location.origin}`)}` : "";
+  const note = !j.claimed ? "" : j.usedShield ? `<div class="note info"><span class="ic">${I("check")}</span><p> الدرع حمى سلسلتك، فاتك يوم وما انطفت الشعلة!</p></div>`
+    : j.gotShield ? `<div class="note tip"><span class="ic">${I("sparkles")}</span><p> كسبت درع! لو فاتك يوم، الدرع يحمي شعلتك.</p></div>`
+    : j.broke ? `<p class="small muted">انطفت شعلة الـ${j.lost} أيام… بس هذي فرصة تكسر رقمك </p>` : "";
   const el = modalCard(`<div class="flame-big" style="--s:${Math.min(1.5, 1 + j.streak / 30)}">${emo(fl.k)}<b>${j.streak}</b></div>
     <h3 style="margin:.2em 0">${title}</h3>
     <div class="small">مستواك: <b>${fl.t}</b>${nxt ? ` · باقي ${nxt.n - j.streak} ${nxt.n - j.streak === 1 ? "يوم" : "أيام"} وتصير «${nxt.t}» ${nxt.e}` : ""}</div>
     <div class="daily-days">${strip}</div>
-    <div class="small muted">${j.shields ? "🛡️".repeat(j.shields) + " درع يحمي شعلتك" : "كل ٧ أيام ورا بعض تكسب درع 🛡️"}${j.best > j.streak ? ` · أطول سلسلة لك: ${j.best}` : ""}</div>
+    <div class="small muted">${j.shields ? "".repeat(j.shields) + " درع يحمي شعلتك" : "كل ٧ أيام ورا بعض تكسب درع "}${j.best > j.streak ? ` · أطول سلسلة لك: ${j.best}` : ""}</div>
     ${note}
     <div class="surprise" tabindex="0" role="button"><div class="sp-front">${emo("gift", "emo-lg")}<b>اضغط وافتح مفاجأة اليوم</b></div><div class="sp-back" hidden>${surpriseHtml(surpriseOf(day))}</div></div>
     ${F.today && F.today.length ? `<div class="fam-box"><div class="small"><b>دخلوا اليوم:</b></div>${F.today.map(chip).join("")}</div>` : ""}
-    ${others.length ? `<div class="fam-box warn"><div class="small"><b>شعلتهم بتنطفي اليوم:</b></div>${others.map(chip).join("")}<a class="btn btn-sm" target="_blank" rel="noopener" href="${wa}">ذكّرهم 📲</a></div>` : ""}
+    ${others.length ? `<div class="fam-box warn"><div class="small"><b>شعلتهم بتنطفي اليوم:</b></div>${others.map(chip).join("")}<a class="btn btn-sm" target="_blank" rel="noopener" href="${wa}">ذكّرهم </a></div>` : ""}
     ${!Store.get("step_push_on", false) ? `<a class="push-nudge" href="account.html#notif">${emo("bell")} تبي نذكّرك قبل ما تنطفي شعلتك؟ <b>فعّل الإشعارات</b></a>` : ""}
     <div class="btn-row" style="justify-content:center"><a class="btn btn-warm btn-lg" href="general.html#/next" data-close>${I("zap")} يلا نكمل</a><button type="button" class="btn" data-close>لاحقًا</button></div>`);
   const sp = el.querySelector(".surprise");
@@ -645,12 +695,12 @@ function showDaily(j, day){
   sp.addEventListener("keydown", e => { if(e.key === "Enter") open(); });
   try{ if(j.claimed){ if(typeof SFX !== "undefined") SFX.win(); if(j.streak > 1) confetti(); } }catch(e){}
 }
-/* إعلان بداية فعالية أو قرب موعدها — مرة واحدة لكل موعد */
+/* إعلان بداية فعالية أو قرب موعدها، مرة واحدة لكل موعد */
 function announce(kind, id, start, title, body, href, btn){
   const key = `step_ann_${kind}_${id}_${start}`;
   if(Store.get(key, false)) return;
   Store.set(key, true);
-  if(kind === "soon"){ toast(`${title} — ${body}`, 6000); try{ if(typeof SFX !== "undefined") SFX.tick(); }catch(e){} return; }
+  if(kind === "soon"){ toast(`${title} · ${body}`, 6000); try{ if(typeof SFX !== "undefined") SFX.tick(); }catch(e){} return; }
   modalCard(`<div class="gift-box live">${I("zap")}</div><h3>${esc(title)}</h3><p>${esc(body)}</p><div class="btn-row" style="justify-content:center">${href ? `<a class="btn btn-warm btn-lg" href="${href}" data-close>${esc(btn || "يلا")}</a>` : ""}<button type="button" class="btn" data-close>لاحقًا</button></div>`);
   try{ if(typeof SFX !== "undefined") SFX.win(); }catch(e){}
 }
@@ -688,11 +738,11 @@ function renderEventsBar(){
       const fb = host.querySelector(".ev-flame"); if(fb) fb.addEventListener("click", () => showDaily(Object.assign({}, dl, { claimed: false }), dl.day));
       hydrateIcons(host); return;
     }
-    const tHtml = T.ended ? "" : `<a class="ev-card tour" href="compete.html#tournament"><span class="ev-ic">${I("trophy")}</span><div><b>${esc(T.title)} — ${esc(T.prize)}</b><div class="small">${T.upcoming ? "تبدأ بعد " + fmtLeft(T.startsAt - s.now) : "المركز الأول في ترتيب الشهر يفوز · تنتهي بعد " + fmtLeft(T.endsAt - s.now)}</div></div><span class="ev-go">${I("arrow")}</span></a>`;
-    const eHtml = act ? `<a class="ev-card live" href="general.html#/golden"><span class="ev-ic">${emo("clock")}</span><div><b>×${s.mult} نقاط الآن — ${esc(act.title)}</b><div class="small">${esc(act.desc)} · تنتهي بعد ${fmtLeft(act.endsAt - s.now)}</div></div></a>`
+    const tHtml = T.ended ? "" : `<a class="ev-card tour" href="compete.html#tournament"><span class="ev-ic">${I("trophy")}</span><div><b>${esc(T.title)} · ${esc(T.prize)}</b><div class="small">${T.upcoming ? "تبدأ بعد " + fmtLeft(T.startsAt - s.now) : "المركز الأول في ترتيب الشهر يفوز · تنتهي بعد " + fmtLeft(T.endsAt - s.now)}</div></div><span class="ev-go">${I("arrow")}</span></a>`;
+    const eHtml = act ? `<a class="ev-card live" href="general.html#/golden"><span class="ev-ic">${emo("clock")}</span><div><b>×${s.mult} نقاط الآن، ${esc(act.title)}</b><div class="small">${esc(act.desc)} · تنتهي بعد ${fmtLeft(act.endsAt - s.now)}</div></div></a>`
       : s.next ? `<div class="ev-card next"><span class="ev-ic">${emo("clock")}</span><div><b>القادم: ${esc(s.next.title)} ×${s.next.mult}</b><div class="small">${esc(s.next.desc)} · بعد ${fmtLeft(s.next.startsAt - s.now)}</div></div></div>` : "";
-    const gHtml = gf ? `<div class="ev-card gift"><span class="ev-ic">${emo("gift")}</span><div><b>${esc(gf.title)} — نقاط ×${gf.mult}</b><div class="small">باقي ${fmtLeft(gf.endsAt - s.now)}</div></div></div>` : "";
-    const bHtml = B ? `<a class="ev-card ${B.active ? "live" : "next"}" href="general.html#/battle"><span class="ev-ic">${emo("swords")}</span><div><b>${esc(B.title)}${B.active ? " — قائمة الآن!" : ""}</b><div class="small">${B.active ? "تنتهي بعد " + fmtLeft(B.active.end - s.now) : B.next ? "تبدأ بعد " + fmtLeft(B.next.start - s.now) : ""} · الجوائز +${B.prizes.join(" / +")}</div></div><span class="ev-go">${I("arrow")}</span></a>` : "";
+    const gHtml = gf ? `<div class="ev-card gift"><span class="ev-ic">${emo("gift")}</span><div><b>${esc(gf.title)}، نقاط ×${gf.mult}</b><div class="small">باقي ${fmtLeft(gf.endsAt - s.now)}</div></div></div>` : "";
+    const bHtml = B ? `<a class="ev-card ${B.active ? "live" : "next"}" href="general.html#/battle"><span class="ev-ic">${emo("swords")}</span><div><b>${esc(B.title)}${B.active ? "، قائمة الآن!" : ""}</b><div class="small">${B.active ? "تنتهي بعد " + fmtLeft(B.active.end - s.now) : B.next ? "تبدأ بعد " + fmtLeft(B.next.start - s.now) : ""} · الجوائز +${B.prizes.join(" / +")}</div></div><span class="ev-go">${I("arrow")}</span></a>` : "";
     host.innerHTML = `<div class="ev-cards">${gHtml + bHtml + eHtml}</div>`; hydrateIcons(host);
   };
   draw(); setInterval(draw, 20000);
@@ -752,7 +802,7 @@ function renderPassages(hostId){
   const host = document.getElementById(hostId);
   if(!host || typeof PASSAGES === "undefined") return;
   host.innerHTML = PASSAGES.map((p, pi) => `<article class="passage" id="${p.id}">
-    <div class="section-title"><span class="badge teal">قطعة ${pi + 1}</span><h3 class="en" style="margin:0">${esc(p.title)}</h3><span class="muted">— ${esc(p.ar)}</span></div>
+    <div class="section-title"><span class="badge teal">قطعة ${pi + 1}</span><h3 class="en" style="margin:0">${esc(p.title)}</h3><span class="muted">${esc(p.ar)}</span></div>
     ${p.note ? `<div class="note info"><span class="ic"><i data-i='chat'></i></span><p>${esc(p.note)}</p></div>` : ""}
     <div class="ptext">${esc(p.text)}</div>
     ${p.qs.map((q, qi) => `<div class="pq" data-p="${pi}" data-q="${qi}"><div class="qt">${qi + 1}. ${esc(q.q)}</div><div class="opts">${q.opts.map((o, k) => `<button type="button" data-k="${k}">${LETTERS[k]}) ${esc(o)}</button>`).join("")}</div><div class="exp" hidden></div></div>`).join("")}
