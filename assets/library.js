@@ -5,7 +5,7 @@
   const ALL = (window.STORIES || []).slice().sort((a, b) => LV.indexOf(a.lvl) - LV.indexOf(b.lvl) || a.d - b.d);
   const LVN = { A1: "مبتدئ", A2: "أساسي", B1: "متوسط", B2: "فوق المتوسط", C1: "متقدم", C2: "احتراف" };
   const LVD = { A1: "قصص قصيرة جدًا بجمل بسيطة", A2: "حكايات مشهورة بلغة سهلة", B1: "قصص كلاسيكية مختصرة", B2: "روايات عالمية بلغة أغنى", C1: "أدب متقدم بمفردات راقية", C2: "روايات كبرى بلغة قريبة من الأصل" };
-  const LVC = { A1: "#16a34a", A2: "#2563eb", B1: "#d97706", B2: "#7c3aed", C1: "#dc2626", C2: "#64748b" };
+  const LVC = { A1: "#16a34a", A2: "#2563eb", B1: "#d97706", B2: "#0891b2", C1: "#dc2626", C2: "#64748b" };
   const KIND = { fable: "حكاية رمزية", fairy: "حكاية خرافية", short: "قصة قصيرة", novel: "رواية مختصرة" };
   const TIMES = window.STORY_TIMES || {};
   const byId = id => ALL.find(s => s.id === id);

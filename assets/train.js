@@ -4,7 +4,7 @@
   const L = Bank.LETTERS;
   const S = { mode: "smart", count: 10, list: [], idx: 0, correct: 0, ids: [], done: false, topics: null, before: {}, startedAt: 0 };
   const MODE_INFO = {
-    smart: { t: "تدريب ذكي", ic: "<i data-i='brain'></i>", bg: "linear-gradient(135deg,#6d28d9,#4f46e5)", d: "النظام يختار الأسئلة المناسبة لمستواك: يركّز على ما أخطأت فيه وعلى الأسئلة الجديدة والمواضيع الأضعف تلقائيًا." },
+    smart: { t: "تدريب ذكي", ic: "<i data-i='brain'></i>", bg: "linear-gradient(135deg,#e50914,#7a0a10)", d: "النظام يختار الأسئلة المناسبة لمستواك: يركّز على ما أخطأت فيه وعلى الأسئلة الجديدة والمواضيع الأضعف تلقائيًا." },
     weak: { t: "نقاط الضعف", ic: "<i data-i='chartdown'></i>", bg: "linear-gradient(135deg,#e11d48,#f97316)", d: "ركّز على المواضيع ذات الإتقان الأقل لتحسين مستواك بسرعة." },
     review: { t: "مراجعة", ic: "<i data-i='repeat'></i>", bg: "linear-gradient(135deg,#d97706,#fbbf24)", d: "أسئلة حان وقت مراجعتها بنظام التكرار المتباعد لتثبيت المعلومة في الذاكرة." },
     marks: { t: "أسئلتي المعلَّمة", ic: "<i data-i='bookmark'></i>", bg: "linear-gradient(135deg,#0d9488,#2dd4bf)", d: "الأسئلة التي علّمت عليها بنفسك من الاختبارات والتجميعات لتذاكرها متى شئت." }

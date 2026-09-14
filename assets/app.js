@@ -408,7 +408,7 @@ function renderNav(){
     dr.addEventListener("click", e => { if(e.target.closest("a")){ dr.hidden = true; mb.classList.remove("open"); } });
     document.addEventListener("click", e => { if(!dr.hidden && !host.contains(e.target)){ dr.hidden = true; mb.classList.remove("open"); } });
   }
-  applyTheme(Store.get("step_theme", null) || systemTheme());
+  applyTheme(Store.get("step_theme", null) || "dark");
   if(!document.querySelector(".tabbar")){
     const tb = document.createElement("nav"); tb.className = "tabbar";
     tb.innerHTML = TABS.map(h => { const n = NAV.find(x => x.href === h) || (h === "index.html" ? { icon: "home", label: "البداية" } : { icon: me ? "user" : "lock", label: me ? "حسابي" : "دخول" }); return `<a href="${h}" class="${isActive(h) ? "active" : ""}"><span class="ic">${I(n.icon)}</span>${n.label}</a>`; }).join("");
@@ -424,7 +424,7 @@ function confetti(){
   if(typeof SFX !== "undefined") SFX.win();
   const c = document.createElement("canvas"); c.id = "confetti"; document.body.appendChild(c);
   const ctx = c.getContext("2d"); c.width = innerWidth; c.height = innerHeight;
-  const colors = ["#6d28d9", "#f97316", "#0ea5e9", "#db2777", "#fbbf24", "#16a34a"];
+  const colors = ["#e50914", "#f97316", "#fbbf24", "#ffffff", "#16a34a", "#0ea5e9"];
   const P = Array.from({ length: 140 }, () => ({ x: Math.random() * c.width, y: -20 - Math.random() * c.height * .5, r: 4 + Math.random() * 6, vx: -2 + Math.random() * 4, vy: 2 + Math.random() * 4, col: colors[Math.floor(Math.random() * colors.length)], rot: Math.random() * 6, vr: -.2 + Math.random() * .4 }));
   const t0 = Date.now();
   (function frame(){

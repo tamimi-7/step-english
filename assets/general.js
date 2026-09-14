@@ -3,7 +3,7 @@
   const $ = s => document.querySelector(s);
   const V = window.GEN_VOCAB || [], G = window.GEN_GRAMMAR || [], D = window.GEN_DIALOGUES || [], U = window.GEN_UNITS || [];
   const LV = ["A1", "A2", "B1", "B2"], LVN = { A1: "مبتدئ", A2: "أساسي", B1: "متوسط", B2: "متقدم" };
-  const LVC = { A1: "#16a34a", A2: "#2563eb", B1: "#d97706", B2: "#7c3aed" };
+  const LVC = { A1: "#16a34a", A2: "#2563eb", B1: "#d97706", B2: "#0891b2" };
   const L = ["A", "B", "C", "D"];
   const theme = id => V.find(t => t.id === id), lesson = id => G.find(l => l.id === id), dialog = id => D.find(d => d.id === id);
   const wid = (t, i) => `gw-${t.id}-${i}`;
