@@ -65,6 +65,7 @@ module.exports = H.handler(["GET", "POST"], async (req, res) => {
     }
     /* فعاليات اليوم */
     if(b.quest !== undefined){ const r = await DL.claimQuest(me.u, String(b.quest)); return r.error ? H.err(res, 400, r.error) : H.ok(res, r); }
+    if(b.wordleHint !== undefined){ const r = await DL.wordleHint(me.u, String(b.wordleHint)); return r.error ? H.err(res, 400, r.error) : H.ok(res, r); }
     if(b.wordle !== undefined){ const r = await DL.wordleGuess(me.u, b.wordle); return r.error ? H.err(res, 400, r.error) : H.ok(res, r); }
     if(b.family){ const r = await DL.claimFamily(me.u); return r.error ? H.err(res, 400, r.error) : H.ok(res, r); }
     const id = String(b.ack || "").slice(0, 60);

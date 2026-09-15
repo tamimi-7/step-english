@@ -1522,3 +1522,13 @@ footer{border-top:1px solid var(--line)!important}
 .card .quest:last-of-type{border-bottom:0!important}
 .quest .q-ic{color:#e50914}
 .quest.claimed .q-ic{color:var(--ok)}
+
+/* كلمة اليوم: المجال والتلميحات */
+.wd-topic{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin:4px 0 8px;font-size:.95rem}
+.wd-topic b{color:#e50914}
+.wd-worth{margin-inline-start:auto;font-size:.85rem;color:var(--muted)}
+.wd-worth b{color:var(--ink)!important}
+.wd-hints{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px}
+.wd-hints .btn{font-size:.82rem}
+.wd-hints .btn[disabled]{opacity:.6}
+.wd-hint-box p{line-height:1.9}

@@ -767,7 +767,7 @@
     let cur = "", busy = false;
     const KEYS = ["qwertyuiop", "asdfghjkl", "zxcvbnm"];
     const keyState = () => { const m = {}; st.guesses.forEach(g => [...g.w].forEach((ch, i) => { const v = g.fb[i]; if(m[ch] === "g") return; if(v === "g" || (v === "y" && m[ch] !== "g") || !m[ch]) m[ch] = v === "b" && m[ch] ? m[ch] : v; })); return m; };
-    const shareText = () => `إنقلش، كلمة اليوم ${st.date} ${st.won ? st.guesses.length : "X"}/6\n` + st.guesses.map(g => [...g.fb].map(c => c === "g" ? "🟩" : c === "y" ? "🟨" : "⬛").join("")).join("\n");
+    const shareText = () => `إنقلش، كلمة اليوم ${st.date} ${st.won ? st.guesses.length : "X"}/6${(st.hints || []).length ? ` · تلميحات ${st.hints.length}` : ""}\n` + st.guesses.map(g => [...g.fb].map(c => c === "g" ? "🟩" : c === "y" ? "🟨" : "⬛").join("")).join("\n");
     let revealRow = -1;
     const draw = () => {
       if(!location.hash.startsWith("#/wordle")) return;
@@ -783,12 +783,27 @@
           <p class="small muted">كلمة جديدة كل يوم الساعة ١٢ بالليل</p></div>` : "";
       render(crumb([{ t: "اليوم", href: "#/today" }, { t: "كلمة اليوم" }]) + `<div class="wordle">
         <div class="wd-top"><h1 style="margin:0"> كلمة اليوم</h1><span class="badge">${st.guesses.length}/6</span></div>
-        <p class="small muted wd-help">خمّن الكلمة الإنجليزية (٥ حروف). 🟩 الحرف في مكانه · 🟨 موجود بس بمكان ثاني · ⬛ مو موجود. كل ما قلّت محاولاتك زادت نقاطك (حتى +٦).</p>
-        ${st.hint ? `<div class="note tip"><span class="ic">${I("bulb")}</span><p>تلميح: معناها «<b>${esc(st.hint)}</b>»</p></div>` : ""}
+        <p class="small muted wd-help">خمّن الكلمة الإنجليزية (٥ حروف). 🟩 الحرف في مكانه · 🟨 موجود بس بمكان ثاني · ⬛ مو موجود.</p>
+        ${st.topic ? `<div class="wd-topic"><span>المجال: <b>${esc(st.topic)}</b></span>${st.lvl ? `<span class="badge">${esc(st.lvl)}</span>` : ""}${!st.done ? `<span class="wd-worth">لو حليتها الحين: <b>+${st.worth}</b></span>` : ""}</div>` : ""}
+        ${!st.done ? `<div class="wd-hints">
+          <button type="button" class="btn btn-sm" data-hint="first" ${st.hintData.first ? "disabled" : ""}>${I("type")} أول حرف ${st.hintData.first ? `<b class="en">${esc(st.hintData.first)}</b>` : st.guesses.length >= st.freeFirstAfter - 1 ? "" : "(−١)"}</button>
+          <button type="button" class="btn btn-sm" data-hint="meaning" ${st.hintData.meaning ? "disabled" : ""}>${I("globe")} المعنى ${st.hintData.meaning ? "" : "(−١)"}</button>
+          <button type="button" class="btn btn-sm" data-hint="example" ${st.hintData.example ? "disabled" : ""}>${I("bookopen")} جملة فيها الكلمة ${st.hintData.example ? "" : "(−١)"}</button>
+        </div>
+        ${st.hintData.first || st.hintData.meaning || st.hintData.example ? `<div class="note tip wd-hint-box"><span class="ic">${I("bulb")}</span><p>${[st.hintData.first ? `أول حرف: <b class="en">${esc(st.hintData.first)}</b>${!(st.hints || []).includes("first") ? " (مجاني بعد ٣ محاولات)" : ""}` : "", st.hintData.meaning ? `معناها: <b>${esc(st.hintData.meaning)}</b>` : "", st.hintData.example ? (st.hintData.example.en ? `<span class="en" dir="ltr">${esc(st.hintData.example.en)}</span>${st.hintData.example.ar ? `<br><span class="small muted">${esc(st.hintData.example.ar)}</span>` : ""}` : `جملة: ${esc(st.hintData.example.ar || "")}`) : ""].filter(Boolean).join("<br>")}</p></div>` : ""}` : ""}
         <div class="wd-grid">${rows}</div>${kb}${end}
-        ${fam.length ? `<div class="card sheet"><h3 style="margin:0 0 6px">العائلة اليوم</h3>${fam.map(x => `<div class="wd-fam"><span>${esc(x.name)}</span><span class="small muted">${x.won ? `✓ ${x.tries}/6` : x.done ? "✗" : `يحاول… ${x.tries}/6`}</span>${x.grid ? `<span class="wd-mini">${x.grid.map(r => `<i>${[...r].map(c => `<b class="t-${c}"></b>`).join("")}</i>`).join("")}</span>` : ""}</div>`).join("")}</div>` : ""}
+        ${fam.length ? `<div class="card sheet"><h3 style="margin:0 0 6px">العائلة اليوم</h3>${fam.map(x => `<div class="wd-fam"><span>${esc(x.name)}</span><span class="small muted">${x.won ? `✓ ${x.tries}/6${x.hints ? ` · ${x.hints} تلميح` : ""}` : x.done ? "✗" : `يحاول… ${x.tries}/6`}</span>${x.grid ? `<span class="wd-mini">${x.grid.map(r => `<i>${[...r].map(c => `<b class="t-${c}"></b>`).join("")}</i>`).join("")}</span>` : ""}</div>`).join("")}</div>` : ""}
       </div>`);
       document.querySelectorAll("#app .wd-k").forEach(b => b.addEventListener("click", () => press(b.dataset.k)));
+      document.querySelectorAll("#app [data-hint]").forEach(b => b.addEventListener("click", async () => {
+        if(b.disabled || busy) return;
+        const free = b.dataset.hint === "first" && st.guesses.length >= st.freeFirstAfter;
+        if(!free && !confirm("التلميح ينقص نقطة من نقاط كلمة اليوم. تبيه؟")) return;
+        busy = true; b.disabled = true;
+        try{ const r = await Auth.api("/api/points", { method: "POST", body: { wordleHint: b.dataset.hint } }); st = r.state; sfx("tick"); draw(); }
+        catch(e){ toast(e.message, 3000); b.disabled = false; }
+        busy = false;
+      }));
       const sh = $("#wdShare"); if(sh) sh.addEventListener("click", async () => { const txt = shareText(); try{ if(navigator.share) await navigator.share({ text: txt }); else { await navigator.clipboard.writeText(txt); toast("انتسخت النتيجة، الصقها لأهلك "); } }catch(e){ try{ await navigator.clipboard.writeText(txt); toast("انتسخت النتيجة "); }catch(err){} } });
     };
     const shake = () => { const r = document.querySelector("#app .wd-row.cur"); if(r){ r.classList.remove("shake"); void r.offsetWidth; r.classList.add("shake"); } };
