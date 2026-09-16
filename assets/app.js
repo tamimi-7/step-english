@@ -491,6 +491,7 @@ function pointsExplain(j){
   if(j.bonus) rows.push(`<span class="px bonus">${I(j.bonusSource === "gift" ? "gift" : "zap")} ${esc(j.bonusLabel || "مضاعف")} ×٢ = +${j.bonus}</span>`);
   if(j.stage) rows.push(`<span class="px stage">${I("trophy")} إتمام مرحلة = +${j.stage.points}</span>`);
   if(j.storyBonus) rows.push(`<span class="px stage">${I("bookopen")} إتمام قصة = +${j.storyBonus.points}</span>`);
+  if(j.wordRepeats) rows.push(`<span class="px muted">${I("repeat")} ${j.wordRepeats} ${j.wordRepeats === 1 ? "كلمة أخذت نقطتها قبل في مكان ثاني" : "كلمات أخذت نقاطها قبل في مكان ثاني"} = 0</span>`);
   if(j.repeated) rows.push(`<span class="px muted">${I("repeat")} ${j.repeated} ${j.repeated === 1 ? "سؤال سبق أخذ نقطته" : "أسئلة سبق أخذ نقاطها"}${j.repeatedAt ? ` (آخرها ${fmtDate(j.repeatedAt)})` : ""} = 0</span>`);
   if(!j.bonus && j.base && typeof EVENTS !== "undefined" && EVENTS.status().active.some(a => a.id === "golden") && !String(location.hash).includes("golden")) rows.push(`<a class="px" href="general.html#/golden">${I("zap")} ×٢ في تحدي ساعة الذهب فقط ←</a>`);
   if(!j.base && j.repeated) rows.push(`<span class="px muted">${I("info")} أحسنت! بس هذي الأسئلة أخذت نقاطها من قبل، النقاط الجديدة تلقاها في دروس ووحدات ما خلصتها</span>`);

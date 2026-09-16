@@ -66,12 +66,24 @@ module.exports = H.handler(["GET", "POST"], async (req, res) => {
     already = added === 0 || added === "0";
   }
 
-  let newIds = [], bonus = 0, stage = null, storyBonus = null, points = 0, repeatedAt = null;
+  let newIds = [], bonus = 0, stage = null, storyBonus = null, points = 0, repeatedAt = null, wordRepeats = 0;
   let stats = (await db.getJSON("stats:" + me.u)) || { quizzes: 0, correct: 0, answered: 0, best: 0, last: null };
   if(!already){
     if(ids.length){
       const seen = await db.pipeline(ids.map(id => ["SISMEMBER", "earned:" + me.u, id]));
-      newIds = ids.filter((id, i) => !(seen[i] === 1 || seen[i] === "1"));
+      let fresh = ids.filter((id, i) => !(seen[i] === 1 || seen[i] === "1"));
+      /* الكلمة تنحسب مرة وحدة في العمر، حتى لو جت في المفردات وكلمات القصص و«كلماتي» */
+      const keys = fresh.map(id => VAL.wordKey(id));
+      const withWord = keys.map((k, i) => k ? { k, id: fresh[i] } : null).filter(Boolean);
+      if(withWord.length){
+        const dup = await db.pipeline(withWord.map(x => ["SISMEMBER", "earnedw:" + me.u, x.k]));
+        const paidWord = new Set(); const drop = new Set();
+        withWord.forEach((x, i) => { if(dup[i] === 1 || dup[i] === "1" || paidWord.has(x.k)) drop.add(x.id); else paidWord.add(x.k); });
+        wordRepeats = drop.size;
+        fresh = fresh.filter(id => !drop.has(id));
+        if(paidWord.size) await db.call("SADD", "earnedw:" + me.u, ...paidWord);
+      }
+      newIds = fresh;
       if(newIds.length) await db.pipeline([["SADD", "earned:" + me.u, ...newIds], ["HSET", "earnedat:" + me.u, ...newIds.flatMap(id => [id, String(at)])]]);
       /* الأسئلة المكررة: متى أخذت نقطتها من قبل (للشفافية) */
       const rep = ids.filter(id => !newIds.includes(id));
@@ -116,7 +128,7 @@ module.exports = H.handler(["GET", "POST"], async (req, res) => {
   ]);
   const rk = v => v === null || v === undefined ? null : Number(v) + 1;
   H.ok(res, {
-    saved: !already, already, rejected, repeatedAt, points, base: newIds.length, bonus, bonusSource, bonusLabel, stage, storyBonus,
+    saved: !already, already, rejected, repeatedAt, wordRepeats, points, base: newIds.length, bonus, bonusSource, bonusLabel, stage, storyBonus,
     newCount: newIds.length, repeated: Math.max(0, ids.length - newIds.length), mult,
     gift: gift ? { id: gift.id, title: gift.title, mult: gift.mult, endsAt: gift.endsAt } : null, activeEvents: ev.active,
     totalPoints: Number(tp || 0), weekPoints: Number(wp || 0), monthPoints: Number(mp || 0),
