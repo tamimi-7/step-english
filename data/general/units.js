@@ -6,7 +6,7 @@ window.GEN_UNITS = [
 {id:"u3",lvl:"A1",t:"العائلة",themes:["family"],grammar:"pronouns",dialogue:null,goal:"تتعلّم 24 كلمة عن العائلة، وتتقن قاعدة الضمائر والملكية."},
 {id:"u4",lvl:"A1",t:"الروتين اليومي",themes:["daily-routine"],grammar:"present-simple",dialogue:null,goal:"تتعلّم 24 كلمة عن الروتين اليومي، وتتقن قاعدة المضارع البسيط."},
 {id:"u5",lvl:"A1",t:"الطعام والشراب",themes:["food"],grammar:null,dialogue:"restaurant",goal:"تتعلّم 24 كلمة عن الطعام والشراب، وتتدرّب على محادثة في المطعم."},
-{id:"u6",lvl:"A1",t:"البيت والأثاث",themes:["home"],grammar:"present-continuous",dialogue:"apartment",goal:"تتعلّم 24 كلمة عن البيت والأثاث، وتتقن قاعدة There is / There are + حروف الجر للمكان."},
+{id:"u6",lvl:"A1",t:"البيت والأثاث",themes:["home"],grammar:"there-is",dialogue:"apartment",goal:"تتعلّم 24 كلمة عن البيت والأثاث، وتتقن قاعدة There is / There are + حروف الجر للمكان."},
 {id:"u7",lvl:"A1",t:"الملابس والألوان",themes:["clothes"],grammar:"present-continuous",dialogue:null,goal:"تتعلّم 24 كلمة عن الملابس والألوان، وتتقن قاعدة المضارع المستمر."},
 {id:"u8",lvl:"A1",t:"الجسم والصحة",themes:["body-health"],grammar:"can",dialogue:null,goal:"تتعلّم 24 كلمة عن الجسم والصحة، وتتقن قاعدة can / can't."},
 {id:"u9",lvl:"A1",t:"الطقس والفصول",themes:["weather"],grammar:null,dialogue:null,goal:"تتعلّم 24 كلمة عن الطقس والفصول."},
