@@ -1532,3 +1532,26 @@ footer{border-top:1px solid var(--line)!important}
 .wd-hints .btn{font-size:.82rem}
 .wd-hints .btn[disabled]{opacity:.6}
 .wd-hint-box p{line-height:1.9}
+
+/* «شرح القاعدة» مع السؤال نفسه — قبل ما تجاوب */
+.q-card .q-tools{display:flex;align-items:center;gap:8px}
+.rule-peek{display:inline-flex;align-items:center;gap:5px;padding:5px 10px;border:1px solid var(--line);border-radius:10px;font-size:.82rem;color:var(--ink);text-decoration:none;white-space:nowrap}
+.rule-peek:hover{border-color:#e50914;color:#e50914}
+.rule-peek svg{width:15px;height:15px}
+/* زر «التالي» وهو مقفل: يبين إنه مقفل، ما يوهمك إنه ينضغط */
+.quiz-nav .btn-primary:disabled{background:transparent!important;color:var(--muted)!important;border-color:var(--line)!important;opacity:1}
+
+/* بقايا ألوان قديمة داخل شرح الدرس: نرجّعها لهوية الموقع (أسود + أحمر) */
+.lesson h2 .n{background:#e50914!important;color:#fff!important;box-shadow:none!important}
+.why-box,.when-box{border:1px solid var(--line)!important;border-radius:10px!important;background:var(--card)!important}
+[data-theme="dark"] .when-box,[data-theme="dark"] .why-box{background:#141414!important;border-color:#2a2a2a!important}
+.why-box h3,.when-box h3{color:#e50914!important}
+.en-line{color:var(--ink)!important}
+[data-theme="dark"] .en-line{color:#f2f2f2!important}
+
+/* جدول المقارنة داخل نافذة الشرح: يدخل في عرض الجوال بدون سحب يمين ويسار */
+@media (max-width:520px){
+  .rule-body .table-wrap table{font-size:.8rem;table-layout:fixed;width:100%}
+  .rule-body .table-wrap th,.rule-body .table-wrap td{padding:6px 7px;white-space:normal;word-break:break-word}
+  .rule-body .rule-lesson{padding-inline:8px}
+}
