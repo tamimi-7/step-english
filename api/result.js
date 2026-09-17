@@ -6,6 +6,8 @@ const AR = require("../lib/areas");
 const VAL = require("../lib/validids");
 const RC = require("../lib/recap");
 const MODES = ["grammar", "vocab", "reading", "mix", "wrong", "challenge", "train", "general"];
+/* مكافأة المراجعة: كل ٤ إجابات صحيحة على أسئلة سبق أخذت نقاطها = نقطة، بحد يومي حتى ما تصير مزرعة نقاط */
+const REVIEW_PER = 4, REVIEW_DAILY_CAP = 10;
 const ID_RE = /^[\x21-\x7e؀-ۿ]{1,80}$/;
 const UNIT_RE = /^u\d{1,3}$/;
 
@@ -66,7 +68,7 @@ module.exports = H.handler(["GET", "POST"], async (req, res) => {
     already = added === 0 || added === "0";
   }
 
-  let newIds = [], bonus = 0, stage = null, storyBonus = null, points = 0, repeatedAt = null, wordRepeats = 0;
+  let newIds = [], bonus = 0, stage = null, storyBonus = null, points = 0, repeatedAt = null, wordRepeats = 0, review = null;
   let stats = (await db.getJSON("stats:" + me.u)) || { quizzes: 0, correct: 0, answered: 0, best: 0, last: null };
   if(!already){
     if(ids.length){
@@ -103,11 +105,22 @@ module.exports = H.handler(["GET", "POST"], async (req, res) => {
       const info = VAL.storyInfo(story);
       if(info){ const added = await db.call("SADD", "storydone:" + me.u, story); if(added === 1 || added === "1") storyBonus = { id: story, points: AR.STORY_POINTS[info.lvl] || 6 }; }
     }
-    points = newIds.length + bonus + (stage ? stage.points : 0) + (storyBonus ? storyBonus.points : 0);
+    /* المراجعة تستاهل: الأسئلة اللي جاوبتها صح وسبق أخذت نقاطها تعطي نقطة لكل ٤، بحد ١٠ نقاط في اليوم */
+    const reviewCorrect = Math.max(0, ids.length - newIds.length);
+    if(reviewCorrect >= REVIEW_PER){
+      const rk = "rev:" + EV.dateKey(at) + ":" + me.u;
+      const used = Number(await db.call("GET", rk)) || 0;
+      const pts = Math.max(0, Math.min(Math.floor(reviewCorrect / REVIEW_PER), REVIEW_DAILY_CAP - used));
+      if(pts){
+        await db.pipeline([["INCRBY", rk, pts], ["EXPIRE", rk, 8 * 86400]]);
+        review = { points: pts, questions: reviewCorrect, left: Math.max(0, REVIEW_DAILY_CAP - used - pts) };
+      }else if(used >= REVIEW_DAILY_CAP) review = { points: 0, questions: reviewCorrect, left: 0, capped: true };
+    }
+    points = newIds.length + bonus + (stage ? stage.points : 0) + (storyBonus ? storyBonus.points : 0) + (review ? review.points : 0);
     const partial = !!b.partial;
     if(!partial){ stats.quizzes += 1; stats.correct += score; stats.answered += total; }
     if(!partial) stats.best = Math.max(stats.best || 0, Math.round(score / total * 100)); stats.last = at;
-    const rec = { mode, partial: partial || undefined, score, total, seconds, at, challenge: challengeId, points, base: newIds.length, bonus, mult, stage: stage ? stage.unit : null, story: storyBonus ? storyBonus.id : null, tag: tag || undefined, golden: ids.some(id => id.startsWith("gh-")) || undefined };
+    const rec = { mode, partial: partial || undefined, score, total, seconds, at, challenge: challengeId, points, base: newIds.length, bonus, mult, stage: stage ? stage.unit : null, story: storyBonus ? storyBonus.id : null, review: review && review.points ? review.points : undefined, tag: tag || undefined, golden: ids.some(id => id.startsWith("gh-")) || undefined };
     const cmds = [
       ["LPUSH", "results:" + me.u, JSON.stringify(rec)], ["LTRIM", "results:" + me.u, 0, 499],
       ["SET", "stats:" + me.u, JSON.stringify(stats)], ["HSET", "names", me.u, me.name]
@@ -117,6 +130,7 @@ module.exports = H.handler(["GET", "POST"], async (req, res) => {
     if(bonus) cmds.push(["HINCRBY", "ptsx:" + me.u, bonusSource, bonus]);
     if(stage) cmds.push(["HINCRBY", "ptsx:" + me.u, "stages", stage.points]);
     if(storyBonus) cmds.push(["HINCRBY", "ptsx:" + me.u, "storybonus", storyBonus.points]);
+    if(review && review.points) cmds.push(["HINCRBY", "ptsx:" + me.u, "review", review.points]);
     if(points > 0){ cmds.push(["ZINCRBY", "lb:total", points, me.u]); cmds.push(["ZINCRBY", "lb:week:" + wk, points, me.u]); cmds.push(["ZINCRBY", "lb:month:" + mk, points, me.u]); }
     else { cmds.push(["ZINCRBY", "lb:total", 0, me.u]); }
     await db.pipeline(cmds);
@@ -128,7 +142,7 @@ module.exports = H.handler(["GET", "POST"], async (req, res) => {
   ]);
   const rk = v => v === null || v === undefined ? null : Number(v) + 1;
   H.ok(res, {
-    saved: !already, already, rejected, repeatedAt, wordRepeats, points, base: newIds.length, bonus, bonusSource, bonusLabel, stage, storyBonus,
+    saved: !already, already, rejected, repeatedAt, wordRepeats, review, points, base: newIds.length, bonus, bonusSource, bonusLabel, stage, storyBonus,
     newCount: newIds.length, repeated: Math.max(0, ids.length - newIds.length), mult,
     gift: gift ? { id: gift.id, title: gift.title, mult: gift.mult, endsAt: gift.endsAt } : null, activeEvents: ev.active,
     totalPoints: Number(tp || 0), weekPoints: Number(wp || 0), monthPoints: Number(mp || 0),
