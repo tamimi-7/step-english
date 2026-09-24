@@ -1555,3 +1555,7 @@ footer{border-top:1px solid var(--line)!important}
   .rule-body .table-wrap th,.rule-body .table-wrap td{padding:6px 7px;white-space:normal;word-break:break-word}
   .rule-body .rule-lesson{padding-inline:8px}
 }
+
+/* سلّم نقاط كلمة اليوم */
+.wd-scale{font-size:.82rem;color:var(--muted);margin:-4px 0 8px}
+.wd-scale b{color:#e50914}

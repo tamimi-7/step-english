@@ -784,11 +784,11 @@
       render(crumb([{ t: "اليوم", href: "#/today" }, { t: "كلمة اليوم" }]) + `<div class="wordle">
         <div class="wd-top"><h1 style="margin:0"> كلمة اليوم</h1><span class="badge">${st.guesses.length}/6</span></div>
         <p class="small muted wd-help">خمّن الكلمة الإنجليزية (٥ حروف). 🟩 الحرف في مكانه · 🟨 موجود بس بمكان ثاني · ⬛ مو موجود.</p>
-        ${st.topic ? `<div class="wd-topic"><span>المجال: <b>${esc(st.topic)}</b></span>${st.lvl ? `<span class="badge">${esc(st.lvl)}</span>` : ""}${!st.done ? `<span class="wd-worth">لو حليتها الحين: <b>+${st.worth}</b></span>` : ""}</div>` : ""}
+        ${st.topic ? `<div class="wd-topic"><span>المجال: <b>${esc(st.topic)}</b></span>${st.lvl ? `<span class="badge">${esc(st.lvl)}</span>` : ""}${!st.done ? `<span class="wd-worth">لو حليتها الحين: <b>+${st.worth}</b></span>` : ""}</div><div class="wd-scale">النقاط حسب محاولتك: <b>٢٥</b> · ١٥ · ٩ · ٦ · ٤ · ٢</div>` : ""}
         ${!st.done ? `<div class="wd-hints">
-          <button type="button" class="btn btn-sm" data-hint="first" ${st.hintData.first ? "disabled" : ""}>${I("type")} أول حرف ${st.hintData.first ? `<b class="en">${esc(st.hintData.first)}</b>` : st.guesses.length >= st.freeFirstAfter - 1 ? "" : "(−١)"}</button>
-          <button type="button" class="btn btn-sm" data-hint="meaning" ${st.hintData.meaning ? "disabled" : ""}>${I("globe")} المعنى ${st.hintData.meaning ? "" : "(−١)"}</button>
-          <button type="button" class="btn btn-sm" data-hint="example" ${st.hintData.example ? "disabled" : ""}>${I("bookopen")} جملة فيها الكلمة ${st.hintData.example ? "" : "(−١)"}</button>
+          <button type="button" class="btn btn-sm" data-hint="first" ${st.hintData.first ? "disabled" : ""}>${I("type")} أول حرف ${st.hintData.first ? `<b class="en">${esc(st.hintData.first)}</b>` : st.guesses.length >= st.freeFirstAfter - 1 ? "" : "(ينزّلك درجة)"}</button>
+          <button type="button" class="btn btn-sm" data-hint="meaning" ${st.hintData.meaning ? "disabled" : ""}>${I("globe")} المعنى ${st.hintData.meaning ? "" : "(ينزّلك درجة)"}</button>
+          <button type="button" class="btn btn-sm" data-hint="example" ${st.hintData.example ? "disabled" : ""}>${I("bookopen")} جملة فيها الكلمة ${st.hintData.example ? "" : "(ينزّلك درجة)"}</button>
         </div>
         ${st.hintData.first || st.hintData.meaning || st.hintData.example ? `<div class="note tip wd-hint-box"><span class="ic">${I("bulb")}</span><p>${[st.hintData.first ? `أول حرف: <b class="en">${esc(st.hintData.first)}</b>${!(st.hints || []).includes("first") ? " (مجاني بعد ٣ محاولات)" : ""}` : "", st.hintData.meaning ? `معناها: <b>${esc(st.hintData.meaning)}</b>` : "", st.hintData.example ? (st.hintData.example.en ? `<span class="en" dir="ltr">${esc(st.hintData.example.en)}</span>${st.hintData.example.ar ? `<br><span class="small muted">${esc(st.hintData.example.ar)}</span>` : ""}` : `جملة: ${esc(st.hintData.example.ar || "")}`) : ""].filter(Boolean).join("<br>")}</p></div>` : ""}` : ""}
         <div class="wd-grid">${rows}</div>${kb}${end}
@@ -798,7 +798,7 @@
       document.querySelectorAll("#app [data-hint]").forEach(b => b.addEventListener("click", async () => {
         if(b.disabled || busy) return;
         const free = b.dataset.hint === "first" && st.guesses.length >= st.freeFirstAfter;
-        if(!free && !confirm("التلميح ينقص نقطة من نقاط كلمة اليوم. تبيه؟")) return;
+        if(!free && !confirm("التلميح ينزّلك درجة وحدة في النقاط (٢٥ ← ١٥ ← ٩ ← ٦ ← ٤ ← ٢). تبيه؟")) return;
         busy = true; b.disabled = true;
         try{ const r = await Auth.api("/api/points", { method: "POST", body: { wordleHint: b.dataset.hint } }); st = r.state; sfx("tick"); draw(); }
         catch(e){ toast(e.message, 3000); b.disabled = false; }

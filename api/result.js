@@ -7,7 +7,7 @@ const VAL = require("../lib/validids");
 const RC = require("../lib/recap");
 const MODES = ["grammar", "vocab", "reading", "mix", "wrong", "challenge", "train", "general"];
 /* مكافأة المراجعة: كل ٤ إجابات صحيحة على أسئلة سبق أخذت نقاطها = نقطة، بحد يومي حتى ما تصير مزرعة نقاط */
-const REVIEW_PER = 4, REVIEW_DAILY_CAP = 10;
+const REVIEW_PER = 4, REVIEW_DAILY_CAP = 25;
 const ID_RE = /^[\x21-\x7e؀-ۿ]{1,80}$/;
 const UNIT_RE = /^u\d{1,3}$/;
 
