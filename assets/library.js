@@ -14,6 +14,18 @@
   /* حالة القارئ: آخر قصة وموضعها، القصص المكتملة، مواضع القراءة */
   const LIB = Object.assign({ last: null, done: {}, pos: {}, listened: {}, speed: 1, ar: true }, Store.get("step_lib", {}));
   const save = () => Store.set("step_lib", LIB);
+  /* القصص المكتملة محفوظة في حسابك، فتبين لك حتى لو دخلت من جوال ثاني */
+  async function pullDone(){
+    if(typeof Auth === "undefined" || !Auth.user()) return false;
+    try{
+      const j = await Auth.api("/api/points");
+      if(!j || !Array.isArray(j.stories)) return false;
+      let added = 0;
+      j.stories.forEach(id => { if(!LIB.done[id]){ LIB.done[id] = { server: true, at: Date.now() }; added++; } });
+      if(added) save();
+      return added > 0;
+    }catch(e){ return false; }
+  }
   const GEN = () => Store.get("step_gen", { xp: 0 });
   const addXP = n => { const g = GEN(); g.xp = (g.xp || 0) + n; Store.set("step_gen", g); toast(`+${n} XP`); };
   const sfx = n => { if(typeof SFX !== "undefined" && SFX[n]) SFX[n](); };
@@ -175,7 +187,7 @@
     if(!LV.includes(lv)) return routes.home();
     const list = ALL.filter(s => s.lvl === lv); const st = levelStats(lv);
     render(crumb([{ t: `${lv} · ${LVN[lv]}` }]) + `<div class="card sheet lvl-top" style="--c:${LVC[lv]}"><div class="section-title"><div class="lvl-badge" style="background:${LVC[lv]}">${lv}</div><h1 style="margin:0">${LVN[lv]}</h1><span class="lvl-pct big">${st.pct}%</span></div>${bar(st.pct)}<p class="muted small" style="margin:8px 0 0">${LVD[lv]}. القصص مرتبة من الأسهل إلى الأصعب، ${st.done}/${st.n} مكتملة.</p></div>
-      <div class="story-list">${list.map((s, i) => { const status = storyStatus(s); const d = LIB.done[s.id]; return `<a class="story ${status}" href="#/read/${s.id}"><div class="story-n" style="background:${status === "done" ? "var(--ok)" : LVC[lv]}">${status === "done" ? I("check") : i + 1}</div><div class="story-body"><div class="story-t en">${esc(s.title)}</div><div class="story-ar">${esc(s.ar)} <span class="muted small">· ${esc(s.author)}</span></div><div class="small muted">${KIND[s.kind] || ""} · ${wordsOf(s)} كلمة · ${I("headphones")} ${minutesOf(s)} دقيقة${d ? ` · <b style="color:var(--ok)">${d.score}/${d.total} في الأسئلة</b>` : status === "started" ? " · <b>بدأتها</b>" : ""}</div></div>${I("arrow")}</a>`; }).join("")}</div>
+      <div class="story-list">${list.map((s, i) => { const status = storyStatus(s); const d = LIB.done[s.id]; return `<a class="story ${status}" href="#/read/${s.id}"><div class="story-n" style="background:${status === "done" ? "var(--ok)" : LVC[lv]}">${status === "done" ? I("check") : i + 1}</div><div class="story-body"><div class="story-t en">${esc(s.title)}</div><div class="story-ar">${esc(s.ar)} <span class="muted small">· ${esc(s.author)}</span></div><div class="small muted">${KIND[s.kind] || ""} · ${wordsOf(s)} كلمة · ${I("headphones")} ${minutesOf(s)} دقيقة${d ? (d.total ? ` · <b style="color:var(--ok)">${d.score}/${d.total} في الأسئلة</b>` : ` · <b style="color:var(--ok)">مكتملة</b>`) : status === "started" ? " · <b>بدأتها</b>" : ""}</div></div>${I("arrow")}</a>`; }).join("")}</div>
       ${LV.indexOf(lv) < LV.length - 1 ? `<div class="btn-row" style="justify-content:center;margin-top:16px"><a class="btn" href="#/level/${LV[LV.indexOf(lv) + 1]}">المستوى التالي: ${LV[LV.indexOf(lv) + 1]} ←</a></div>` : ""}`);
   };
 
@@ -408,5 +420,6 @@
   document.addEventListener("DOMContentLoaded", () => {
     route();
     if(Auth.user() && typeof Progress !== "undefined") Progress.sync(false).then(ok => { const name = (location.hash.replace(/^#\/?/, "") || "").split("/")[0] || "home"; if(ok && ["home", "level", "words"].includes(name)) route(); });
+    pullDone().then(ok => { if(ok) route(); });
   });
 })();
