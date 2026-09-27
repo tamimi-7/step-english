@@ -6,8 +6,9 @@ const AR = require("../lib/areas");
 const VAL = require("../lib/validids");
 const RC = require("../lib/recap");
 const MODES = ["grammar", "vocab", "reading", "mix", "wrong", "challenge", "train", "general"];
-/* مكافأة المراجعة: كل ٤ إجابات صحيحة على أسئلة سبق أخذت نقاطها = نقطة، بحد يومي حتى ما تصير مزرعة نقاط */
-const REVIEW_PER = 4, REVIEW_DAILY_CAP = 25;
+/* مكافأة المراجعة: كل ٥ إجابات صحيحة على أسئلة سبق أخذت نقاطها = ٣ نقاط (٢٠ سؤال = ١٢)، بحد يومي حتى ما تصير مزرعة نقاط */
+const REVIEW_NUM = 3, REVIEW_DEN = 5, REVIEW_MIN = 2, REVIEW_DAILY_CAP = 40;
+const reviewPoints = n => Math.floor(n * REVIEW_NUM / REVIEW_DEN);
 const ID_RE = /^[\x21-\x7e؀-ۿ]{1,80}$/;
 const UNIT_RE = /^u\d{1,3}$/;
 
@@ -107,10 +108,10 @@ module.exports = H.handler(["GET", "POST"], async (req, res) => {
     }
     /* المراجعة تستاهل: الأسئلة اللي جاوبتها صح وسبق أخذت نقاطها تعطي نقطة لكل ٤، بحد ١٠ نقاط في اليوم */
     const reviewCorrect = Math.max(0, ids.length - newIds.length);
-    if(reviewCorrect >= REVIEW_PER){
+    if(reviewCorrect >= REVIEW_MIN){
       const rk = "rev:" + EV.dateKey(at) + ":" + me.u;
       const used = Number(await db.call("GET", rk)) || 0;
-      const pts = Math.max(0, Math.min(Math.floor(reviewCorrect / REVIEW_PER), REVIEW_DAILY_CAP - used));
+      const pts = Math.max(0, Math.min(reviewPoints(reviewCorrect), REVIEW_DAILY_CAP - used));
       if(pts){
         await db.pipeline([["INCRBY", rk, pts], ["EXPIRE", rk, 8 * 86400]]);
         review = { points: pts, questions: reviewCorrect, left: Math.max(0, REVIEW_DAILY_CAP - used - pts) };
