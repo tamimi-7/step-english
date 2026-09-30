@@ -621,6 +621,7 @@ async function showFinale(f, me, done){
   const pranked = !!(f.prank && f.prank.names.some(n => String(me.name).trim() === n || String(me.u) === n));
   const fem = /^(سلمى|سلمي|salma|salmaa)$/i.test(String(real.name).trim());
   const row = (r, i) => `<div class="fin-row ${i === 0 ? "top" : ""}"><span class="fin-rk">${i + 1}</span><span class="fin-nm">${esc(r.name)}</span><span class="fin-pt">${r.points}</span></div>`;
+  const prize = f.prize || ((EVENTS.CONFIG || {}).tournament || {}).prize || null;
   const el = modalCard(`<div class="fin-wrap"></div>`, () => { seen(); done(); });
   const box = el.querySelector(".fin-wrap");
   const bind = () => { hydrateIcons(box); box.querySelectorAll("[data-close]").forEach(b => b.addEventListener("click", () => { el.remove(); seen(); done(); })); };
@@ -640,7 +641,7 @@ async function showFinale(f, me, done){
         ${pts && pts.stages ? stat("check", pts.stages.length, "وحدة أنهيتيها") : ""}
         ${gap > 0 ? stat("zap", "+" + gap, "فارق عن الثاني") : ""}
       </div>
-      ${f.prize ? `<div class="fin-prize">${I("gift")} <b>${esc(f.prize)}</b></div>` : ""}
+      ${prize ? `<div class="fin-prize">${I("gift")} <b>${esc(prize)}</b></div>` : ""}
       ${f.praise ? `<p class="fin-praise">${esc(f.praise)}</p>` : ""}
       <button type="button" class="btn btn-primary btn-lg" data-close style="margin-top:12px">${I("check")} يستاهل التعب</button>`;
     bind(); cheer(3);
@@ -665,12 +666,14 @@ async function showFinale(f, me, done){
   };
   if(!pranked) return plain();
   /* المقلب: يبقى معروض لين تضغط بنفسها، ما فيه مؤقت */
+  const fakeBoard = [{ name: f.prank.winner, points: f.prank.points || (real.points + 129) }, ...board.filter(r => r.name !== f.prank.winner)].slice(0, 5);
   box.innerHTML = `<div class="gift-box">${I("trophy")}</div><h3 style="margin:.2em 0">${esc(f.title)}</h3>
     <p class="muted" style="margin:0">انتهى الشهر، وبعد منافسة طويلة… الفائز هو</p>
     <div class="fin-fake">${esc(f.prank.winner)}</div>
-    <p class="small muted" style="margin:0 0 4px">مبروك له! 🎉</p>
-    ${f.prize ? `<p class="small muted" style="margin:0">الجائزة: ${esc(f.prize)}</p>` : ""}
-    <button type="button" class="btn btn-lg" id="finNext" style="margin-top:14px">${I("list")} شوف الترتيب كامل</button>`;
+    <p class="small muted" style="margin:0 0 8px">بـ ${f.prank.points || (real.points + 129)} نقطة — مبروك له! 🎉</p>
+    <div class="fin-board">${fakeBoard.map(row).join("")}</div>
+    ${prize ? `<p class="small muted" style="margin:8px 0 0">الجائزة: ${esc(prize)}</p>` : ""}
+    <button type="button" class="btn btn-lg" id="finNext" style="margin-top:14px">${I("list")} شوف التفاصيل</button>`;
   hydrateIcons(box);
   box.querySelector("#finNext").addEventListener("click", reveal);
 }
