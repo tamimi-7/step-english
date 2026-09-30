@@ -1559,3 +1559,16 @@ footer{border-top:1px solid var(--line)!important}
 /* سلّم نقاط كلمة اليوم */
 .wd-scale{font-size:.82rem;color:var(--muted);margin:-4px 0 8px}
 .wd-scale b{color:#e50914}
+
+/* ختام البطولة */
+.fin-fake{font-size:1.9rem;font-weight:800;color:#e50914;margin:10px 0;letter-spacing:-.5px}
+.fin-fake.win{animation:finpop .5s ease-out}
+@keyframes finpop{from{transform:scale(.7);opacity:0}to{transform:scale(1);opacity:1}}
+.fin-prank{font-size:2rem;margin-bottom:4px}
+.fin-prank svg{width:44px;height:44px;color:#e50914}
+.fin-board{display:flex;flex-direction:column;gap:4px;text-align:start}
+.fin-row{display:flex;align-items:center;gap:8px;padding:7px 10px;border:1px solid var(--line);border-radius:10px;font-size:.9rem}
+.fin-row.top{border-color:#e50914}
+.fin-rk{min-width:18px;color:var(--muted)}
+.fin-nm{flex:1;font-weight:600}
+.fin-pt{font-weight:700}

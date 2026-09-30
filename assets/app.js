@@ -598,8 +598,54 @@ async function giftCheck(){
     }catch(e){}
   }
   if(me && !Store.get("step_fb_design-v3_" + me.u, false)) queue.push(() => new Promise(done => designFeedback(done)));
+  const fin = finaleDue(me); if(fin) queue.push(() => new Promise(done => showFinale(fin, me, done)));
   for(const show of queue) await show();
   await dailyCheck();
+}
+/* ---- ختام البطولة: إعلان الفائز ---- */
+function finaleDue(me){
+  if(!me || typeof EVENTS === "undefined") return null;
+  const f = (EVENTS.CONFIG || {}).finale; if(!f) return null;
+  if(Date.now() < Date.parse(f.at)) return null;
+  if(Store.get("step_finale_" + f.id + "_" + me.u, false)) return null;
+  return f;
+}
+async function showFinale(f, me, done){
+  const seen = () => Store.set("step_finale_" + f.id + "_" + me.u, true);
+  let board = [];
+  try{ const j = await Auth.api("/api/leaderboard"); board = (j && ((j.monthly && j.monthly.length ? j.monthly : j.total) || [])) || []; }catch(e){}
+  if(!board.length){ done(); return; }
+  const real = board[0], pranked = f.prank && f.prank.names.some(n => String(me.name).trim() === n || String(me.u) === n);
+  const row = (r, i) => `<div class="fin-row ${i === 0 ? "top" : ""}"><span class="fin-rk">${i + 1}</span><span class="fin-nm">${esc(r.name)}</span><span class="fin-pt">${r.points}</span></div>`;
+  const el = modalCard("<div class=\"fin-wrap\"></div>", () => { seen(); done(); });
+  const box = el.querySelector(".fin-wrap");
+  const finish = () => {
+    box.innerHTML = `<div class="gift-box">${I("trophy")}</div><h3 style="margin:.2em 0">${esc(f.title)}</h3>
+      <p class="muted" style="margin:0 0 10px">الفائز${/ة$/.test(real.name) || real.name === "سلمى" ? "ة" : ""}: <b style="color:#e50914">${esc(real.name)}</b> بـ ${real.points} نقطة</p>
+      <div class="fin-board">${board.slice(0, 5).map(row).join("")}</div>
+      <button type="button" class="btn btn-primary btn-lg" data-close style="margin-top:12px">${I("check")} مبروك!</button>`;
+    hydrateIcons(box); box.querySelector("[data-close]").addEventListener("click", () => { el.remove(); seen(); done(); });
+    try{ if(typeof SFX !== "undefined") SFX.win(); confetti(); }catch(e){}
+  };
+  if(!pranked) return finish();
+  /* المقلب: اسم ثاني أولًا، وبعدها ينكشف */
+  box.innerHTML = `<div class="gift-box">${I("trophy")}</div><h3 style="margin:.2em 0">${esc(f.title)}</h3>
+    <p class="muted" style="margin:0">وبعد شهر كامل من التعب… الفائز هو</p>
+    <div class="fin-fake">${esc(f.prank.winner)}</div>
+    <p class="small muted" style="margin:0">مبروك له! 🎉</p>
+    <button type="button" class="btn btn-sm" id="finNext" style="margin-top:12px">شوف اللوحة</button>`;
+  hydrateIcons(box);
+  let fired = false;
+  const reveal = () => { if(fired) return; fired = true;
+    box.innerHTML = `<div class="fin-prank">${I("sparkles")}</div><h3 style="margin:.2em 0">مقلب! 😄</h3><p class="muted" style="margin:0 0 10px">الفائزة الحقيقية…</p>
+      <div class="fin-fake win">${esc(real.name)}</div><p class="muted" style="margin:0 0 10px">بـ <b>${real.points}</b> نقطة — مستحقة عن جدارة</p>
+      <div class="fin-board">${board.slice(0, 5).map(row).join("")}</div>
+      <button type="button" class="btn btn-primary btn-lg" data-close style="margin-top:12px">${I("check")} مبروك لي!</button>`;
+    hydrateIcons(box); box.querySelector("[data-close]").addEventListener("click", () => { el.remove(); seen(); done(); });
+    try{ if(typeof SFX !== "undefined") SFX.win(); confetti(); setTimeout(confetti, 600); }catch(e){}
+  };
+  box.querySelector("#finNext").addEventListener("click", reveal);
+  setTimeout(reveal, Math.max(3, f.prank.seconds || 7) * 1000);
 }
 /* الحضور اليومي، بدون نقاط: شعلة تكبر، درع يحمي السلسلة، مفاجأة اليوم، ومين دخل من المشاركين */
 const riyadhDay = () => { try{ return new Date().toLocaleDateString("en-CA", { timeZone: "Asia/Riyadh" }); }catch(e){ return new Date().toISOString().slice(0, 10); } };
