@@ -88,12 +88,12 @@ module.exports = H.handler(["GET", "POST"], async (req, res) => {
     return H.ok(res, { recap: { id: r.id, key: r.key, title: r.title, start: r.start, end: r.end, mult: r.mult, players: active.length, top: active.slice(0, 5).map(x => ({ name: x.name, gained: x.gained, me: x.u === me.u })), me: mine } });
   }
   const wk = db.weekKey(), mk = EV.monthKey();
-  const [areasFlat, extraFlat, stages, noticesFlat, tp, mp, wp, rank, mrank, wrank, earnedN, gstart, stories] = await db.pipeline([
+  const [areasFlat, extraFlat, stages, noticesFlat, tp, mp, wp, rank, mrank, wrank, earnedN, gstart, stories, wordsN] = await db.pipeline([
     ["HGETALL", "ptsa:" + me.u], ["HGETALL", "ptsx:" + me.u], ["SMEMBERS", "stages:" + me.u], ["HGETALL", "notices:" + me.u],
     ["ZSCORE", "lb:total", me.u], ["ZSCORE", "lb:month:" + mk, me.u], ["ZSCORE", "lb:week:" + wk, me.u],
     ["ZREVRANK", "lb:total", me.u], ["ZREVRANK", "lb:month:" + mk, me.u], ["ZREVRANK", "lb:week:" + wk, me.u],
     ["SCARD", "earned:" + me.u], ["GET", "giftstart:" + ((EV.giftFor(me) || {}).id || "none") + ":" + me.u],
-    ["SMEMBERS", "storydone:" + me.u]
+    ["SMEMBERS", "storydone:" + me.u], ["SCARD", "earnedw:" + me.u]
   ]);
   const num = o => Object.fromEntries(Object.entries(db.flatToObj(o)).map(([k, v]) => [k, Number(v) || 0]));
   const areas = num(areasFlat), extra = num(extraFlat);
@@ -107,7 +107,7 @@ module.exports = H.handler(["GET", "POST"], async (req, res) => {
     areas: AR.AREAS.map(a => ({ key: a.key, label: a.label, points: areas[a.key] || 0 })).concat(areas.other ? [{ key: "other", label: "أخرى", points: areas.other }] : []),
     extras: Object.entries(AR.EXTRAS).map(([k, label]) => ({ key: k, label, points: extra[k] || 0 })),
     sum: sumAreas + sumExtra, consistent: sumAreas + sumExtra === total, uniqueQuestions: Number(earnedN || 0),
-    stages, stagePoints: AR.STAGE_POINTS, stories: stories || [],
+    stages, stagePoints: AR.STAGE_POINTS, stories: stories || [], words: Number(wordsN || 0),
     notices: notices.filter(n => !n.acked), gift: gift && gstart ? { id: gift.id, title: gift.title, msg: gift.msg, mult: gift.mult, endsAt: gift.endsAt } : (gift ? { id: gift.id, title: gift.title, msg: gift.msg, mult: gift.mult, endsAt: gift.endsAt, pending: true } : null),
     week_key: wk, month_key: mk
   });

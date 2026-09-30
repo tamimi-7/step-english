@@ -1572,3 +1572,15 @@ footer{border-top:1px solid var(--line)!important}
 .fin-rk{min-width:18px;color:var(--muted)}
 .fin-nm{flex:1;font-weight:600}
 .fin-pt{font-weight:700}
+
+/* ختام البطولة: المفاجأة */
+.fin-crown{margin-bottom:2px}
+.fin-crown svg{width:54px;height:54px;color:#e50914}
+.fin-stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(86px,1fr));gap:8px;margin:10px 0}
+.fin-stat{display:flex;flex-direction:column;align-items:center;gap:2px;padding:10px 6px;border:1px solid var(--line);border-radius:10px}
+.fin-stat svg{width:18px;height:18px;color:#e50914}
+.fin-stat b{font-size:1.25rem;line-height:1.2}
+.fin-stat span{font-size:.75rem;color:var(--muted);text-align:center}
+.fin-prize{display:inline-flex;align-items:center;gap:6px;padding:8px 14px;border:1px solid #e50914;border-radius:10px;margin:4px 0}
+.fin-prize svg{width:18px;height:18px;color:#e50914}
+.fin-praise{font-size:.92rem;line-height:1.9;margin:10px 0 0;color:var(--ink)}

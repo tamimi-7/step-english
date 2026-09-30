@@ -612,40 +612,67 @@ function finaleDue(me){
 }
 async function showFinale(f, me, done){
   const seen = () => Store.set("step_finale_" + f.id + "_" + me.u, true);
-  let board = [];
+  let board = [], pts = null;
   try{ const j = await Auth.api("/api/leaderboard"); board = (j && ((j.monthly && j.monthly.length ? j.monthly : j.total) || [])) || []; }catch(e){}
   if(!board.length){ done(); return; }
-  const real = board[0], pranked = f.prank && f.prank.names.some(n => String(me.name).trim() === n || String(me.u) === n);
+  try{ pts = await loadPoints(); }catch(e){}
+  const real = board[0], second = board[1] || null;
+  const isMe = String(real.name).trim() === String(me.name).trim() || real.u === me.u;
+  const pranked = !!(f.prank && f.prank.names.some(n => String(me.name).trim() === n || String(me.u) === n));
+  const fem = /^(سلمى|سلمي|salma|salmaa)$/i.test(String(real.name).trim());
   const row = (r, i) => `<div class="fin-row ${i === 0 ? "top" : ""}"><span class="fin-rk">${i + 1}</span><span class="fin-nm">${esc(r.name)}</span><span class="fin-pt">${r.points}</span></div>`;
-  const el = modalCard("<div class=\"fin-wrap\"></div>", () => { seen(); done(); });
+  const el = modalCard(`<div class="fin-wrap"></div>`, () => { seen(); done(); });
   const box = el.querySelector(".fin-wrap");
-  const finish = () => {
+  const bind = () => { hydrateIcons(box); box.querySelectorAll("[data-close]").forEach(b => b.addEventListener("click", () => { el.remove(); seen(); done(); })); };
+  const cheer = n => { try{ if(typeof SFX !== "undefined") SFX.win(); for(let i = 0; i < (n || 1); i++) setTimeout(confetti, i * 500); }catch(e){} };
+
+  /* المفاجأة: إنجازها بالأرقام + الجائزة + كلمة من القلب */
+  const surprise = () => {
+    const gap = second ? real.points - second.points : 0;
+    const stat = (ic, num, lbl) => `<div class="fin-stat">${I(ic)}<b>${num}</b><span>${lbl}</span></div>`;
+    box.innerHTML = `<div class="fin-crown">${I("trophy")}</div>
+      <h3 style="margin:.2em 0">بطلة سبتمبر</h3>
+      <p class="muted" style="margin:0 0 10px">هذا اللي سوّيتيه خلال الشهر يا ${esc(me.name)}</p>
+      <div class="fin-stats">
+        ${stat("star", real.points, "نقطة")}
+        ${pts && pts.words ? stat("type", pts.words, "كلمة تعلمتيها") : ""}
+        ${pts && pts.stories ? stat("bookopen", pts.stories.length, "قصة أكملتيها") : ""}
+        ${pts && pts.stages ? stat("check", pts.stages.length, "وحدة أنهيتيها") : ""}
+        ${gap > 0 ? stat("zap", "+" + gap, "فارق عن الثاني") : ""}
+      </div>
+      ${f.prize ? `<div class="fin-prize">${I("gift")} <b>${esc(f.prize)}</b></div>` : ""}
+      ${f.praise ? `<p class="fin-praise">${esc(f.praise)}</p>` : ""}
+      <button type="button" class="btn btn-primary btn-lg" data-close style="margin-top:12px">${I("check")} يستاهل التعب</button>`;
+    bind(); cheer(3);
+  };
+  /* الكشف: الفائز الحقيقي */
+  const reveal = () => {
+    box.innerHTML = `<div class="fin-prank">${I("sparkles")}</div><h3 style="margin:.2em 0">مقلب! 😄</h3>
+      <p class="muted" style="margin:0 0 10px">الفائز${fem ? "ة" : ""} الحقيقي${fem ? "ة" : ""}…</p>
+      <div class="fin-fake win">${esc(real.name)}</div>
+      <p class="muted" style="margin:0 0 10px">بـ <b>${real.points}</b> نقطة — مستحقة عن جدارة</p>
+      <div class="fin-board">${board.slice(0, 5).map(row).join("")}</div>
+      <button type="button" class="btn btn-primary btn-lg" id="finSurprise" style="margin-top:12px">${I("gift")} وفيه مفاجأة كمان ←</button>`;
+    hydrateIcons(box); box.querySelector("#finSurprise").addEventListener("click", surprise); cheer(2);
+  };
+  /* النتيجة العادية لباقي العائلة */
+  const plain = () => {
     box.innerHTML = `<div class="gift-box">${I("trophy")}</div><h3 style="margin:.2em 0">${esc(f.title)}</h3>
-      <p class="muted" style="margin:0 0 10px">الفائز${/ة$/.test(real.name) || real.name === "سلمى" ? "ة" : ""}: <b style="color:#e50914">${esc(real.name)}</b> بـ ${real.points} نقطة</p>
+      <p class="muted" style="margin:0 0 10px">الفائز${fem ? "ة" : ""}: <b style="color:#e50914">${esc(real.name)}</b> بـ ${real.points} نقطة</p>
       <div class="fin-board">${board.slice(0, 5).map(row).join("")}</div>
-      <button type="button" class="btn btn-primary btn-lg" data-close style="margin-top:12px">${I("check")} مبروك!</button>`;
-    hydrateIcons(box); box.querySelector("[data-close]").addEventListener("click", () => { el.remove(); seen(); done(); });
-    try{ if(typeof SFX !== "undefined") SFX.win(); confetti(); }catch(e){}
+      ${isMe ? `<button type="button" class="btn btn-primary btn-lg" id="finSurprise" style="margin-top:12px">${I("gift")} وفيه مفاجأة كمان ←</button>` : `<button type="button" class="btn btn-primary btn-lg" data-close style="margin-top:12px">${I("check")} مبروك ${esc(real.name)}!</button>`}`;
+    hydrateIcons(box); const b = box.querySelector("#finSurprise"); if(b) b.addEventListener("click", surprise); else bind(); cheer(1);
   };
-  if(!pranked) return finish();
-  /* المقلب: اسم ثاني أولًا، وبعدها ينكشف */
+  if(!pranked) return plain();
+  /* المقلب: يبقى معروض لين تضغط بنفسها، ما فيه مؤقت */
   box.innerHTML = `<div class="gift-box">${I("trophy")}</div><h3 style="margin:.2em 0">${esc(f.title)}</h3>
-    <p class="muted" style="margin:0">وبعد شهر كامل من التعب… الفائز هو</p>
+    <p class="muted" style="margin:0">انتهى الشهر، وبعد منافسة طويلة… الفائز هو</p>
     <div class="fin-fake">${esc(f.prank.winner)}</div>
-    <p class="small muted" style="margin:0">مبروك له! 🎉</p>
-    <button type="button" class="btn btn-sm" id="finNext" style="margin-top:12px">شوف اللوحة</button>`;
+    <p class="small muted" style="margin:0 0 4px">مبروك له! 🎉</p>
+    ${f.prize ? `<p class="small muted" style="margin:0">الجائزة: ${esc(f.prize)}</p>` : ""}
+    <button type="button" class="btn btn-lg" id="finNext" style="margin-top:14px">${I("list")} شوف الترتيب كامل</button>`;
   hydrateIcons(box);
-  let fired = false;
-  const reveal = () => { if(fired) return; fired = true;
-    box.innerHTML = `<div class="fin-prank">${I("sparkles")}</div><h3 style="margin:.2em 0">مقلب! 😄</h3><p class="muted" style="margin:0 0 10px">الفائزة الحقيقية…</p>
-      <div class="fin-fake win">${esc(real.name)}</div><p class="muted" style="margin:0 0 10px">بـ <b>${real.points}</b> نقطة — مستحقة عن جدارة</p>
-      <div class="fin-board">${board.slice(0, 5).map(row).join("")}</div>
-      <button type="button" class="btn btn-primary btn-lg" data-close style="margin-top:12px">${I("check")} مبروك لي!</button>`;
-    hydrateIcons(box); box.querySelector("[data-close]").addEventListener("click", () => { el.remove(); seen(); done(); });
-    try{ if(typeof SFX !== "undefined") SFX.win(); confetti(); setTimeout(confetti, 600); }catch(e){}
-  };
   box.querySelector("#finNext").addEventListener("click", reveal);
-  setTimeout(reveal, Math.max(3, f.prank.seconds || 7) * 1000);
 }
 /* الحضور اليومي، بدون نقاط: شعلة تكبر، درع يحمي السلسلة، مفاجأة اليوم، ومين دخل من المشاركين */
 const riyadhDay = () => { try{ return new Date().toLocaleDateString("en-CA", { timeZone: "Asia/Riyadh" }); }catch(e){ return new Date().toISOString().slice(0, 10); } };
